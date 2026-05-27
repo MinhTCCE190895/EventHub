@@ -5,6 +5,11 @@
       "args": ["-y", "dotnet-template-mcp"],
       "description": "Dùng .NET Template Engine sinh code scaffolding cho .NET 9"
     },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"],
+      "description": "Tự động chạy browser, mở trang web và phân tích DOM/UI"
+    },
     "sharplens-mcp": {
       "command": "npx",
       "args": ["-y", "sharplens-mcp"],
