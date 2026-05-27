@@ -2,22 +2,42 @@
   "mcpServers": {
     "dotnet-template-mcp": {
       "command": "npx",
-      "args": ["-y", "dotnet-template-mcp"],
+      "args": [
+        "-y",
+        "dotnet-template-mcp"
+      ],
       "description": "Dùng .NET Template Engine sinh code scaffolding cho .NET 9"
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-playwright"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-playwright"
+      ],
       "description": "Tự động chạy browser, mở trang web và phân tích DOM/UI"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp"
+      ],
+      "description": "Đọc DOM, theo dõi Network, chụp DOM Snapshot và đọc Console Log qua Chrome DevTools Protocol (CDP)"
     },
     "sharplens-mcp": {
       "command": "npx",
-      "args": ["-y", "sharplens-mcp"],
+      "args": [
+        "-y",
+        "sharplens-mcp"
+      ],
       "description": "Phân tích mã ngữ nghĩa Roslyn thay cho việc đọc file text"
     },
     "SqlAugur": {
       "command": "npx",
-      "args": ["-y", "sql-augur-mcp"],
+      "args": [
+        "-y",
+        "sql-augur-mcp"
+      ],
       "env": {
         "SQL_SERVER_MODE": "ReadOnly"
       },
@@ -25,22 +45,34 @@
     },
     "mcp-server-github-actions": {
       "command": "npx",
-      "args": ["-y", "mcp-server-github-actions"],
+      "args": [
+        "-y",
+        "mcp-server-github-actions"
+      ],
       "description": "Theo dõi CI/CD, đọc file log và re-run job lỗi"
     },
     "git": {
       "command": "npx",
-      "args": ["-y", "git-mcp"],
+      "args": [
+        "-y",
+        "git-mcp"
+      ],
       "description": "Tối ưu hóa thao tác Git"
     },
     "memory": {
       "command": "npx",
-      "args": ["-y", "memory-mcp"],
+      "args": [
+        "-y",
+        "memory-mcp"
+      ],
       "description": "Lưu trữ entity graph và bộ nhớ tri thức"
     },
     "sequential-thinking": {
       "command": "npx",
-      "args": ["-y", "sequential-thinking-mcp"],
+      "args": [
+        "-y",
+        "sequential-thinking-mcp"
+      ],
       "description": "Hỗ trợ suy nghĩ logic tuần tự"
     }
   }

@@ -36,3 +36,9 @@ graph TD
 - Xác định nguyên nhân gốc rễ (ví dụ: thiếu DI, cấu hình Fluent API sai, CSS selector sai).
 - **TUYỆT ĐỐI** không viết lại hay sinh lại toàn bộ file mã nguồn.
 - Chỉ đề xuất hoặc sửa đổi trực tiếp phần code bị lỗi kèm theo comment phân tách rõ ràng dạng git diff hoặc thay đổi cục bộ (`// ... existing code ...`).
+
+### Bước 4: Luồng Gỡ lỗi Giao diện Sâu (Deep UI Debugging)
+- Khi nhận được yêu cầu khởi chạy hoặc phát hiện các trục trặc về giao diện:
+  - Agent tự động liên kết với `chrome-devtools-mcp` để kết nối vào giao thức CDP của trình duyệt.
+  - Thực hiện giám sát console log của trình duyệt, chụp DOM Snapshot, và dò lỗi CSS Kinetic Glass bị xung đột/ghi đè.
+  - Tự động vá lỗi style và kiểm tra lại giao diện cho đến khi giao diện hiển thị chính xác.
