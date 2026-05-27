@@ -1,0 +1,30 @@
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Re]leases/
+x64/
+x86/
+SDK/
+build/
+bin/
+obj/
+
+## Visual Studio 2015/2017/2019/2022 cache directory
+.vs/
+
+## Rider cache directory
+.idea/
+
+## OS-generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

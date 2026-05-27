@@ -1,0 +1,42 @@
+{
+  "mcpServers": {
+    "dotnet-template-mcp": {
+      "command": "npx",
+      "args": ["-y", "dotnet-template-mcp"],
+      "description": "Dùng .NET Template Engine sinh code scaffolding cho .NET 9"
+    },
+    "sharplens-mcp": {
+      "command": "npx",
+      "args": ["-y", "sharplens-mcp"],
+      "description": "Phân tích mã ngữ nghĩa Roslyn thay cho việc đọc file text"
+    },
+    "SqlAugur": {
+      "command": "npx",
+      "args": ["-y", "sql-augur-mcp"],
+      "env": {
+        "SQL_SERVER_MODE": "ReadOnly"
+      },
+      "description": "Cấu hình SQL Server chế độ Read-Only để sau này sinh ERD"
+    },
+    "mcp-server-github-actions": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-github-actions"],
+      "description": "Theo dõi CI/CD, đọc file log và re-run job lỗi"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "git-mcp"],
+      "description": "Tối ưu hóa thao tác Git"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "memory-mcp"],
+      "description": "Lưu trữ entity graph và bộ nhớ tri thức"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "sequential-thinking-mcp"],
+      "description": "Hỗ trợ suy nghĩ logic tuần tự"
+    }
+  }
+}
