@@ -1,8 +1,8 @@
-using Blazer.Components;
+using Blazor.Components;
 using BLL;
 using DAL;
 
-namespace Blazer
+namespace Blazor
 {
     public class Program
     {
