@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/RazorPages/">
+    <Project Path="RazorPages/RazerPages.csproj" />
+  </Folder>
+  <Project Path="Blazer/Blazer.csproj" />
+  <Project Path="BLL/BLL.csproj" />
+  <Project Path="DAL/DAL.csproj" />
+  <Project Path="MVC/MVC.csproj" />
+</Solution>

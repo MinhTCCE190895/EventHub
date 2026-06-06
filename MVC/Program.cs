@@ -1,3 +1,6 @@
+using BLL;
+using DAL;
+
 namespace MVC
 {
     public class Program
@@ -8,6 +11,10 @@ namespace MVC
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            // Register BLL & DAL services
+            builder.Services.AddDataAccessLayer(builder.Configuration);
+            builder.Services.AddBusinessLogicLayer();
 
             var app = builder.Build();
 

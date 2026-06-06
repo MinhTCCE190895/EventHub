@@ -1,4 +1,6 @@
 using Blazer.Components;
+using BLL;
+using DAL;
 
 namespace Blazer
 {
@@ -11,6 +13,10 @@ namespace Blazer
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            // Register BLL & DAL services
+            builder.Services.AddDataAccessLayer(builder.Configuration);
+            builder.Services.AddBusinessLogicLayer();
 
             var app = builder.Build();
 
