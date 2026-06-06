@@ -6,7 +6,7 @@ namespace Blazor
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +35,12 @@ namespace Blazor
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
+
+            // Seed Data
+            using (var scope = app.Services.CreateScope())
+            {
+                await DAL.Data.DbInitializer.SeedAsync(scope.ServiceProvider);
+            }
 
             app.Run();
         }
