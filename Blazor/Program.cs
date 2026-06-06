@@ -1,6 +1,6 @@
-using Blazer.Components;
+using Blazor.Components;
 
-namespace Blazer
+namespace Blazor
 {
     public class Program
     {
