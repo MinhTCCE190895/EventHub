@@ -1,0 +1,14 @@
+{
+    "skills": [
+        {
+            "name": "test-skill",
+            "description": "Mô tả cho agent biết khi nào cần dùng skill này.",
+            "command": "echo 'Skill đã hoạt động!'",
+            "permissions": {
+                "fileSystem": true,
+                "terminal": true,
+                "network": false
+            }
+        }
+    ]
+}
