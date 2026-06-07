@@ -1,11 +1,12 @@
 using BLL;
 using DAL;
+using DAL.Data;
 
 namespace RazerPages
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,9 @@ namespace RazerPages
             builder.Services.AddBusinessLogicLayer();
 
             var app = builder.Build();
+
+            // Chạy migration và seed data khi khởi động — chỉ chạy nếu DB chưa có dữ liệu
+            await DbInitializer.SeedAsync(app.Services);
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
