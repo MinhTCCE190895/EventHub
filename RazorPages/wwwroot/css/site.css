@@ -328,7 +328,8 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .card-separator-dot {

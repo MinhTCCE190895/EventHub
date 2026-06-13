@@ -253,7 +253,6 @@
                                         <i class="bi bi-calendar3"></i>
                                         <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
                                     </span>
-                                    <span class="card-separator-dot">•</span>
                                     <span class="card-minimal-meta">
                                         <i class="bi bi-geo-alt"></i>
                                         <span class="text-truncate" style="max-width: 150px;">@card.VenueName</span>
@@ -266,7 +265,6 @@
                                         <i class="bi bi-person"></i>
                                         <span class="text-truncate" style="max-width: 150px;">@card.OrganizerName</span>
                                     </span>
-                                    <span class="card-separator-dot">•</span>
                                     <span class="card-minimal-meta">
                                         <i class="bi bi-people"></i>
                                         <span>@(card.MaxCapacity > 0 ? (card.MaxCapacity - card.BookedCount <= 0 ? "Hết chỗ" : $"Còn {card.MaxCapacity - card.BookedCount}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")</span>
