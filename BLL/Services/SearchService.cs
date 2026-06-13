@@ -47,8 +47,8 @@ public class SearchService : ISearchService
             "Upcoming" => query.Where(e => e.StartTime > now),
             "Ongoing" => query.Where(e => e.StartTime <= now && e.EndTime >= now),
             "Past" => query.Where(e => e.EndTime < now),
-            // Default: Hide past events, only show upcoming and ongoing ones
-            _ => query.Where(e => e.EndTime >= now)
+            // Default: Show all events (no filter) when "Tất cả" is selected
+            _ => query
         };
 
         if (searchDto.StartDate.HasValue)
