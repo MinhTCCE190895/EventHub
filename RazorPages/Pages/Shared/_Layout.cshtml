@@ -1,3 +1,6 @@
+@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -17,13 +20,13 @@
             </a>
             
             <nav class="sidebar-nav">
-                <a class="sidebar-link active" asp-page="/Index">
+                <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
                     <i class="bi bi-compass-fill"></i> Khám phá
                 </a>
-                <a class="sidebar-link" asp-page="/Bookmarks/Index">
+                <a class="sidebar-link @(currentPage == "/Bookmarks/Index" ? "active" : "")" asp-page="/Bookmarks/Index">
                     <i class="bi bi-bookmark-heart-fill"></i> Bookmarks
                 </a>
-                <a class="sidebar-link" asp-page="/Privacy">
+                <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư
                 </a>
             </nav>

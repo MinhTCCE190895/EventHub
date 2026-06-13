@@ -10,6 +10,8 @@
     <p class="text-muted">Khám phá và đặt vé cho các sự kiện hấp dẫn nhất tại UniEvent Hub.</p>
 </div>
 
+@Html.AntiForgeryToken()
+
 <form id="searchForm" method="get" class="search-card-minimal">
     <!-- ViewType hidden input -->
     <input type="hidden" asp-for="SearchVm.ViewType" id="viewTypeInput" />
@@ -150,11 +152,17 @@
                         statusClass = "status-past";
                     }
 
-                    <div class="card-minimal p-3">
+                            <div class="card-minimal p-3">
                         <div class="d-flex flex-column flex-md-row align-items-center gap-4">
                             <div class="flex-shrink-0 position-relative" style="width: 160px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
                                 <!-- Floating status badge -->
                                 <span class="card-badge-overlay @statusClass" style="top: 8px; left: 8px; font-size: 0.65rem; padding: 0.25rem 0.6rem;">@statusText</span>
+                                
+                                <!-- Floating Bookmark Toggle Button -->
+                                <button type="button" onclick="toggleBookmark('@card.Id', this)" class="btn-bookmark-floating" style="top: 8px; right: 8px; width: 30px; height: 30px;" title="Lưu sự kiện">
+                                    <i class="@(Model.BookmarkedEventIds.Contains(card.Id) ? "bi bi-bookmark-fill text-warning" : "bi bi-bookmark text-white")"></i>
+                                </button>
+                                
                                 <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
                                      class="w-100 h-100" style="object-fit: cover;" alt="@card.Title" />
                             </div>
@@ -183,8 +191,8 @@
                                 </div>
                             </div>
                             <div class="flex-shrink-0 w-100 w-md-auto text-end">
-                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn btn-outline-minimal btn-sm px-4 py-2">
-                                    Chi tiết <i class="bi bi-arrow-right-short ms-1"></i>
+                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
+                                    Chi tiết <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -217,10 +225,11 @@
                             <div class="card-minimal-img-wrapper">
                                 <!-- Floating status and calendar badge -->
                                 <span class="card-badge-overlay @statusClass">@statusText</span>
-                                <div class="card-date-overlay">
-                                    <span class="day">@card.StartTime.Day</span>
-                                    <span class="month">T@(card.StartTime.Month)</span>
-                                </div>
+                                
+                                <!-- Floating Bookmark Toggle Button -->
+                                <button type="button" onclick="toggleBookmark('@card.Id', this)" class="btn-bookmark-floating" title="Lưu sự kiện">
+                                    <i class="@(Model.BookmarkedEventIds.Contains(card.Id) ? "bi bi-bookmark-fill text-warning" : "bi bi-bookmark text-white")"></i>
+                                </button>
                                 
                                 <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
                                      class="card-minimal-img" alt="@card.Title" />
@@ -251,8 +260,8 @@
                                 </div>
                             </div>
                             <div class="card-minimal-footer">
-                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn btn-outline-minimal btn-sm w-100 py-2">
-                                    Xem chi tiết <i class="bi bi-arrow-right-short ms-1"></i>
+                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
+                                    Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -457,6 +466,32 @@
                         });
                 });
             });
+        }
+
+        // Toggle bookmark status asynchronously using AJAX
+        function toggleBookmark(eventId, buttonEl) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/Index?handler=ToggleBookmark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `eventId=${eventId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = buttonEl.querySelector('i');
+                    if (data.isBookmarked) {
+                        icon.className = 'bi bi-bookmark-fill text-warning';
+                    } else {
+                        icon.className = 'bi bi-bookmark text-white';
+                    }
+                }
+            })
+            .catch(err => console.error('Error toggling bookmark:', err));
         }
 
         // Initial binding
