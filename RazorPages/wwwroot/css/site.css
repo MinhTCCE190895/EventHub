@@ -238,6 +238,12 @@ body {
   box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.04), inset 0 -4px 0 #CCFF00;
 }
 
+/* List View Card Hover Override (No translate and no lime highlight) */
+.card-minimal-list:hover {
+  transform: none;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.04);
+}
+
 .card-minimal-img-wrapper {
   position: relative;
   overflow: hidden;

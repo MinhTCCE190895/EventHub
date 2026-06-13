@@ -155,7 +155,7 @@
                     var remaining = card.MaxCapacity - card.BookedCount;
                     string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
 
-                    <div class="card-minimal p-3">
+                    <div class="card-minimal card-minimal-list p-3">
                         <div class="d-flex flex-column flex-md-row align-items-center gap-4">
                             <div class="flex-shrink-0 position-relative" style="width: 180px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
                                 <!-- Floating status badge -->
