@@ -47,7 +47,7 @@
                 string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
 
                 <div class="col" id="card_@card.Id">
-                    <div class="card-minimal">
+                    <div class="card-minimal @(card.EndTime < now ? "is-past" : "")">
                         <div class="card-minimal-img-wrapper">
                             <span class="card-badge-overlay @statusClass">@statusText</span>
                             

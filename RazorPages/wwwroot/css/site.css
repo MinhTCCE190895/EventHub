@@ -159,34 +159,46 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  padding: 1.25rem 1.75rem;
-  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .form-label-minimal {
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
   display: block;
 }
 
 .form-control-minimal, .form-select-minimal {
   border-radius: var(--radius-md);
   border: 1px solid #e2e8f0;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
   background-color: #ffffff;
   transition: all 0.2s ease;
   width: 100%;
+}
+
+.search-card-minimal .input-group-text {
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
+  border-color: #e2e8f0;
 }
 
 .form-control-minimal:focus, .form-select-minimal:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
   outline: none;
+}
+
+.btn-group .btn.active {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
 }
 
 /* Filter Tag Labels */
@@ -235,13 +247,13 @@ body {
 
 .card-minimal:hover {
   transform: translateY(-6px);
-  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.04), inset 0 -4px 0 #CCFF00;
+  box-shadow: 0px 12px 28px rgba(0, 0, 0, 0.06);
 }
 
-/* List View Card Hover Override (No translate and no lime highlight) */
+/* List View Card Hover Override (No translate and no bottom border highlight) */
 .card-minimal-list:hover {
   transform: none;
-  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .card-minimal-img-wrapper {
@@ -607,4 +619,25 @@ body {
 
 .btn-bookmark-floating i.bi-bookmark-fill {
   color: #ffb020;
+}
+
+/* Past/Finished Event Visual Style (Grayscale and subtle opacity fading) */
+.card-minimal.is-past {
+  opacity: 0.75;
+  background-color: #f8fafc;
+  border: 1px dashed rgba(0, 0, 0, 0.08) !important;
+}
+
+.card-minimal.is-past img {
+  filter: grayscale(100%) opacity(0.6);
+  transition: all 0.3s ease;
+}
+
+.card-minimal.is-past:hover {
+  opacity: 0.95;
+  border-style: solid !important;
+}
+
+.card-minimal.is-past:hover img {
+  filter: grayscale(40%) opacity(0.8);
 }

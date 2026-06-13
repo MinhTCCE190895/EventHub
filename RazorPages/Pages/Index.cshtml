@@ -16,7 +16,7 @@
     <!-- ViewType hidden input -->
     <input type="hidden" asp-for="SearchVm.ViewType" id="viewTypeInput" />
 
-    <div class="row g-4 align-items-end">
+    <div class="row g-3 align-items-end">
         <div class="col-md-4">
             <label asp-for="SearchVm.Keyword" class="form-label-minimal">Từ khóa tìm kiếm</label>
             <div class="input-group">
@@ -62,7 +62,7 @@
     </div>
 
     <!-- Date Range Filter -->
-    <div class="row g-4 align-items-end mt-2">
+    <div class="row g-3 align-items-end mt-1">
         <div class="col-md-6">
             <label asp-for="SearchVm.StartDate" class="form-label-minimal">Từ ngày</label>
             <input type="date" asp-for="SearchVm.StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
@@ -155,7 +155,7 @@
                     var remaining = card.MaxCapacity - card.BookedCount;
                     string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
 
-                    <div class="card-minimal card-minimal-list p-3">
+                    <div class="card-minimal card-minimal-list p-3 @(card.EndTime < now ? "is-past" : "")">
                         <div class="d-flex flex-column flex-md-row align-items-center gap-4">
                             <div class="flex-shrink-0 position-relative" style="width: 180px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
                                 <!-- Floating status badge -->
@@ -235,7 +235,7 @@
                     string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
 
                     <div class="col">
-                        <div class="card-minimal">
+                        <div class="card-minimal @(card.EndTime < now ? "is-past" : "")">
                             <div class="card-minimal-img-wrapper">
                                 <!-- Floating status and calendar badge -->
                                 <span class="card-badge-overlay @statusClass">@statusText</span>
