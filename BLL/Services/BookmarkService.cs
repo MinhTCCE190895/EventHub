@@ -52,12 +52,16 @@ public class BookmarkService : IBookmarkService
             .Include(b => b.Event)
                 .ThenInclude(e => e.Venue)
             .Include(b => b.Event)
+                .ThenInclude(e => e.Organizer)
+            .Include(b => b.Event)
+                .ThenInclude(e => e.Bookings)
+            .Include(b => b.Event)
                 .ThenInclude(e => e.EventTags)
                     .ThenInclude(et => et.Tag)
             .Where(b => b.StudentId == studentId)
             .OrderByDescending(b => b.SavedAt)
             .ToListAsync(cancellationToken);
-
+ 
         return bookmarks.Select(b => new EventCardDTO
         {
             Id = b.Event.Id,
@@ -66,7 +70,10 @@ public class BookmarkService : IBookmarkService
             StartTime = b.Event.StartTime,
             EndTime = b.Event.EndTime,
             VenueName = b.Event.Venue.Name,
-            TagNames = b.Event.EventTags.Select(et => et.Tag.Name).ToList()
+            TagNames = b.Event.EventTags.Select(et => et.Tag.Name).ToList(),
+            OrganizerName = b.Event.Organizer.FullName,
+            MaxCapacity = b.Event.Venue.MaxCapacity,
+            BookedCount = b.Event.Bookings.Count(bk => bk.Status != "Cancelled")
         }).ToList();
     }
 

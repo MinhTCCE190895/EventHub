@@ -60,13 +60,23 @@
                              <h5 class="card-minimal-title" title="@card.Title">@card.Title</h5>
                              
                              <div class="card-minimal-meta mt-auto">
-                                 <i class="bi bi-calendar3 text-primary"></i>
+                                 <i class="bi bi-calendar3"></i>
                                  <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
                              </div>
                              
                              <div class="card-minimal-meta">
-                                 <i class="bi bi-geo-alt-fill text-danger"></i>
+                                 <i class="bi bi-geo-alt"></i>
                                  <span class="text-truncate" style="max-width: 240px;">@card.VenueName</span>
+                             </div>
+ 
+                             <div class="card-minimal-meta">
+                                 <i class="bi bi-person"></i>
+                                 <span class="text-truncate" style="max-width: 240px;">@card.OrganizerName</span>
+                             </div>
+ 
+                             <div class="card-minimal-meta">
+                                 <i class="bi bi-people"></i>
+                                 <span>@(card.MaxCapacity > 0 ? (card.MaxCapacity - card.BookedCount <= 0 ? "Hết chỗ" : $"Còn {card.MaxCapacity - card.BookedCount}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")</span>
                              </div>
  
                              <div class="d-flex flex-wrap gap-1 mt-3">

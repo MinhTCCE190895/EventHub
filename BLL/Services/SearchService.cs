@@ -90,7 +90,10 @@ public class SearchService : ISearchService
             StartTime = e.StartTime,
             EndTime = e.EndTime,
             VenueName = e.Venue.Name,
-            TagNames = e.EventTags.Select(et => et.Tag.Name).ToList()
+            TagNames = e.EventTags.Select(et => et.Tag.Name).ToList(),
+            OrganizerName = e.Organizer.FullName,
+            MaxCapacity = e.Venue.MaxCapacity,
+            BookedCount = e.Bookings.Count(b => b.Status != "Cancelled")
         }).ToList();
 
         return (items, totalCount);

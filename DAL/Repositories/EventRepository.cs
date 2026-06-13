@@ -14,6 +14,8 @@ public class EventRepository : BaseRepository<Event>, IEventRepository
         return _dbSet
             .AsNoTracking()
             .Include(e => e.Venue)
+            .Include(e => e.Organizer)
+            .Include(e => e.Bookings)
             .Include(e => e.EventTags)
                 .ThenInclude(et => et.Tag)
             .Include(e => e.EventCategories);
