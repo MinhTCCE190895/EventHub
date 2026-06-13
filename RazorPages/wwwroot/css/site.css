@@ -341,13 +341,6 @@ body {
   justify-content: flex-end;
 }
 
-.card-separator-dot {
-  color: #B3B3B3;
-  font-size: 0.8rem;
-  user-select: none;
-  margin: 0 8px;
-}
-
 .card-action-row-minimal {
   display: flex;
   justify-content: space-between;
