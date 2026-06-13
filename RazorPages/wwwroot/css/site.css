@@ -261,17 +261,43 @@ body {
   position: absolute;
   top: 12px;
   left: 12px;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.25rem 0.6rem;
-  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
   z-index: 5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-badge-overlay::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.card-badge-overlay.status-upcoming::before {
+  background-color: #fb923c; /* Orange */
+  box-shadow: 0 0 8px #fb923c;
+}
+
+.card-badge-overlay.status-ongoing::before {
+  background-color: #4ade80; /* Green */
+  box-shadow: 0 0 8px #4ade80;
+}
+
+.card-badge-overlay.status-past::before {
+  background-color: #94a3b8; /* Slate Gray */
 }
 
 .card-date-overlay {
@@ -362,6 +388,19 @@ body {
   -webkit-text-stroke: 0.2px #595959;
   display: inline-flex;
   transform: translateY(1px);
+}
+
+/* Quota Urgency Highlights */
+.card-minimal-meta.seats-urgency-low,
+.card-minimal-meta.seats-urgency-low i {
+  color: #fb923c !important;
+  font-weight: 600;
+}
+
+.card-minimal-meta.seats-urgency-soldout,
+.card-minimal-meta.seats-urgency-soldout i {
+  color: #ef4444 !important;
+  font-weight: 600;
 }
 
 .card-minimal-footer {

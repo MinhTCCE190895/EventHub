@@ -43,6 +43,9 @@
                     statusClass = "status-past";
                 }
 
+                var remaining = card.MaxCapacity - card.BookedCount;
+                string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
+
                 <div class="col" id="card_@card.Id">
                     <div class="card-minimal">
                         <div class="card-minimal-img-wrapper">
@@ -77,9 +80,9 @@
                                      <i class="bi bi-person"></i>
                                      <span class="text-truncate" style="max-width: 150px;">@card.OrganizerName</span>
                                  </span>
-                                 <span class="card-minimal-meta">
+                                 <span class="card-minimal-meta @seatsClass">
                                      <i class="bi bi-people"></i>
-                                     <span>@(card.MaxCapacity > 0 ? (card.MaxCapacity - card.BookedCount <= 0 ? "Hết chỗ" : $"Còn {card.MaxCapacity - card.BookedCount}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")</span>
+                                     <span>@(card.MaxCapacity > 0 ? (remaining <= 0 ? "Hết chỗ" : $"Còn {remaining}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")</span>
                                  </span>
                              </div>
  
