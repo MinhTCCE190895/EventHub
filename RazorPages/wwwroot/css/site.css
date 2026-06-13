@@ -221,11 +221,11 @@ body {
 
 /* Premium Borderless Cards */
 .card-minimal {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: none;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -235,8 +235,7 @@ body {
 
 .card-minimal:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 30px -5px rgba(37, 99, 235, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.04), inset 0 -4px 0 #CCFF00;
 }
 
 .card-minimal-img-wrapper {
@@ -282,30 +281,37 @@ body {
 /* Tag style inside card */
 .badge-tag-premium {
   display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-right: 8px;
-  transition: color 0.2s ease;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #111111;
+  background-color: #CCFF00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.card-minimal:hover .badge-tag-premium {
-  color: var(--primary);
+.badge-tag-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(204, 255, 0, 0.4);
 }
 
 .card-minimal-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  background-color: #FFFFFF;
 }
 
 .card-minimal-title {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   line-height: 1.4;
-  margin-bottom: 0.75rem;
-  color: var(--text-main);
+  margin-bottom: 1rem;
+  color: #111111;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -314,28 +320,45 @@ body {
 }
 
 .card-minimal:hover .card-minimal-title {
-  color: var(--primary);
+  color: #111111;
+}
+
+.card-group-minimal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-separator-dot {
+  color: #B3B3B3;
+  font-size: 0.8rem;
+  user-select: none;
+}
+
+.card-action-row-minimal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
 }
 
 .card-minimal-meta {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: #595959;
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 0.4rem;
 }
 
 .card-minimal-meta i {
+  color: #595959;
   font-size: 0.9rem;
+  -webkit-text-stroke: 0.2px #595959;
 }
 
 .card-minimal-footer {
-  padding: 0 1.25rem 1.25rem 1.25rem;
-  background: transparent;
-  border-top: none;
-  display: flex;
-  justify-content: flex-end;
+  display: none;
 }
 
 /* Minimal Custom Buttons */
@@ -357,8 +380,8 @@ body {
 .btn-outline-minimal {
   background-color: transparent;
   border: none;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: #595959;
+  font-weight: 600;
   font-size: 0.85rem;
   padding: 0;
   display: inline-flex;
@@ -370,8 +393,7 @@ body {
 }
 
 .btn-outline-minimal:hover {
-  color: var(--primary);
-  font-weight: 600;
+  color: #111111;
 }
 
 .btn-outline-minimal i {
