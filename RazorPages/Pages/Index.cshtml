@@ -157,7 +157,7 @@
 
                     <div class="card-minimal p-3">
                         <div class="d-flex flex-column flex-md-row align-items-center gap-4">
-                            <div class="flex-shrink-0 position-relative" style="width: 160px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
+                            <div class="flex-shrink-0 position-relative" style="width: 180px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
                                 <!-- Floating status badge -->
                                 <span class="card-badge-overlay @statusClass" style="top: 8px; left: 8px; font-size: 0.65rem; padding: 0.25rem 0.6rem;">@statusText</span>
                                 
@@ -169,29 +169,27 @@
                                 <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
                                      class="w-100 h-100" style="object-fit: cover;" alt="@card.Title" />
                             </div>
-                            <div class="flex-grow-1 w-100">
-                                <h5 class="fw-bold mb-2 text-slate-900 card-minimal-title" style="display: block; font-size: 1.15rem;">@card.Title</h5>
-                                <div class="d-flex flex-wrap gap-3 mb-2">
-                                    <span class="card-minimal-meta mb-0">
+                            <div class="flex-grow-1">
+                                <h5 class="fw-bold mb-2 card-minimal-title" style="display: block; font-size: 1.15rem; margin-bottom: 0.5rem; -webkit-line-clamp: 1;">@card.Title</h5>
+                                <div class="d-flex flex-wrap gap-4 align-items-center mb-3">
+                                    <span class="card-minimal-meta">
                                         <i class="bi bi-calendar3"></i>
-                                        @card.StartTime.ToString("dd/MM/yyyy HH:mm")
+                                        <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
                                     </span>
-                                    <span class="card-minimal-meta mb-0">
+                                    <span class="card-minimal-meta">
                                         <i class="bi bi-geo-alt"></i>
-                                        @card.VenueName
+                                        <span>@card.VenueName</span>
                                     </span>
-                                </div>
-                                <div class="d-flex flex-wrap gap-3 mb-3">
-                                    <span class="card-minimal-meta mb-0">
+                                    <span class="card-minimal-meta">
                                         <i class="bi bi-person"></i>
-                                        @card.OrganizerName
+                                        <span>@card.OrganizerName</span>
                                     </span>
-                                    <span class="card-minimal-meta mb-0 @seatsClass">
+                                    <span class="card-minimal-meta @seatsClass">
                                         <i class="bi bi-people"></i>
-                                        @(card.MaxCapacity > 0 ? (remaining <= 0 ? "Hết chỗ" : $"Còn {remaining}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")
+                                        <span>@(card.MaxCapacity > 0 ? (remaining <= 0 ? "Hết chỗ" : $"Còn {remaining}/{card.MaxCapacity} chỗ") : "Chỗ ngồi tự do")</span>
                                     </span>
                                 </div>
-                                <div class="d-flex flex-wrap gap-1">
+                                <div class="d-flex flex-wrap gap-2">
                                     @if (card.TagNames != null)
                                     {
                                         @foreach (var tag in card.TagNames)
@@ -203,7 +201,7 @@
                                     }
                                 </div>
                             </div>
-                            <div class="flex-shrink-0 w-100 w-md-auto text-end">
+                            <div class="flex-shrink-0 text-end">
                                 <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
                                     Chi tiết <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
