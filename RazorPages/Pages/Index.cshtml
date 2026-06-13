@@ -1,10 +1,467 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Khám phá sự kiện - UniEvent Hub";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="page-header-minimal">
+    <span class="page-badge-minimal">Explore Events</span>
+    <h1 class="display-6 fw-bold mb-2">Tìm kiếm sự kiện</h1>
+    <p class="text-muted">Khám phá và đặt vé cho các sự kiện hấp dẫn nhất tại UniEvent Hub.</p>
 </div>
+
+<form id="searchForm" method="get" class="search-card-minimal">
+    <!-- ViewType hidden input -->
+    <input type="hidden" asp-for="SearchVm.ViewType" id="viewTypeInput" />
+
+    <div class="row g-4 align-items-end">
+        <div class="col-md-4">
+            <label asp-for="SearchVm.Keyword" class="form-label-minimal">Từ khóa tìm kiếm</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 border-slate-200" style="border-radius: var(--radius-md) 0 0 var(--radius-md);">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input asp-for="SearchVm.Keyword" id="keywordInput" autocomplete="off" class="form-control form-control-minimal border-start-0" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" placeholder="Nhập tên hoặc mô tả sự kiện..." maxlength="200" />
+            </div>
+            <span asp-validation-for="SearchVm.Keyword" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="SearchVm.CategoryId" class="form-label-minimal">Danh mục</label>
+            <select asp-for="SearchVm.CategoryId" onchange="submitInstant()" class="form-select form-select-minimal">
+                <option value="">Tất cả danh mục</option>
+                @foreach (var cat in Model.SearchVm.Categories)
+                {
+                    <option value="@cat.Id" selected="@(Model.SearchVm.CategoryId == cat.Id)">@cat.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label asp-for="SearchVm.TimeFilter" class="form-label-minimal">Thời gian</label>
+            <select asp-for="SearchVm.TimeFilter" onchange="submitInstant()" class="form-select form-select-minimal">
+                <option value="">Tất cả</option>
+                <option value="Upcoming">Sắp diễn ra</option>
+                <option value="Ongoing">Đang diễn ra</option>
+                <option value="Past">Đã kết thúc</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="SearchVm.SortBy" class="form-label-minimal">Sắp xếp theo</label>
+            <select asp-for="SearchVm.SortBy" onchange="submitInstant()" class="form-select form-select-minimal">
+                <option value="DateAsc">Ngày diễn ra (Tăng dần)</option>
+                <option value="DateDesc">Ngày diễn ra (Giảm dần)</option>
+                <option value="NameAsc">Tên sự kiện (A-Z)</option>
+                <option value="NameDesc">Tên sự kiện (Z-A)</option>
+                <option value="Popularity">Mức độ phổ biến (Đặt vé nhiều)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row g-4 align-items-end mt-2">
+        <div class="col-md-6">
+            <label asp-for="SearchVm.StartDate" class="form-label-minimal">Từ ngày</label>
+            <input type="date" asp-for="SearchVm.StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="SearchVm.EndDate" class="form-label-minimal">Đến ngày</label>
+            <input type="date" asp-for="SearchVm.EndDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+        </div>
+    </div>
+
+    @if (Model.SearchVm.Tags != null && Model.SearchVm.Tags.Count > 0)
+    {
+        <div class="mt-4 border-top pt-3">
+            <label class="form-label-minimal d-block mb-3">Lọc nhanh theo thẻ (Tags)</label>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var tag in Model.SearchVm.Tags)
+                {
+                    <div class="tag-badge-minimal">
+                        <input class="tag-checkbox-minimal" type="checkbox"
+                               name="SearchVm.TagIds" value="@tag.Id"
+                               id="tag_@tag.Id"
+                               @(Model.SearchVm.TagIds != null && Model.SearchVm.TagIds.Contains(tag.Id) ? "checked" : "")
+                               onchange="submitInstant()" />
+                        <label class="tag-label-minimal" for="tag_@tag.Id">
+                            <i class="bi bi-tag-fill me-1"></i> @tag.Name
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</form>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    @if (Model.SearchVm.Results != null && Model.SearchVm.Results.Count > 0)
+    {
+        <h5 class="fw-bold mb-0 text-slate-800">
+            Kết quả tìm kiếm (@Model.SearchVm.TotalCount sự kiện)
+        </h5>
+        
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small">
+                Trang <strong>@Model.SearchVm.PageNumber</strong> / @Model.SearchVm.TotalPages
+            </span>
+            <!-- Layout toggle buttons -->
+            <div class="btn-group btn-group-sm rounded-3 overflow-hidden border">
+                <button type="button" onclick="changeView('Grid')" class="btn btn-light border-0 px-3 @(Model.SearchVm.ViewType == "Grid" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng lưới">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+                <button type="button" onclick="changeView('List')" class="btn btn-light border-0 px-3 @(Model.SearchVm.ViewType == "List" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng danh sách">
+                    <i class="bi bi-list-task"></i>
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Results and pagination area -->
+<div id="resultsWrapper">
+    @if (Model.SearchVm.Results == null || Model.SearchVm.Results.Count == 0)
+    {
+        <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
+            <div class="display-1 text-muted mb-3"><i class="bi bi-calendar-x"></i></div>
+            <h5 class="fw-bold text-slate-700">Không tìm thấy sự kiện nào</h5>
+            <p class="text-muted mb-0">Thử thay đổi từ khóa hoặc bộ lọc của bạn xem sao.</p>
+        </div>
+    }
+    else
+    {
+        @if (Model.SearchVm.ViewType == "List")
+        {
+            <!-- List View Style -->
+            <div class="d-flex flex-column gap-3 mb-5">
+                @foreach (var card in Model.SearchVm.Results)
+                {
+                    var now = DateTime.UtcNow;
+                    string statusText = "Đang diễn ra";
+                    string statusClass = "status-ongoing";
+                    if (card.StartTime > now)
+                    {
+                        statusText = "Sắp diễn ra";
+                        statusClass = "status-upcoming";
+                    }
+                    else if (card.EndTime < now)
+                    {
+                        statusText = "Đã kết thúc";
+                        statusClass = "status-past";
+                    }
+
+                    <div class="card-minimal p-3">
+                        <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                            <div class="flex-shrink-0 position-relative" style="width: 160px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
+                                <!-- Floating status badge -->
+                                <span class="card-badge-overlay @statusClass" style="top: 8px; left: 8px; font-size: 0.65rem; padding: 0.25rem 0.6rem;">@statusText</span>
+                                <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
+                                     class="w-100 h-100" style="object-fit: cover;" alt="@card.Title" />
+                            </div>
+                            <div class="flex-grow-1 w-100">
+                                <h5 class="fw-bold mb-2 text-slate-900 card-minimal-title" style="display: block; font-size: 1.15rem;">@card.Title</h5>
+                                <div class="d-flex flex-wrap gap-3 mb-3">
+                                    <span class="card-minimal-meta mb-0">
+                                        <i class="bi bi-calendar3 text-primary"></i>
+                                        @card.StartTime.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                    <span class="card-minimal-meta mb-0">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                                        @card.VenueName
+                                    </span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if (card.TagNames != null)
+                                    {
+                                        @foreach (var tag in card.TagNames)
+                                        {
+                                            <span class="badge-tag-premium">
+                                                #@tag
+                                            </span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 w-100 w-md-auto text-end">
+                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn btn-outline-minimal btn-sm px-4 py-2">
+                                    Chi tiết <i class="bi bi-arrow-right-short ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Grid View Style (Default) -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+                @foreach (var card in Model.SearchVm.Results)
+                {
+                    var now = DateTime.UtcNow;
+                    string statusText = "Đang diễn ra";
+                    string statusClass = "status-ongoing";
+                    if (card.StartTime > now)
+                    {
+                        statusText = "Sắp diễn ra";
+                        statusClass = "status-upcoming";
+                    }
+                    else if (card.EndTime < now)
+                    {
+                        statusText = "Đã kết thúc";
+                        statusClass = "status-past";
+                    }
+
+                    <div class="col">
+                        <div class="card-minimal">
+                            <div class="card-minimal-img-wrapper">
+                                <!-- Floating status and calendar badge -->
+                                <span class="card-badge-overlay @statusClass">@statusText</span>
+                                <div class="card-date-overlay">
+                                    <span class="day">@card.StartTime.Day</span>
+                                    <span class="month">T@(card.StartTime.Month)</span>
+                                </div>
+                                
+                                <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
+                                     class="card-minimal-img" alt="@card.Title" />
+                            </div>
+                            <div class="card-minimal-body">
+                                <h5 class="card-minimal-title" title="@card.Title">@card.Title</h5>
+                                
+                                <div class="card-minimal-meta mt-auto">
+                                    <i class="bi bi-calendar3 text-primary"></i>
+                                    <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                
+                                <div class="card-minimal-meta">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                                    <span class="text-truncate" style="max-width: 240px;">@card.VenueName</span>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-1 mt-3">
+                                    @if (card.TagNames != null)
+                                    {
+                                        @foreach (var tag in card.TagNames)
+                                        {
+                                            <span class="badge-tag-premium">
+                                                #@tag
+                                            </span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="card-minimal-footer">
+                                <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn btn-outline-minimal btn-sm w-100 py-2">
+                                    Xem chi tiết <i class="bi bi-arrow-right-short ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @* Minimal Pagination *@
+        @if (Model.SearchVm.TotalPages > 1)
+        {
+            var routeData = new Dictionary<string, string>
+            {
+                { "SearchVm.Keyword", Model.SearchVm.Keyword ?? "" },
+                { "SearchVm.CategoryId", Model.SearchVm.CategoryId?.ToString() ?? "" },
+                { "SearchVm.TimeFilter", Model.SearchVm.TimeFilter ?? "" },
+                { "SearchVm.SortBy", Model.SearchVm.SortBy ?? "" },
+                { "SearchVm.ViewType", Model.SearchVm.ViewType ?? "Grid" }
+            };
+
+            if (Model.SearchVm.TagIds != null)
+            {
+                for (int t = 0; t < Model.SearchVm.TagIds.Count; t++)
+                {
+                    routeData.Add($"SearchVm.TagIds[{t}]", Model.SearchVm.TagIds[t].ToString());
+                }
+            }
+
+            <nav aria-label="Phân trang">
+                <ul class="pagination pagination-minimal justify-content-center">
+                    @if (Model.SearchVm.PageNumber > 1)
+                    {
+                        var prevRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", (Model.SearchVm.PageNumber - 1).ToString() } };
+                        <li class="page-item">
+                            <a class="page-link ajax-page-link"
+                               asp-page="./Index"
+                               asp-all-route-data="prevRoute">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = 1; i <= Model.SearchVm.TotalPages; i++)
+                    {
+                        var pageRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", i.ToString() } };
+                        <li class="page-item @(i == Model.SearchVm.PageNumber ? "active" : "")">
+                            <a class="page-link ajax-page-link"
+                               asp-page="./Index"
+                               asp-all-route-data="pageRoute">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    @if (Model.SearchVm.PageNumber < Model.SearchVm.TotalPages)
+                    {
+                        var nextRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", (Model.SearchVm.PageNumber + 1).ToString() } };
+                        <li class="page-item">
+                            <a class="page-link ajax-page-link"
+                               asp-page="./Index"
+                               asp-all-route-data="nextRoute">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        let debounceTimer;
+        const form = document.getElementById('searchForm');
+        const keywordInput = document.getElementById('keywordInput');
+
+        // Instant filter on input with 300ms debounce (no page reloads, keeps typing focus)
+        keywordInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                submitInstant();
+            }, 300);
+        });
+
+        // Toggle layout view (Grid vs. List)
+        function changeView(viewType) {
+            document.getElementById('viewTypeInput').value = viewType;
+            submitInstant();
+        }
+
+        // Standard instant submission trigger
+        function submitInstant() {
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+
+            // Update URL dynamically without reloading page
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+
+            // Show skeleton loader
+            const resultsWrapper = document.getElementById('resultsWrapper');
+            const viewType = document.getElementById('viewTypeInput').value || 'Grid';
+            let skeletonHtml = '';
+            
+            if (viewType === 'List') {
+                skeletonHtml = `
+                    <div class="d-flex flex-column gap-3 mb-5">
+                        ${Array(3).fill(`
+                            <div class="card-minimal p-3">
+                                <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                                    <div class="flex-shrink-0 skeleton-image" style="width: 160px; aspect-ratio: 16/10; border-radius: var(--radius-md);"></div>
+                                    <div class="flex-grow-1 w-100">
+                                        <div class="skeleton-line title"></div>
+                                        <div class="skeleton-line meta"></div>
+                                        <div class="skeleton-line" style="width: 40%; height: 0.75rem;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                skeletonHtml = `
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+                        ${Array(3).fill(`
+                            <div class="col">
+                                <div class="skeleton-card">
+                                    <div class="skeleton-image"></div>
+                                    <div class="skeleton-body">
+                                        <div class="skeleton-line title"></div>
+                                        <div class="skeleton-line meta"></div>
+                                        <div class="skeleton-line btn"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            resultsWrapper.innerHTML = skeletonHtml;
+
+            // Fetch dynamic partial content
+            fetch(newUrl)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Replace results container
+                    const newResults = doc.getElementById('resultsWrapper');
+                    resultsWrapper.innerHTML = newResults.innerHTML;
+                    
+                    // Replace header count and toggles
+                    const headerContainer = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                    const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                    if (headerContainer && newHeader) {
+                        headerContainer.innerHTML = newHeader.innerHTML;
+                    }
+                    
+                    // Re-attach AJAX pagination click event listeners
+                    bindPaginationLinks();
+                })
+                .catch(err => console.error('Error fetching search results:', err));
+        }
+
+        // Bind AJAX request to pagination links to prevent full page reloads
+        function bindPaginationLinks() {
+            document.querySelectorAll('.ajax-page-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href');
+                    
+                    // Update URL dynamically
+                    window.history.pushState({ path: url }, '', url);
+                    
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            // Swap wrappers
+                            document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
+                            
+                            const headerContainer = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                            const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                            if (headerContainer && newHeader) {
+                                headerContainer.innerHTML = newHeader.innerHTML;
+                            }
+                            
+                            bindPaginationLinks();
+                            
+                            // Scroll back to top of results smoothly
+                            document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' });
+                        });
+                });
+            });
+        }
+
+        // Initial binding
+        document.addEventListener('DOMContentLoaded', function() {
+            bindPaginationLinks();
+        });
+    </script>
+}
