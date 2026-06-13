@@ -28,3 +28,11 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+## AI tools — không commit
+.kiro/
+.agents/
+.antigravity/
+.cursorrules
+.clinerules
+.antigravityrules
