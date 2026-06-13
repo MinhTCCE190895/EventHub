@@ -332,6 +332,15 @@ body {
   width: 100%;
 }
 
+.card-group-minimal > .card-minimal-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-group-minimal > .card-minimal-meta:last-child {
+  justify-content: flex-end;
+}
+
 .card-separator-dot {
   color: #B3B3B3;
   font-size: 0.8rem;
