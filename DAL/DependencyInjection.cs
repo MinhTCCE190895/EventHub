@@ -14,8 +14,8 @@ public static class DependencyInjection
             options.UseSqlServer(configuration.GetConnectionString("EventHub") 
                 ?? throw new InvalidOperationException("Connection string 'EventHub' not found.")));
 
-        // Đăng ký generic repository
         services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+        services.AddScoped<IEventRepository, EventRepository>();
 
         return services;
     }
