@@ -6,7 +6,7 @@
         "-y",
         "dotnet-template-mcp"
       ],
-      "description": "Dùng .NET Template Engine sinh code scaffolding cho .NET 9"
+      "description": "Dùng .NET Template Engine sinh code scaffolding cho .NET 8"
     },
     "playwright": {
       "command": "npx",
@@ -74,6 +74,14 @@
         "sequential-thinking-mcp"
       ],
       "description": "Hỗ trợ suy nghĩ logic tuần tự"
+    },
+    "codegraph": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "codegraph-mcp"
+      ],
+      "description": "Phân tích mã nguồn và dependency graph sử dụng Roslyn"
     }
   }
 }

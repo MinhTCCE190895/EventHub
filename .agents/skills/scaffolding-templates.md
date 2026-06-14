@@ -2,12 +2,12 @@
 
 ---
 name: scaffolding-templates
-description: Kịch bản hướng dẫn xây dựng và dựng khung code nhanh cho các module .NET 9, EF Core, MVC, Razor Pages, Blazor và Worker Service của UniEvent Hub.
+description: Kịch bản hướng dẫn xây dựng và dựng khung code nhanh cho các module .NET 8, EF Core, MVC, Razor Pages, Blazor và Worker Service của UniEvent Hub.
 ---
 
 ## 1. Dựng khung cơ sở dữ liệu và Thực thể (Database & Entity Scaffolding)
 Khi tạo mới một thực thể trong hệ thống:
-1. Định nghĩa thực thể trong lớp **Core** (Entities), sử dụng các C# 13 features (ví dụ: primary constructors, required properties, init-only properties).
+1. Định nghĩa thực thể trong lớp **Core** (Entities), sử dụng các C# 12 features (ví dụ: primary constructors, required properties, init-only properties).
 2. Tạo Fluent API mapping cấu hình bảng trong lớp **Infrastructure** (`DbContext`).
 3. Đảm bảo cấu hình mối quan hệ khóa ngoại và indexes rõ ràng, đặc biệt cho các bảng chứa quan hệ Many-to-Many như `EventTag`.
 

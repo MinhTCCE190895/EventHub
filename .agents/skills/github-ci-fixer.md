@@ -40,7 +40,7 @@ gh run view <run-id> --log-failed
 ```
 
 ### Bước 4: Nhận diện lỗi phổ biến
-- **Lỗi Biên dịch (Build Errors):** Thiếu package, sai phiên bản SDK .NET 9.
+- **Lỗi Biên dịch (Build Errors):** Thiếu package, sai phiên bản SDK .NET 8.
 - **Lỗi Kiểm thử (Failed Tests):** Kiểm thử bất định (flaky tests), thiếu cấu hình DB môi trường test.
 - **Lỗi Phân tích Tĩnh (Linter/Format):** Code không tuân thủ quy tắc định dạng dotnet format.
 

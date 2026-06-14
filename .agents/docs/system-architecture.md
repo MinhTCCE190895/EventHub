@@ -1,6 +1,6 @@
 # Tài liệu Kiến trúc Hệ thống (System Architecture Documentation)
 
-Chào mừng đến với tài liệu kỹ thuật cốt lõi của **UniEvent Hub**. Tài liệu này được biên soạn bởi Senior .NET 9 Architect nhằm hướng dẫn cấu trúc dự án và quy chuẩn thiết kế.
+Chào mừng đến với tài liệu kỹ thuật cốt lõi của **UniEvent Hub**. Tài liệu này được biên soạn bởi Senior .NET 8 Architect nhằm hướng dẫn cấu trúc dự án và quy chuẩn thiết kế.
 
 ---
 
@@ -23,6 +23,13 @@ UniEventHub/
 └── PL/                                    # Presentation Layer (Lớp giao diện người dùng)
     └── [Web Project]/                     # Dự án web chính (MVC Identity, Razor Pages Location/Event, Blazor Dashboard/Analytics)
 ```
+
+- **[Tầng BLL (Business Logic Layer)](../../BLL)**
+- **[Tầng DAL (Data Access Layer)](../../DAL)**
+- **[Tầng PL - Razor Pages](../../RazorPages)**
+- **[Tầng PL - MVC](../../MVC)**
+- **[Tầng PL - Blazor](../../Blazor)**
+
 
 ---
 

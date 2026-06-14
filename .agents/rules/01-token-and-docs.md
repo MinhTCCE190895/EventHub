@@ -11,3 +11,52 @@
   - Mặc định mã trạng thái **"A"** luôn có nghĩa là **"Add"** (Thêm mới).
   - Ghi nhận **QuiNC** là tác giả duy nhất của module/phần code đó.
   - **TUYỆT ĐỐI** không sinh ra các giải thích thừa thãi hay chú thích dài dòng về ý nghĩa của các chữ cái A (Add), M (Modify), hay D (Delete).
+
+## 3. Luật Thực thi Memory Snapshot & Work Log
+- **Trước khi làm việc**: Agent bắt buộc phải đọc file `.agents/docs/memory-snapshots.md` để nắm rõ tiến trình và bối cảnh các module đã hoàn thiện.
+- **Sau khi hoàn thành tác vụ lớn / Khi context hội thoại quá tải**:
+  - Bắt buộc phải cập nhật trạng thái phân hệ và ghi nhận nhật ký làm việc (ngày tháng, tên agent, công việc ngắn gọn) vào phần **3. NHẬT KÝ THAY ĐỔI CỦA AGENT** trong file `.agents/docs/memory-snapshots.md`.
+  - File `.agents/docs/memory-snapshots.md` phải được force add (`git add -f`) và commit/push lên repository cùng với code của tính năng đó để đồng bộ cho toàn bộ các thành viên khác và các Agent AI tiếp theo.
+
+## 4. Luật Sử dụng Codegraph để Phân tích Mã nguồn
+- Khi cần phân tích luồng code, tìm kiếm cấu trúc class, kiểm tra các lớp gọi (Callers) / lớp bị gọi (Callees) hoặc phân tích tầm ảnh hưởng của thay đổi (Impact Analysis), Agent bắt buộc phải ưu tiên sử dụng các MCP tools của `codegraph` (ví dụ: `codegraph_search`, `codegraph_callers`, `codegraph_callees`, `codegraph_impact`).
+- Hạn chế sử dụng grep text đơn giản đối với các tác vụ liên quan đến phân tích cấu trúc Roslyn để đảm bảo độ chính xác tuyệt đối của cấu trúc Clean Architecture trong dự án.
+- **Hướng dẫn Cài đặt & Cấu hình Codegraph MCP (Nếu chưa có):**
+  - Đảm bảo trong file `.agents/mcp-config.json` có cấu hình block `"codegraph"` chạy bằng npx với package `codegraph-mcp`.
+  - Nếu Agent hoặc IDE báo thiếu tool, lập trình viên/Agent cần cài đặt hoặc khởi chạy thủ công thông qua CLI bằng lệnh:
+    ```bash
+    npx -y codegraph-mcp
+    ```
+  - Cấu hình MCP server trong Settings của IDE Client (Cursor/VSCode/Windsurf) trỏ đến file `.agents/mcp-config.json` để tự động tích hợp.
+
+## 5. Luật Xác định Danh tính & Vai trò Thành viên (Member Identity & Persona)
+- **Bắt đầu Hội thoại mới (Conversation Startup)**: 
+  - **TUYỆT ĐỐI KHÔNG** tự ý giả định/đoán mò danh tính người dùng dựa trên metadata IDE hoặc tên thư mục repository (ví dụ: tên `MinhTCCE190895` trong đường dẫn workspace).
+  - Trong lượt phản hồi đầu tiên của một cuộc hội thoại mới, Agent **bắt buộc** phải hỏi người dùng câu hỏi xác thực xem họ là thành viên nào trong dự án UniEvent Hub (Ví dụ: *"Chào bạn, để tôi hỗ trợ chính xác theo đúng phân hệ và coding style, xin hỏi bạn là QuiNC, LongNH, MinhTC, Khôi hay TriLT?"*) trừ khi thông tin này đã được người dùng chủ động khai báo từ trước trong cuộc hội thoại đó.
+- **Phong cách Xưng hô & Lập trình theo Persona**:
+  - **Nếu là QuiNC (quinc-fptu / MinhTCCE190895)**:
+
+    - Xưng hô: "anh QuiNC" hoặc "anh".
+    - Phân hệ hỗ trợ: Search & Filter (`FE-03`), Weather Widget (`FE-08`), Bookmark (`FE-11`).
+    - Coding Style: Code đơn giản dạng intern/junior, LINQ method syntax, viết comment giải thích lý do bằng tiếng Việt, commit ngắn gọn thực tế, không viết unit test.
+  - **Nếu là LongNH (Nhóm trưởng)**:
+    - Xưng hô: "anh Long" hoặc "Trưởng nhóm Long".
+    - Phân hệ hỗ trợ: MVC Identity & Authorization (`FE-01`), Admin Control Panel (`FE-09`).
+    - Focus: Quản lý RBAC, Unit of Work, DbContext Setup, bảo mật MVC Views.
+  - **Nếu là MinhTC**:
+    - Xưng hô: "anh Minh".
+    - Phân hệ hỗ trợ: Event CRUD (`FE-02`), Venue Limits (`FE-05`), Event Requests (`FE-13`).
+    - Focus: Razor Pages PageModel, AutoMapper, xử lý DB Exceptions, chống Over-posting qua `[BindProperty]`.
+  - **Nếu là Khôi**:
+    - Xưng hô: "anh Khôi".
+    - Phân hệ hỗ trợ: Live Ticket Booking (`FE-04`), Live Dashboard (`FE-10`), Live Q&A Hub (`FE-15`).
+    - Focus: Blazor Components, SignalR Hubs, Concurrency Exception (`DbUpdateConcurrencyException`), Rate Limiting.
+  - **Nếu là TriLT**:
+    - Xưng hô: "anh TriLT" hoặc "anh Trí".
+    - Phân hệ hỗ trợ: Email Reminders (`FE-06`), Feedback + Metrics (`FE-07`), Follows System (`FE-12`).
+    - Focus: BackgroundService, `Parallel.ForEachAsync`, PLINQ (`.AsParallel()`), tối ưu truy vấn đếm.
+
+
+
+
+

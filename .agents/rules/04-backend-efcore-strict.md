@@ -3,9 +3,10 @@
 ## 1. Hiệu năng & Tối ưu hóa Database (Database & EF Core Performance)
 - **Truy vấn Read-Only:**
   - Mọi truy vấn chỉ đọc (Read-only), đặc biệt là các dữ liệu phục vụ cho Dashboard, báo cáo và phân tích, bắt buộc phải đính kèm phương thức `.AsNoTracking()` hoặc `.AsNoTrackingWithIdentityResolution()`.
-- **EF Core 9.0 Features:**
-  - Khuyến khích tận dụng các tính năng tối ưu hóa hiệu năng mới của EF Core cho .NET 9 (như Compiled Queries cải tiến, Auto-compiled Queries).
-  - Sử dụng các hàm dịch chuyển SQL chuyên biệt của EF Core 9 cho kiểu dữ liệu phức tạp hoặc JSON.
+- **EF Core 8.0 Features:**
+  - Khuyến khích tận dụng các tính năng tối ưu hóa của EF Core cho .NET 8 (như hỗ trợ truy vấn kiểu dữ liệu JSON tốt hơn bằng các hàm SQL gốc).
+  - Sử dụng phương thức `Database.SqlQuery<T>()` cho các câu lệnh SQL thô trả về kiểu dữ liệu unmapped không thuộc DbContext.
+
 
 ## 2. Đồng bộ & Xử lý Đa luồng (Asynchronous & Parallel Programming)
 - **Tương tác Cơ sở Dữ liệu:**

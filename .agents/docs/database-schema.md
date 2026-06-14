@@ -75,7 +75,7 @@ erDiagram
 
 ---
 
-## 2. Quy chuẩn Fluent API EF Core 9.0
+## 2. Quy chuẩn Fluent API EF Core 8.0
 
 ### 2.1. Cấu hình Many-to-Many cho EventTag
 Thực thể trung gian `EventTag` được cấu hình tường minh để cho phép lưu trữ thêm các thuộc tính mở rộng nếu cần thiết:

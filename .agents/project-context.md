@@ -1,6 +1,6 @@
 # Dự án UniEvent Hub
 
-Áp dụng 100% tiêu chuẩn .NET 9, Repository Pattern, DI.
+Áp dụng 100% tiêu chuẩn .NET 8, Repository Pattern, DI.
 
 ## Thực thể cốt lõi (9 thực thể)
 1. **Role**
