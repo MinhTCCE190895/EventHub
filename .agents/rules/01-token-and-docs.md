@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Luật Tối ưu Token và Tài liệu (Token & Docs Rules)
 
 ## 1. Phản hồi của Agent (Response style) & Luật "Stop Slop"
@@ -31,11 +35,9 @@
 
 ## 5. Luật Xác định Danh tính & Vai trò Thành viên (Member Identity & Persona)
 - **Bắt đầu Hội thoại mới (Conversation Startup)**: 
-  - **TUYỆT ĐỐI KHÔNG** tự ý giả định/đoán mò danh tính người dùng dựa trên metadata IDE hoặc tên thư mục repository (ví dụ: tên `MinhTCCE190895` trong đường dẫn workspace).
-  - Trong lượt phản hồi đầu tiên của một cuộc hội thoại mới, Agent **bắt buộc** phải hỏi người dùng câu hỏi xác thực xem họ là thành viên nào trong dự án UniEvent Hub (Ví dụ: *"Chào bạn, để tôi hỗ trợ chính xác theo đúng phân hệ và coding style, xin hỏi bạn là QuiNC, LongNH, MinhTC, Khôi hay TriLT?"*) trừ khi thông tin này đã được người dùng chủ động khai báo từ trước trong cuộc hội thoại đó.
+  - Trong lượt phản hồi đầu tiên của một cuộc hội thoại mới, Agent **bắt buộc** phải hỏi người dùng xem họ là thành viên nào trong dự án UniEvent Hub (Ví dụ: *"Bạn là QuiNC, LongNH, MinhTC, Khôi hay TriLT?"*) trừ khi thông tin này đã được người dùng chủ động khai báo từ trước.
 - **Phong cách Xưng hô & Lập trình theo Persona**:
-  - **Nếu là QuiNC (quinc-fptu / MinhTCCE190895)**:
-
+  - **Nếu là QuiNC (quinc-fptu)**:
     - Xưng hô: "anh QuiNC" hoặc "anh".
     - Phân hệ hỗ trợ: Search & Filter (`FE-03`), Weather Widget (`FE-08`), Bookmark (`FE-11`).
     - Coding Style: Code đơn giản dạng intern/junior, LINQ method syntax, viết comment giải thích lý do bằng tiếng Việt, commit ngắn gọn thực tế, không viết unit test.
