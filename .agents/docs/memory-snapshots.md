@@ -58,7 +58,6 @@ graph TD
 
 ## 1. PHÂN HỆ ĐÃ HOÀN THÀNH (COMPLETED MODULES)
 
-
 ### 1.1. Kiến trúc chung & Cấu hình Luật (System Architecture & Rules)
 - **Môi trường:** Đã đồng bộ 100% sang **.NET 8** và **C# 12** trên toàn bộ cấu hình, rules và tài liệu.
 - **Tài liệu hệ thống:**
@@ -78,6 +77,17 @@ graph TD
 - **Trang đã lưu Bookmarks (`Pages/Bookmarks/Index.cshtml` & `Pages/Bookmarks/Index.cshtml.cs`):**
   - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
   - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
+
+### 1.3. Phân hệ Background & Post-Event (TriLT)
+- **FE-06 Email Reminders (`feature/trilt-email-worker`):**
+  - Triển khai `EmailReminderWorker` (`BackgroundService`) tự động quét database định kỳ để gửi mail nhắc nhở.
+  - Sử dụng `Parallel.ForEachAsync` gửi email song song cho hàng loạt sinh viên với hiệu suất tối ưu.
+- **FE-07 Feedback + Metrics (`feature/trilt-feedback`):**
+  - Tích hợp tính năng gửi Feedback kèm điểm đánh giá đa tiêu chí (Diễn giả, Hậu cần, Nội dung) cho sinh viên có vé.
+  - Sử dụng **PLINQ (.AsParallel())** để tính toán song song điểm trung bình các tiêu chí của sự kiện trên nhiều nhân CPU.
+- **FE-12 Follows System (`feature/trilt-follows`):**
+  - Cho phép sinh viên Follow/Unfollow ban tổ chức sự kiện ngay tại trang Explore qua AJAX.
+  - Sử dụng truy vấn `.CountAsync()` trực tiếp trên database để tính số lượng người theo dõi tối ưu nhất.
 
 ---
 
@@ -111,13 +121,16 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
-- `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
+- `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8.
 - **2026-06-14**: 
-  - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
-  - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
+  - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222.
+  - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ kỹ năng và workflow.
+  - **Persona TriLT**: Hoàn thành toàn bộ 3 nhiệm vụ phân công cho TriLT trên các nhánh tương ứng:
+    - Nhánh `feature/trilt-email-worker`: Giải quyết conflict và hoàn thiện `EmailReminderWorker` gửi mail nhắc nhở song song sử dụng `Parallel.ForEachAsync` (commit `097f598`).
+    - Nhánh `feature/trilt-feedback`: Triển khai phân hệ Feedback với điểm số đa tiêu chí, tính toán trung bình song song bằng PLINQ (`.AsParallel()`) (commit `e514f06`).
+    - Nhánh `feature/trilt-follows`: Triển khai Follows System với tối ưu hóa đếm số followers bằng query trực tiếp `.CountAsync()` (commit `23fc21c`).
 
-
-### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
-- **Nhánh `feature/trilt-email-worker`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Worker Service gửi mail.
-- **Nhánh `feature/trilt-feedback`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Blazor Feedback Analytics.
-- **Nhánh `feature/trilt-follows`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách chức năng Follows.
+### 3.3. Trạng thái các nhánh của TriLT (Trí Lê)
+- **Nhánh `feature/trilt-email-worker`**: Hoàn thành & đã commit cục bộ (commit `097f598`).
+- **Nhánh `feature/trilt-feedback`**: Hoàn thành & đã commit cục bộ (commit `e514f06`).
+- **Nhánh `feature/trilt-follows`**: Hoàn thành & đã commit cục bộ (commit `23fc21c`).
