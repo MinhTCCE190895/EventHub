@@ -14,7 +14,7 @@ namespace MVC
 
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddBusinessLogicLayer();
+            builder.Services.AddBusinessLogicLayer(builder.Configuration);
 
             var app = builder.Build();
 

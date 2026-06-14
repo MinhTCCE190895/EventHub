@@ -173,5 +173,65 @@ public static class DbInitializer
         );
 
         await context.SaveChangesAsync();
+
+        // Seed a test student
+        var studentId = Guid.NewGuid();
+        var student = new User
+        {
+            Id = studentId,
+            FullName = "Nguyễn Văn Tri",
+            Role = "Student",
+            Email = "dangerchain453@gmail.com",
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+        await context.Users.AddAsync(student);
+        await context.SaveChangesAsync();
+
+        // Seed a test Event for email worker verification
+        var testEventId = Guid.NewGuid();
+        var eventStartTime = DateTime.UtcNow.AddDays(2);
+        var testEvent = new Event
+        {
+            Id = testEventId,
+            OrganizerId = adminId,
+            VenueId = venueA.Id,
+            Title = "Hội thảo Công nghệ Blockchain và tương lai Web3",
+            Description = "Buổi chia sẻ kiến thức chuyên sâu về công nghệ Blockchain và xu hướng phát triển ứng dụng Web3.",
+            BannerUrl = "images/blockchain-event.jpg",
+            StartTime = eventStartTime,
+            EndTime = eventStartTime.AddHours(2),
+            Status = "Published",
+            CreatedAt = DateTime.UtcNow
+        };
+        await context.Events.AddAsync(testEvent);
+        await context.SaveChangesAsync();
+
+        // Link category and tag to event
+        await context.EventCategories.AddAsync(new EventCategory { EventId = testEventId, CategoryId = catIT.Id });
+        await context.EventTags.AddAsync(new EventTag { EventId = testEventId, TagId = tagIT.Id });
+
+        // Seed a Booking for the student
+        var booking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            EventId = testEventId,
+            StudentId = studentId,
+            TicketCode = "TICKET-BC-9999",
+            BookingTime = DateTime.UtcNow,
+            Status = "Confirmed",
+            IsCheckedIn = false
+        };
+        await context.Bookings.AddAsync(booking);
+
+        // For immediate testing: set ScheduledTime in the past
+        var reminder = new EventReminder
+        {
+            EventId = testEventId,
+            ScheduledTime = DateTime.UtcNow.AddMinutes(-5), 
+            IsEmailSent = false
+        };
+        await context.EventReminders.AddAsync(reminder);
+        await context.SaveChangesAsync();
     }
 }
