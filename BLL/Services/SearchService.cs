@@ -92,6 +92,7 @@ public class SearchService : ISearchService
             VenueName = e.Venue.Name,
             TagNames = e.EventTags.Select(et => et.Tag.Name).ToList(),
             OrganizerName = e.Organizer.FullName,
+            OrganizerId = e.OrganizerId,
             MaxCapacity = e.Venue.MaxCapacity,
             BookedCount = e.Bookings.Count(b => b.Status != "Cancelled")
         }).ToList();

@@ -264,10 +264,20 @@
                                 </div>
  
                                 <!-- Group 2 - Organizer & Quota -->
-                                <div class="card-group-minimal mt-2">
-                                    <span class="card-minimal-meta">
+                                <div class="card-group-minimal mt-2 align-items-center">
+                                    <span class="card-minimal-meta d-flex align-items-center">
                                         <i class="bi bi-person"></i>
-                                        <span class="text-truncate" style="max-width: 150px;">@card.OrganizerName</span>
+                                        <span class="text-truncate" style="max-width: 100px;" title="@card.OrganizerName">@card.OrganizerName</span>
+                                        @{
+                                            var isFollowing = Model.FollowedOrganizerIds.Contains(card.OrganizerId);
+                                            var followersCount = Model.OrganizerFollowersCounts.GetValueOrDefault(card.OrganizerId, 0);
+                                        }
+                                        <button type="button" class="btn btn-link p-0 ms-2 text-decoration-none fw-semibold btn-follow-toggle @(isFollowing ? "text-success" : "text-primary")" 
+                                                style="font-size: 11px; vertical-align: middle; line-height: 1;" 
+                                                onclick="toggleFollow('@card.OrganizerId', this)">
+                                            @(isFollowing ? "✓ Đang theo dõi" : "+ Theo dõi")
+                                        </button>
+                                        <span class="text-muted ms-1 followers-count" style="font-size: 11px;">(@followersCount)</span>
                                     </span>
                                     <span class="card-minimal-meta @seatsClass">
                                         <i class="bi bi-people"></i>
@@ -521,6 +531,44 @@
                 }
             })
             .catch(err => console.error('Error toggling bookmark:', err));
+        }
+
+        // Toggle organizer follow status asynchronously using AJAX
+        function toggleFollow(organizerId, buttonEl) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            fetch('/Index?handler=ToggleFollow', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `organizerId=${organizerId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update all follow buttons/counts for this organizer on the page
+                    const buttons = document.querySelectorAll(`button[onclick*="${organizerId}"]`);
+                    buttons.forEach(btn => {
+                        if (data.isFollowing) {
+                            btn.className = 'btn btn-link p-0 ms-2 text-decoration-none fw-semibold btn-follow-toggle text-success';
+                            btn.textContent = '✓ Đang theo dõi';
+                        } else {
+                            btn.className = 'btn btn-link p-0 ms-2 text-decoration-none fw-semibold btn-follow-toggle text-primary';
+                            btn.textContent = '+ Theo dõi';
+                        }
+                        
+                        const countEl = btn.nextElementSibling;
+                        if (countEl && countEl.classList.contains('followers-count')) {
+                            countEl.textContent = `(${data.count})`;
+                        }
+                    });
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
+            })
+            .catch(err => console.error('Error toggling follow:', err));
         }
 
         // Initial binding

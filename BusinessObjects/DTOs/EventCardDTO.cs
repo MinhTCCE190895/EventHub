@@ -10,6 +10,7 @@ public class EventCardDTO
     public string VenueName { get; set; } = string.Empty;
     public List<string> TagNames { get; set; } = new();
     public string OrganizerName { get; set; } = string.Empty;
+    public Guid OrganizerId { get; set; }
     public int MaxCapacity { get; set; }
     public int BookedCount { get; set; }
 }

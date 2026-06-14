@@ -16,6 +16,7 @@ public static class DependencyInjection
 
         services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
         services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IFollowRepository, FollowRepository>();
 
         return services;
     }

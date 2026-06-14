@@ -72,6 +72,7 @@ public class BookmarkService : IBookmarkService
             VenueName = b.Event.Venue.Name,
             TagNames = b.Event.EventTags.Select(et => et.Tag.Name).ToList(),
             OrganizerName = b.Event.Organizer.FullName,
+            OrganizerId = b.Event.OrganizerId,
             MaxCapacity = b.Event.Venue.MaxCapacity,
             BookedCount = b.Event.Bookings.Count(bk => bk.Status != "Cancelled")
         }).ToList();
