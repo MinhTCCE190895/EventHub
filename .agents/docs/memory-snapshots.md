@@ -112,7 +112,9 @@ graph TD
 
 ### 3.2. Cập nhật của Agent (Antigravity)
 - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
-- **2026-06-14**: Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
+- **2026-06-14**: 
+  - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
+  - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
