@@ -9,6 +9,8 @@ public static class DependencyInjection
     {
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddScoped<IFeedbackAnalyticsService, FeedbackAnalyticsService>();
 
         return services;
     }

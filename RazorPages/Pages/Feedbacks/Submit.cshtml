@@ -1,0 +1,98 @@
+@page
+@model RazorPages.Pages.Feedbacks.SubmitModel
+@{
+    ViewData["Title"] = "Đánh giá sự kiện";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+            <h2 class="h4 text-primary mb-3">Đánh giá sự kiện</h2>
+            <h5 class="text-muted mb-4">🎬 @Model.Event.Title</h5>
+
+            @if (Model.SuccessMessage != null)
+            {
+                <div class="alert alert-success border-0 rounded-3" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> @Model.SuccessMessage
+                </div>
+                <div class="mt-3">
+                    <a asp-page="/Index" class="btn btn-primary rounded-pill">Quay lại trang chủ</a>
+                    <a asp-page="./Analytics" asp-route-eventId="@Model.EventId" class="btn btn-outline-secondary rounded-pill ms-2">Xem kết quả phân tích</a>
+                </div>
+            }
+            else
+            {
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger border-0 rounded-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @Model.ErrorMessage
+                    </div>
+                }
+
+                <form method="post" class="needs-validation" novalidate>
+                    <input type="hidden" asp-for="EventId" />
+
+                    <div class="mb-3">
+                        <label asp-for="StudentEmail" class="form-label fw-bold">Email sinh viên (đã mua vé)</label>
+                        <input asp-for="StudentEmail" type="email" class="form-control rounded-3" placeholder="Ví dụ: student@unieventhub.com" required />
+                        <span class="text-danger small" asp-validation-for="StudentEmail"></span>
+                        <div class="form-text">Nhập email của bạn để hệ thống kiểm tra vé tham gia sự kiện. Bạn có thể sử dụng email <code>dangerchain453@gmail.com</code> để test.</div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <h5 class="h6 mb-3 text-secondary fw-bold">Đánh giá các tiêu chí (từ 1 - Rất tệ đến 5 - Rất tốt)</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block fw-semibold">1. Chất lượng Diễn giả</label>
+                        <div class="d-flex gap-3">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="SpeakerScore" id="speaker_@i" value="@i" @(Model.SpeakerScore == i ? "checked" : "") />
+                                    <label class="form-check-label" for="speaker_@i">@i ⭐</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block fw-semibold">2. Công tác Hậu cần & Tổ chức</label>
+                        <div class="d-flex gap-3">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="LogisticsScore" id="logistics_@i" value="@i" @(Model.LogisticsScore == i ? "checked" : "") />
+                                    <label class="form-check-label" for="logistics_@i">@i ⭐</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block fw-semibold">3. Nội dung & Giá trị sự kiện</label>
+                        <div class="d-flex gap-3">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="ContentScore" id="content_@i" value="@i" @(Model.ContentScore == i ? "checked" : "") />
+                                    <label class="form-check-label" for="content_@i">@i ⭐</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="GeneralComment" class="form-label fw-semibold">Ý kiến đóng góp khác</label>
+                        <textarea asp-for="GeneralComment" class="form-control rounded-3" rows="3" placeholder="Nhập ý kiến đóng góp hoặc nhận xét chung của bạn..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a asp-page="/Index" class="btn btn-light rounded-pill">Hủy bỏ</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Gửi đánh giá</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>

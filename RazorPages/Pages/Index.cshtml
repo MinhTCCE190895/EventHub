@@ -292,6 +292,16 @@
                                         Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
                                     </a>
                                 </div>
+
+                                <!-- Feedback & Analytics Actions -->
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-light">
+                                    <a asp-page="/Feedbacks/Submit" asp-route-eventId="@card.Id" class="text-decoration-none text-primary fw-semibold small">
+                                        <i class="bi bi-chat-dots-fill"></i> Đánh giá
+                                    </a>
+                                    <a asp-page="/Feedbacks/Analytics" asp-route-eventId="@card.Id" class="text-decoration-none text-success fw-semibold small">
+                                        <i class="bi bi-bar-chart-fill"></i> Phân tích
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
