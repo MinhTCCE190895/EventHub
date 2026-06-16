@@ -118,6 +118,7 @@ public class IndexModel : PageModel
                 FullName = "Demo Student (QuiNC)",
                 Role = "Student",
                 Email = "student.demo@unieventhub.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Student@123"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
