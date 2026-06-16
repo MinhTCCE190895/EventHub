@@ -158,7 +158,10 @@
     public Guid EventId { get; set; }
 
     [CascadingParameter]
-    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
 
     private Event? EventItem;
     private int RemainingSeats;
@@ -244,6 +247,8 @@
 
     private async Task BookTicketAsync()
     {
+        await JS.InvokeVoidAsync("alert", "Nút đặt vé đã được bấm! C# đang xử lý...");
+        
         Status = BookingStatus.Processing;
         ErrorMessage = null;
         StateHasChanged();
@@ -251,7 +256,9 @@
         try
         {
             // Xác thực user chuẩn Blazor
-            var authState = await AuthStateTask;
+            var authState = await AuthStateTask!;
+            if (authState == null) throw new Exception("Không thể tải trạng thái đăng nhập.");
+
             var user = authState.User;
 
             if (user.Identity == null || !user.Identity.IsAuthenticated)
