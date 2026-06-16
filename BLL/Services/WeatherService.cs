@@ -78,27 +78,48 @@ public class WeatherService : IWeatherService
 
     private string NormalizeLocation(string location)
     {
-        if (string.IsNullOrWhiteSpace(location)) return "Ho Chi Minh";
-        
-        // Nhận diện địa chỉ các Campus FPT và chuyển thành tên thành phố tương ứng
-        if (location.Contains("Nguyễn Văn Cừ") || location.Contains("Võ Văn Ngân") || 
-            location.Contains("Hồ Chí Minh") || location.Contains("HCM") || 
-            location.Contains("Hội trường A") || location.Contains("Hội trường B"))
+        if (string.IsNullOrWhiteSpace(location)) return "Can Tho";
+
+        // Tách địa chỉ theo dấu phẩy để lấy tỉnh/thành phố ở cuối
+        var parts = location.Split(',');
+        string cityCandidate = parts.Length > 0 ? parts[^1].Trim() : location.Trim();
+
+        // Làm sạch các tiền tố hành chính phổ biến ở Việt Nam
+        cityCandidate = cityCandidate
+            .Replace("TP.", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Thành phố", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Tỉnh", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        // Chuẩn hóa sang tiếng Anh không dấu cho API wttr.in nhận diện chính xác nhất
+        if (cityCandidate.Contains("Hồ Chí Minh", StringComparison.OrdinalIgnoreCase) || 
+            cityCandidate.Contains("HCM", StringComparison.OrdinalIgnoreCase) ||
+            location.Contains("Nguyễn Văn Cừ", StringComparison.OrdinalIgnoreCase) ||
+            location.Contains("Võ Văn Ngân", StringComparison.OrdinalIgnoreCase))
         {
             return "Ho Chi Minh";
         }
-        
-        if (location.Contains("Hà Nội") || location.Contains("Hanoi"))
+
+        if (cityCandidate.Contains("Hà Nội", StringComparison.OrdinalIgnoreCase) || 
+            cityCandidate.Contains("Hanoi", StringComparison.OrdinalIgnoreCase))
         {
             return "Hanoi";
         }
 
-        if (location.Contains("Cần Thơ") || location.Contains("Can Tho") || location.Contains("CT"))
+        if (cityCandidate.Contains("Cần Thơ", StringComparison.OrdinalIgnoreCase) || 
+            cityCandidate.Contains("Can Tho", StringComparison.OrdinalIgnoreCase) ||
+            cityCandidate.Contains("CT", StringComparison.OrdinalIgnoreCase))
         {
             return "Can Tho";
         }
 
-        return location;
+        if (cityCandidate.Contains("Đà Nẵng", StringComparison.OrdinalIgnoreCase) || 
+            cityCandidate.Contains("Da Nang", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Da Nang";
+        }
+
+        return cityCandidate;
     }
 
     private string TranslateCondition(string condition)
