@@ -68,7 +68,7 @@
               "RelativeDocumentMoniker": "DAL\\Data\\DbInitializer.cs",
               "ToolTip": "C:\\Users\\HUYNHKHOI\\EventHub\\DAL\\Data\\DbInitializer.cs",
               "RelativeToolTip": "DAL\\Data\\DbInitializer.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAhAAAAAAAAAA==",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAqwBcAAABgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-16T05:53:16.246Z",
               "EditorCaption": ""
@@ -83,8 +83,7 @@
               "RelativeToolTip": "MVC\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA9AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-16T05:10:49.288Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-16T05:10:49.288Z"
             },
             {
               "$type": "Document",
@@ -96,8 +95,7 @@
               "RelativeToolTip": "MVC\\MVC.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:26:23.108Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:26:23.108Z"
             },
             {
               "$type": "Document",
@@ -109,8 +107,7 @@
               "RelativeToolTip": "BLL\\BLL.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:22:44.067Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:22:44.067Z"
             },
             {
               "$type": "Document",
@@ -121,8 +118,7 @@
               "ToolTip": "C:\\Users\\HUYNHKHOI\\EventHub\\BLL\\BLL.csproj",
               "RelativeToolTip": "BLL\\BLL.csproj",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:22:41.902Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:22:41.902Z"
             },
             {
               "$type": "Document",
@@ -134,8 +130,7 @@
               "RelativeToolTip": "BLL\\Class1.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-06T13:14:17.712Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:14:17.712Z"
             },
             {
               "$type": "Document",
@@ -147,8 +142,7 @@
               "RelativeToolTip": "DAL\\DAL.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:03:55.625Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:03:55.625Z"
             },
             {
               "$type": "Document",
@@ -160,8 +154,7 @@
               "RelativeToolTip": "DAL\\Class1.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-06T13:03:08.667Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:03:08.667Z"
             }
           ]
         },

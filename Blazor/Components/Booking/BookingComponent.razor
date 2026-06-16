@@ -1,15 +1,17 @@
 @page "/events/{EventId:guid}/book"
 @rendermode InteractiveServer
+
 @using Microsoft.AspNetCore.SignalR.Client
 @using BLL.Services
 @using DAL.Entities
 @using Microsoft.EntityFrameworkCore
-@inject IBookingService BookingService
-@inject DAL.Data.AppDbContext DbContext
-@inject NavigationManager Navigation
+@using Microsoft.Extensions.DependencyInjection
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
-@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Web
+
+@inject NavigationManager Navigation
+@inject IServiceScopeFactory ScopeFactory
 @implements IAsyncDisposable
 
 <div class="app-container">
@@ -17,6 +19,7 @@
         <div class="content-body">
             @if (EventItem == null)
             {
+                // Skeleton loading
                 <div class="skeleton-card">
                     <div class="skeleton-image"></div>
                     <div class="skeleton-body">
@@ -27,63 +30,103 @@
             }
             else
             {
-                <div class="card-minimal">
-                    <div class="card-minimal-body">
-                        <h3 class="card-minimal-title">@EventItem.Title</h3>
-                        <p class="text-muted">@EventItem.Description</p>
+                <div class="card-minimal booking-card shadow-lg border-0" style="max-width: 600px; margin: 0 auto;">
+                    
+                    <!-- Cover Image -->
+                    <div class="booking-cover position-relative">
+                        <img src="@(string.IsNullOrEmpty(EventItem.BannerUrl) ? "https://placehold.co/600x300/e9ecef/495057?text=No+Banner" : EventItem.BannerUrl)" 
+                             class="w-100 object-fit-cover" 
+                             style="height: 200px; border-radius: var(--radius-lg) var(--radius-lg) 0 0;" alt="Event Cover" />
+                        <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                            <h3 class="text-white mb-0 text-shadow">@EventItem.Title</h3>
+                        </div>
+                    </div>
+
+                    <div class="card-minimal-body p-4">
+                        <p class="text-muted mb-4">
+                            <i class="bi bi-geo-alt-fill text-danger me-2"></i> @EventItem.Venue.Name
+                            <br/>
+                            <i class="bi bi-clock-fill text-primary me-2"></i> @EventItem.StartTime.ToString("dd/MM/yyyy HH:mm")
+                        </p>
                         
-                        <div class="mt-4 p-3 rounded" style="background-color: var(--border-color);">
-                            <h4>Tình trạng vé</h4>
-                            <p class="fs-4 fw-bold @(RemainingSeats <= 0 ? "text-danger" : "text-success")">
-                                Còn lại: @RemainingSeats / @EventItem.Venue.MaxCapacity chỗ
-                            </p>
+                        <!-- Progress Bar (Số lượng ghế) -->
+                        <div class="seats-status mb-4 p-3 rounded" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold"><i class="bi bi-people-fill me-2"></i> Tình trạng vé</span>
+                                <span class="fw-bold @(RemainingSeats <= 0 ? "text-danger" : "text-success")">
+                                    Còn @RemainingSeats / @EventItem.Venue.MaxCapacity
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar @(ProgressPercent > 90 ? "bg-danger" : ProgressPercent > 70 ? "bg-warning" : "bg-success")" 
+                                     role="progressbar" 
+                                     style="width: @ProgressPercent%" 
+                                     aria-valuenow="@ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
                         </div>
 
-                        <!-- Yêu cầu đăng nhập -->
-                        @if (currentStudentId == Guid.Empty)
+                        <!-- Trạng thái Thông báo -->
+                        @if (Status == BookingStatus.Error)
                         {
-                            <div class="alert alert-warning mt-4">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                Vui lòng đăng nhập với tài khoản sinh viên để đặt vé.
-                                <br />
-                                <!-- Giả định cổng MVC đang chạy port 5046 hoặc tương tự, bạn có thể thay đổi sau -->
-                                <a href="https://localhost:7058/Account/Login" class="btn btn-sm btn-outline-dark mt-2">Đi tới trang Đăng nhập</a>
+                            <div class="alert alert-danger d-flex align-items-center">
+                                <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+                                <div>@ErrorMessage</div>
                             </div>
                         }
-                        else
+                        
+                        @if (Status == BookingStatus.Success)
                         {
-                            <div class="alert alert-info mt-4">
-                                Đang đặt vé cho tài khoản: <strong>@currentStudentName</strong>
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(ErrorMessage))
-                        {
-                            <div class="alert alert-danger mt-3">@ErrorMessage</div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(SuccessMessage))
-                        {
-                            <div class="alert alert-success mt-3">
-                                <strong>Thành công!</strong> Mã vé của bạn là: @SuccessMessage
+                            <div class="ticket-success-card text-center p-4 mb-4">
+                                <div class="ticket-icon mb-3">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                                </div>
+                                <h4 class="text-success fw-bold">Đặt Vé Thành Công!</h4>
+                                <p class="text-muted mb-2">Mã vé điện tử của bạn là:</p>
+                                <div class="ticket-code d-inline-block px-4 py-2 fw-bold fs-4 rounded bg-light border border-success border-2 border-dashed">
+                                    @SuccessTicketCode
+                                </div>
+                                <p class="small text-muted mt-3">Vui lòng xuất trình mã này khi check-in tại sự kiện.</p>
                             </div>
                         }
 
-                        <button class="btn btn-primary w-100 mt-4" 
-                                style="border-radius: var(--radius-md);"
-                                disabled="@(IsProcessing || currentStudentId == Guid.Empty || RemainingSeats <= 0)"
-                                @onclick="BookTicket">
-                            @if (IsProcessing)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                <span>Đang xử lý...</span>
-                            }
-                            else
-                            {
-                                <i class="bi bi-ticket-perforated fw-bold me-2"></i>
-                                <span>Booking</span>
-                            }
-                        </button>
+                        <!-- Action Area -->
+                        @if (Status != BookingStatus.Success)
+                        {
+                            <AuthorizeView>
+                                <Authorized>
+                                    <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" 
+                                            style="border-radius: var(--radius-md); font-size: 1.1rem; transition: all 0.3s;"
+                                            disabled="@(Status == BookingStatus.Processing || RemainingSeats <= 0)"
+                                            @onclick="BookTicketAsync">
+                                        @if (Status == BookingStatus.Processing)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                            <span>Đang xử lý giao dịch...</span>
+                                        }
+                                        else if (RemainingSeats <= 0)
+                                        {
+                                            <i class="bi bi-x-circle-fill me-2"></i>
+                                            <span>Sự Kiện Đã Hết Vé</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-ticket-perforated-fill me-2"></i>
+                                            <span>Xác Nhận Đặt Vé</span>
+                                        }
+                                    </button>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <div class="alert alert-warning text-center">
+                                        <i class="bi bi-lock-fill fs-3 mb-2 d-block"></i>
+                                        <strong>Chưa đăng nhập!</strong>
+                                        <p class="mb-3 mt-2">Bạn cần đăng nhập bằng tài khoản Sinh viên để tiếp tục đặt vé.</p>
+                                        <a href="https://localhost:7058/Account/Login?returnUrl=/events/@EventId/book" class="btn btn-dark px-4 fw-bold shadow-sm">
+                                            Đi tới trang Đăng nhập
+                                        </a>
+                                    </div>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        }
                     </div>
                 </div>
             }
@@ -91,42 +134,57 @@
     </main>
 </div>
 
+<style>
+    .booking-card {
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--card-bg, #ffffff);
+    }
+    .text-shadow {
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+    .ticket-success-card {
+        background-color: rgba(25, 135, 84, 0.05);
+        border: 1px dashed var(--success-color, #198754);
+        border-radius: var(--radius-md);
+    }
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>
+
 @code {
     [Parameter]
     public Guid EventId { get; set; }
 
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
     private Event? EventItem;
     private int RemainingSeats;
-    private HubConnection? hubConnection;
-    private bool IsProcessing = false;
-    private string? ErrorMessage;
-    private string? SuccessMessage;
+    private double ProgressPercent => EventItem?.Venue.MaxCapacity > 0 
+        ? ((double)EventItem.RegisteredCount / EventItem.Venue.MaxCapacity) * 100 
+        : 0;
 
-    // Lấy StudentId thật từ AuthState
-    private Guid currentStudentId = Guid.Empty;
-    private string currentStudentName = "";
+    private HubConnection? hubConnection;
+
+    private enum BookingStatus { Idle, Processing, Success, Error }
+    private BookingStatus Status = BookingStatus.Idle;
+    
+    private string? ErrorMessage;
+    private string? SuccessTicketCode;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Tải Event hiện tại
-            EventItem = await DbContext.Events
-                .Include(e => e.Venue)
-                .FirstOrDefaultAsync(e => e.Id == EventId);
+            using var scope = ScopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DAL.Data.AppDbContext>();
 
-            // Lấy Auth State
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if (user.Identity != null && user.Identity.IsAuthenticated)
-            {
-                var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-                if (idClaim != null && Guid.TryParse(idClaim.Value, out var userId))
-                {
-                    currentStudentId = userId;
-                    currentStudentName = user.Identity.Name ?? "Sinh viên";
-                }
-            }
+            EventItem = await dbContext.Events
+                .Include(e => e.Venue)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == EventId);
 
             if (EventItem != null)
             {
@@ -135,7 +193,8 @@
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Lỗi khởi tạo trang: " + ex.Message;
+            ErrorMessage = "Lỗi khởi tạo: " + ex.Message;
+            Status = BookingStatus.Error;
         }
     }
 
@@ -143,30 +202,21 @@
     {
         if (firstRender && EventItem != null)
         {
-            // Khởi chạy ngầm để không làm block UI / Circuit nếu mạng bị treo
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    // Thiết lập SignalR Client
                     hubConnection = new HubConnectionBuilder()
                         .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
                         {
                             options.HttpMessageHandlerFactory = (message) =>
                             {
                                 if (message is HttpClientHandler clientHandler)
-                                {
-                                    clientHandler.ServerCertificateCustomValidationCallback +=
-                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
-                                }
-                                else if (message is SocketsHttpHandler socketsHandler)
-                                {
-                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += 
-                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
-                                }
+                                    clientHandler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslErrors) => true;
                                 return message;
                             };
                         })
+                        .WithAutomaticReconnect()
                         .Build();
 
                     hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
@@ -174,6 +224,10 @@
                         if (eventId == EventId)
                         {
                             RemainingSeats = remaining;
+                            if (EventItem != null)
+                            {
+                                EventItem.RegisteredCount = EventItem.Venue.MaxCapacity - remaining;
+                            }
                             InvokeAsync(StateHasChanged);
                         }
                     });
@@ -182,62 +236,53 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Lỗi khởi tạo SignalR Client: " + ex.Message);
+                    Console.WriteLine("Lỗi SignalR: " + ex.Message);
                 }
             });
         }
     }
 
-    private async Task BookTicket()
+    private async Task BookTicketAsync()
     {
-        Console.WriteLine(">>> Bắt đầu hàm BookTicket!");
-        Console.WriteLine($">>> EventId: {EventId}, currentStudentId: {currentStudentId}");
-
-        IsProcessing = true;
+        Status = BookingStatus.Processing;
         ErrorMessage = null;
-        SuccessMessage = null;
         StateHasChanged();
 
         try
         {
-            if (currentStudentId == Guid.Empty)
+            // Xác thực user chuẩn Blazor
+            var authState = await AuthStateTask;
+            var user = authState.User;
+
+            if (user.Identity == null || !user.Identity.IsAuthenticated)
             {
-                Console.WriteLine(">>> currentStudentId đang trống!");
-                ErrorMessage = "Không tìm thấy User Sinh viên trong hệ thống để đặt vé.";
-                return;
+                throw new UnauthorizedAccessException("Bạn chưa đăng nhập.");
             }
 
-            // Gọi thử BookingService nhưng kèm theo Timeout để tránh EF Core bị treo vĩnh viễn
-            Console.WriteLine(">>> Đang gọi BookingService.BookTicketAsync...");
-            
-            var bookingTask = BookingService.BookTicketAsync(EventId, currentStudentId);
-            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10)); // Timeout 10 giây
-            
-            var completedTask = await Task.WhenAny(bookingTask, timeoutTask);
-            
-            if (completedTask == timeoutTask)
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim == null || !Guid.TryParse(idClaim.Value, out var studentId))
             {
-                // Timeout! EF Core bị treo!
-                throw new Exception("Lỗi: Quá thời gian kết nối Database. Có thể bảng Bookings đang bị lock bởi SSMS hoặc một transaction chưa được commit!");
+                throw new InvalidOperationException("Không thể xác định danh tính tài khoản của bạn.");
             }
 
-            var ticketCode = await bookingTask; // Lấy kết quả nếu thành công
-            Console.WriteLine(">>> Đặt vé thành công, ticketCode: " + ticketCode);
-            SuccessMessage = ticketCode;
-            
-            // Note: RemainingSeats sẽ được update tự động qua SignalR, 
-            // tuy nhiên ta cũng có thể trừ local trước nếu muốn.
+            // Dùng Scope mới để thực thi BookingService (chống lỗi DbContext Concurrency)
+            using var scope = ScopeFactory.CreateScope();
+            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            var ticketCode = await bookingService.BookTicketAsync(EventId, studentId);
+
+            SuccessTicketCode = ticketCode;
+            Status = BookingStatus.Success;
         }
-        catch (DbUpdateConcurrencyException ex)
+        catch (DbUpdateConcurrencyException)
         {
-            ErrorMessage = ex.Message; // "Có người khác đã đặt vé cùng lúc, vui lòng thử lại."
+            Status = BookingStatus.Error;
+            ErrorMessage = "Có người khác vừa đặt vé, hệ thống đang bị quá tải nhẹ. Vui lòng thử lại!";
             
-            // Refresh data từ DB để lấy count mới nhất
-            var latestEvent = await DbContext.Events
-                .AsNoTracking()
-                .Include(e => e.Venue)
-                .FirstOrDefaultAsync(e => e.Id == EventId);
-                
+            // Sync lại số ghế
+            using var scope = ScopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DAL.Data.AppDbContext>();
+            var latestEvent = await dbContext.Events.AsNoTracking().Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == EventId);
             if (latestEvent != null)
             {
                 EventItem = latestEvent;
@@ -246,13 +291,16 @@
         }
         catch (Exception ex)
         {
-            // Bắt các lỗi khác (ví dụ Khóa ngoại do thiếu StudentId, v.v)
-            ErrorMessage = "Đã xảy ra lỗi khi đặt vé: " + ex.Message;
+            Status = BookingStatus.Error;
+            ErrorMessage = ex.Message;
         }
         finally
         {
-            IsProcessing = false;
-            StateHasChanged(); // Ép UI cập nhật lại trạng thái
+            if (Status == BookingStatus.Processing)
+            {
+                Status = BookingStatus.Idle;
+            }
+            StateHasChanged();
         }
     }
 
