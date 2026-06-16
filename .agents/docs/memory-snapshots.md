@@ -21,9 +21,9 @@ graph TD
         DAL[DAL - Data Access]
     end
 
-    %% Modules and Status
     RP_Explore["Explore (Search & Filter)"]:::completed
     RP_Bookmark["Bookmarks (Saved Events)"]:::completed
+    RP_Weather["Weather Widget (API & Caching)"]:::completed
     MVC_Auth["Identity & Authorization"]:::pending
     BZ_Dash["Registration Dashboard"]:::pending
     BZ_Feed["Feedback Analytics"]:::pending
@@ -36,6 +36,7 @@ graph TD
     %% Relationships
     RP --> RP_Explore
     RP --> RP_Bookmark
+    RP --> RP_Weather
     MVC --> MVC_Auth
     BZ --> BZ_Dash
     BZ --> BZ_Feed
@@ -46,6 +47,7 @@ graph TD
 
     RP_Explore --> BLL
     RP_Bookmark --> BLL
+    RP_Weather --> BLL
     BLL --> DAL
 
     %% Apply Classes to main projects
@@ -78,6 +80,10 @@ graph TD
 - **Trang đã lưu Bookmarks (`Pages/Bookmarks/Index.cshtml` & `Pages/Bookmarks/Index.cshtml.cs`):**
   - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
   - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
+- **Weather Widget / API & Caching (`FE-08`):**
+  - Tích hợp API thời tiết thực tế tại địa điểm tổ chức (Ho Chi Minh City cho campus), lưu cache IMemoryCache 30 phút.
+  - Thiết kế giao diện sidebar weather card sang trọng, trực quan theo đúng Style Guide.
+
 
 ---
 
@@ -111,7 +117,10 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
-- `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
+- **2026-06-16 (Antigravity)**:
+  - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
+  - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
+- - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
   - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
