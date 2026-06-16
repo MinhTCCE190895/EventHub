@@ -1,5 +1,8 @@
+@inject BLL.Services.IWeatherService WeatherService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    // Gọi dịch vụ lấy thông tin thời tiết Campus mặc định cho sidebar (Cần Thơ)
+    var campusWeather = await WeatherService.GetWeatherAsync("Can Tho");
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -34,10 +37,36 @@
                 </a>
             </nav>
 
+            @if (campusWeather != null)
+            {
+                <div class="sidebar-weather-card">
+                    <div class="weather-header">
+                        <span class="weather-location">
+                            <i class="bi bi-geo-alt-fill text-danger"></i> @campusWeather.Location
+                        </span>
+                        <span class="text-muted text-uppercase" style="font-size: 0.6rem;">Thời tiết</span>
+                    </div>
+                    <div class="weather-body">
+                        <span class="weather-temp">@campusWeather.Temperature.ToString("0")°C</span>
+                        <i class="bi @campusWeather.WeatherIconClass weather-icon-lg"></i>
+                    </div>
+                    <div class="weather-desc">@campusWeather.Condition</div>
+                    <div class="weather-details">
+                        <span class="weather-detail-item" title="Tốc độ gió">
+                            <i class="bi bi-wind"></i> @campusWeather.WindSpeed.ToString("0.0") km/h
+                        </span>
+                        <span class="weather-detail-item" title="Độ ẩm">
+                            <i class="bi bi-droplet-half"></i> @campusWeather.Humidity%
+                        </span>
+                    </div>
+                </div>
+            }
+
             <div class="sidebar-footer">
                 <div>&copy; 2026 - UniEvent Hub</div>
             </div>
         </aside>
+
 
         <!-- Main Content Wrapper -->
         <div class="app-content">
