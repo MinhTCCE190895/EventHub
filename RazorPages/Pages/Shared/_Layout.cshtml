@@ -29,6 +29,9 @@
                 <a class="sidebar-link @(currentPage == "/Bookmarks/Index" ? "active" : "")" asp-page="/Bookmarks/Index">
                     <i class="bi bi-bookmark-heart-fill"></i> Bookmarks
                 </a>
+                <a class="sidebar-link @(currentPage?.StartsWith("/Organizers") == true ? "active" : "")" asp-page="/Organizers/Index">
+                    <i class="bi bi-person-badge-fill"></i> Organizers
+                </a>
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư
                 </a>
