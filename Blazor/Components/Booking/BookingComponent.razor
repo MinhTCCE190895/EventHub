@@ -7,6 +7,9 @@
 @inject IBookingService BookingService
 @inject DAL.Data.AppDbContext DbContext
 @inject NavigationManager Navigation
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
 @implements IAsyncDisposable
 
 <div class="app-container">
@@ -36,27 +39,23 @@
                             </p>
                         </div>
 
-                        <!-- Dropdown để test chọn User thật -->
-                        <div class="mt-4">
-                            <label class="form-label fw-bold">Tài khoản sinh viên (Mô phỏng Đăng nhập)</label>
-                            @if (Students == null || !Students.Any())
-                            {
-                                <p class="text-danger small">Không tìm thấy sinh viên nào trong CSDL.</p>
-                            }
-                            else
-                            {
-                                <select class="form-select" @bind="currentStudentId">
-                                    <option value="@Guid.Empty">-- Vui lòng chọn 1 Sinh viên --</option>
-                                    @foreach (var s in Students)
-                                    {
-                                        <option value="@s.Id">@s.FullName (@s.Email)</option>
-                                    }
-                                </select>
-                            }
-                            <p class="small text-muted mt-1">
-                                <em>Ghi chú (FE-04): Vì tính năng Authentication (FE-01) chưa hoàn thiện, anh Khôi hãy chọn một sinh viên có thật trong DB từ danh sách này để lấy User ID.</em>
-                            </p>
-                        </div>
+                        <!-- Yêu cầu đăng nhập -->
+                        @if (currentStudentId == Guid.Empty)
+                        {
+                            <div class="alert alert-warning mt-4">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Vui lòng đăng nhập với tài khoản sinh viên để đặt vé.
+                                <br />
+                                <!-- Giả định cổng MVC đang chạy port 5046 hoặc tương tự, bạn có thể thay đổi sau -->
+                                <a href="https://localhost:7058/Account/Login" class="btn btn-sm btn-outline-dark mt-2">Đi tới trang Đăng nhập</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info mt-4">
+                                Đang đặt vé cho tài khoản: <strong>@currentStudentName</strong>
+                            </div>
+                        }
 
                         @if (!string.IsNullOrEmpty(ErrorMessage))
                         {
@@ -72,7 +71,7 @@
 
                         <button class="btn btn-primary w-100 mt-4" 
                                 style="border-radius: var(--radius-md);"
-                                disabled="@IsProcessing"
+                                disabled="@(IsProcessing || currentStudentId == Guid.Empty || RemainingSeats <= 0)"
                                 @onclick="BookTicket">
                             @if (IsProcessing)
                             {
@@ -103,9 +102,9 @@
     private string? ErrorMessage;
     private string? SuccessMessage;
 
-    // Lấy StudentId thật từ Database thay vì hardcode
-    private Guid currentStudentId;
-    private List<User> Students = new();
+    // Lấy StudentId thật từ AuthState
+    private Guid currentStudentId = Guid.Empty;
+    private string currentStudentName = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,12 +115,17 @@
                 .Include(e => e.Venue)
                 .FirstOrDefaultAsync(e => e.Id == EventId);
 
-            // Lấy danh sách tất cả Sinh viên có sẵn trong DB (Dữ liệu thật)
-            Students = await DbContext.Users.Where(u => u.Role == "Student").ToListAsync();
-            
-            if (Students.Any())
+            // Lấy Auth State
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity != null && user.Identity.IsAuthenticated)
             {
-                currentStudentId = Students.First().Id;
+                var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+                if (idClaim != null && Guid.TryParse(idClaim.Value, out var userId))
+                {
+                    currentStudentId = userId;
+                    currentStudentName = user.Identity.Name ?? "Sinh viên";
+                }
             }
 
             if (EventItem != null)

@@ -1,5 +1,6 @@
 using BLL.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace BLL;
 
@@ -7,6 +8,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services)
     {
+        // Cấu hình Shared DataProtection để chia sẻ Cookie Auth giữa MVC, RazorPages và Blazor
+        services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "..", "SharedKeys")))
+            .SetApplicationName("UniEventHub");
+
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IBookingService, BookingService>();

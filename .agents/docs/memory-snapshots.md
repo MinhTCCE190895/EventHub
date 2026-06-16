@@ -138,6 +138,8 @@ graph TD
   - Triển khai thành công tính năng Live Ticket Booking (FE-04) cho user KhôiTH.
   - Cập nhật `Event` entity để thêm `RegisteredCount`, cấu hình Optimistic Concurrency cho chức năng Booking.
   - Thêm `IBookingService`, SignalR `EventHub` và `BookingComponent` trong Blazor.
+  - **Tích hợp Shared DataProtection** cho BLL, kết nối Cookie Auth chung giữa 3 phân hệ MVC, RazorPages, và Blazor.
+  - Sửa `BookingComponent.razor` (FE-04): Xóa dropdown danh sách sinh viên giả, tích hợp `AuthenticationStateProvider` lấy user ID thật từ Identity cookie.
 - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).

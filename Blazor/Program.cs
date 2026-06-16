@@ -18,6 +18,15 @@ namespace Blazor
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
 
+            // Register Cookie Authentication
+            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    // Vì trang Login nằm bên MVC, cứ để tạm (bên Blazor không có UI login, ta sẽ redirect tay nếu cần)
+                    options.LoginPath = "/Account/Login";
+                });
+            builder.Services.AddCascadingAuthenticationState();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -32,6 +41,9 @@ namespace Blazor
 
             app.UseStaticFiles();
             app.UseAntiforgery();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
