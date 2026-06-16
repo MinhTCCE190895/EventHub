@@ -93,6 +93,11 @@ public class WeatherService : IWeatherService
             return "Hanoi";
         }
 
+        if (location.Contains("Cần Thơ") || location.Contains("Can Tho") || location.Contains("CT"))
+        {
+            return "Can Tho";
+        }
+
         return location;
     }
 

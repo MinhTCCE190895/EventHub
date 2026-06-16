@@ -1,8 +1,8 @@
 @inject BLL.Services.IWeatherService WeatherService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
-    // Gọi dịch vụ lấy thông tin thời tiết Campus mặc định cho sidebar (Hồ Chí Minh)
-    var campusWeather = await WeatherService.GetWeatherAsync("Ho Chi Minh");
+    // Gọi dịch vụ lấy thông tin thời tiết Campus mặc định cho sidebar (Cần Thơ)
+    var campusWeather = await WeatherService.GetWeatherAsync("Can Tho");
 }
 <!DOCTYPE html>
 <html lang="vi">
