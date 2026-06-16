@@ -68,7 +68,7 @@ graph TD
   - **[File CSS Toàn cục (site.css)](../../RazorPages/wwwroot/css/site.css)**: CSS style sheet chính của dự án.
   - **[Layout chính của dự án (_Layout.cshtml)](../../RazorPages/Pages/Shared/_Layout.cshtml)**: Khung chứa sidebar và content body.
 
-### 1.2. Phân hệ Razor Pages (Explore & Bookmarks)
+### 1.2. Phân hệ Razor Pages (Explore, Bookmarks & Organizers)
 - **Trang chủ / Explore (`Pages/Index.cshtml` & `Pages/Index.cshtml.cs`):**
   - Đã tích hợp Form tìm kiếm thu gọn (.search-card-minimal) và bộ lọc thời gian (All, Upcoming, Ongoing, Past).
   - Tự động hiển thị dấu chấm LED (`status-upcoming`/`ongoing`/`past`) trên ảnh thẻ sự kiện.
@@ -78,6 +78,9 @@ graph TD
 - **Trang đã lưu Bookmarks (`Pages/Bookmarks/Index.cshtml` & `Pages/Bookmarks/Index.cshtml.cs`):**
   - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
   - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
+- **Quản lý Organizer (`Pages/Organizers/*`):**
+  - Thực hiện các thao tác CRUD cơ bản cho Organizer (User với Role "Organizer").
+  - Áp dụng các quy tắc bảo mật với `[BindProperty]` chống Over-posting và xử lý lỗi DB Exception.
 
 ---
 
@@ -115,6 +118,11 @@ graph TD
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
   - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
+  - **MinhTC Persona**: Hoàn thành tính năng CRUD cho Organizer (Razor Pages):
+    - Thêm các DTO (`OrganizerDTO`, `OrganizerCreateDTO`, `OrganizerUpdateDTO`).
+    - Bổ sung `IOrganizerService` và `OrganizerService` (với PRN222 Compliance).
+    - Tạo giao diện Razor Pages (`Index`, `Create`, `Edit`, `Details`, `Delete`) sử dụng `[BindProperty]`.
+    - Cấu hình AutoMapper cho `User` ↔ `OrganizerDTO`.
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
