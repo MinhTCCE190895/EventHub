@@ -42,6 +42,7 @@ public static class DbInitializer
                 FullName = "System Administrator",
                 Role = "Admin",
                 Email = "admin@unieventhub.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             },
@@ -51,6 +52,7 @@ public static class DbInitializer
                 FullName = "Nguyen Van Organizer",
                 Role = "Organizer",
                 Email = "organizer@unieventhub.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Organizer@123"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             }

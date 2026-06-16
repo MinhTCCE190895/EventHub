@@ -93,8 +93,8 @@ graph TD
 ## 2. PHÂN HỆ CHƯA HOÀN THÀNH (PENDING MODULES - PROJECT SCAFFOLD ONLY)
 
 ### 2.1. Phân hệ MVC (Identity)
-- **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
-- **File thực tế:** Chỉ có duy nhất `HomeController.cs` mặc định. Chưa triển khai AccountController, Login/Register Views hay phân quyền Role chi tiết.
+- **Trạng thái:** Đã hoàn thành (FE-01).
+- **File thực tế:** Đã triển khai Cookie Authentication, AccountController (Register/Login/Logout), views Login/Register/AccessDenied, stylesheet auth.css và liên kết layout với RazorPages.
 
 ### 2.2. Phân hệ Blazor (Registration Dashboard & Feedback Analytics)
 - **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
@@ -123,6 +123,13 @@ graph TD
 - **2026-06-16 (Antigravity)**:
   - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
   - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
+  - **LongNH Persona**: Hoàn thành phân hệ **FE-01 Identity & Authorization**:
+    - Triển khai Cookie Authentication trong `Program.cs`.
+    - Tạo `AccountController` quản lý Login, Register, Logout, AccessDenied.
+    - Cài đặt `IUserService` / `UserService` tích hợp mã hóa mật khẩu qua BCrypt.Net.
+    - Thiết kế giao diện premium cho Login, Register, AccessDenied bằng `auth.css` theo Style Guide.
+    - Liên kết sidebar layout và quản lý trạng thái User Claims toàn diện.
+    - Tạo migration thêm cột `PasswordHash` và cập nhật dữ liệu Seed cho tài khoản Admin/Organizer mặc định.
 - - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).

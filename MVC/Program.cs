@@ -16,6 +16,16 @@ namespace MVC
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
 
+            // Register Cookie Authentication
+            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Account/AccessDenied";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                    options.SlidingExpiration = true;
+                });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -31,6 +41,7 @@ namespace MVC
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

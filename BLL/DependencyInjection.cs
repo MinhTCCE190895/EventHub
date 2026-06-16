@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IOrganizerService, OrganizerService>();
+        services.AddScoped<IUserService, UserService>();
 
         services.AddAutoMapper(config => 
         {

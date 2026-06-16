@@ -9,6 +9,7 @@ public class User
     public bool IsActive { get; set; } = true;
     public string Email { get; set; } = null!;
     public string? AvatarUrl { get; set; }
+    public string PasswordHash { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
 
     // Navigation properties
