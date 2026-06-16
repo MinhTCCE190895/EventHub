@@ -36,6 +36,8 @@ namespace Blazor
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 
+            app.MapHub<BLL.SignalR.EventHub>("/eventhub");
+
             // Seed Data
             using (var scope = app.Services.CreateScope())
             {

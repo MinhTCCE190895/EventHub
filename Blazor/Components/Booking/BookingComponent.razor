@@ -1,0 +1,164 @@
+@page "/events/{EventId:guid}/book"
+@using Microsoft.AspNetCore.SignalR.Client
+@using BLL.Services
+@using DAL.Entities
+@using Microsoft.EntityFrameworkCore
+@inject IBookingService BookingService
+@inject DAL.Data.AppDbContext DbContext
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@rendermode InteractiveServer
+
+<div class="app-container">
+    <main class="app-content w-100 p-4">
+        <div class="content-body">
+            @if (EventItem == null)
+            {
+                <div class="skeleton-card">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-line title"></div>
+                        <div class="skeleton-line text"></div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card-minimal">
+                    <div class="card-minimal-body">
+                        <h3 class="card-minimal-title">@EventItem.Title</h3>
+                        <p class="text-muted">@EventItem.Description</p>
+                        
+                        <div class="mt-4 p-3 rounded" style="background-color: var(--border-color);">
+                            <h4>Tình trạng vé</h4>
+                            <p class="fs-4 fw-bold @(RemainingSeats <= 0 ? "text-danger" : "text-success")">
+                                Còn lại: @RemainingSeats / @EventItem.Venue.MaxCapacity chỗ
+                            </p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <div class="alert alert-danger mt-3">@ErrorMessage</div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(SuccessMessage))
+                        {
+                            <div class="alert alert-success mt-3">
+                                <strong>Thành công!</strong> Mã vé của bạn là: @SuccessMessage
+                            </div>
+                        }
+
+                        <button class="btn btn-primary w-100 mt-4" 
+                                style="border-radius: var(--radius-md);"
+                                disabled="@(RemainingSeats <= 0 || IsProcessing)"
+                                @onclick="BookTicket">
+                            @if (IsProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Đang xử lý...</span>
+                            }
+                            else
+                            {
+                                <span>Đặt vé ngay</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </main>
+</div>
+
+@code {
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    private Event? EventItem;
+    private int RemainingSeats;
+    private HubConnection? hubConnection;
+    private bool IsProcessing = false;
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    // Giả lập StudentId (tạm thời)
+    private Guid currentStudentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Tải Event hiện tại
+        EventItem = await DbContext.Events
+            .Include(e => e.Venue)
+            .FirstOrDefaultAsync(e => e.Id == EventId);
+
+        if (EventItem != null)
+        {
+            RemainingSeats = EventItem.Venue.MaxCapacity - EventItem.RegisteredCount;
+
+            // Thiết lập SignalR Client
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/eventhub"))
+                .Build();
+
+            hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+            {
+                if (eventId == EventId)
+                {
+                    RemainingSeats = remaining;
+                    InvokeAsync(StateHasChanged);
+                }
+            });
+
+            await hubConnection.StartAsync();
+        }
+    }
+
+    private async Task BookTicket()
+    {
+        IsProcessing = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // Call service
+            var ticketCode = await BookingService.BookTicketAsync(EventId, currentStudentId);
+            SuccessMessage = ticketCode;
+            
+            // Note: RemainingSeats sẽ được update tự động qua SignalR, 
+            // tuy nhiên ta cũng có thể trừ local trước nếu muốn.
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            ErrorMessage = ex.Message; // "Có người khác đã đặt vé cùng lúc, vui lòng thử lại."
+            
+            // Refresh data từ DB để lấy count mới nhất
+            var latestEvent = await DbContext.Events
+                .AsNoTracking()
+                .Include(e => e.Venue)
+                .FirstOrDefaultAsync(e => e.Id == EventId);
+                
+            if (latestEvent != null)
+            {
+                EventItem = latestEvent;
+                RemainingSeats = latestEvent.Venue.MaxCapacity - latestEvent.RegisteredCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

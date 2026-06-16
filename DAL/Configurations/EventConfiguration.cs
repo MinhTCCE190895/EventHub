@@ -9,6 +9,7 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
     public void Configure(EntityTypeBuilder<Event> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.RegisteredCount).HasDefaultValue(0);
 
         // DeleteBehavior.Restrict cho Venue -> Events
         builder.HasOne(e => e.Venue)
