@@ -22,19 +22,19 @@
     <div class="app-container">
         <!-- Sleek Left Sidebar -->
         <aside class="app-sidebar">
-            <a class="sidebar-brand" href="https://localhost:7254/">
+            <a class="sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                 <i class="bi bi-shield-check text-primary"></i> UniEvent Hub
             </a>
             
             <nav class="sidebar-nav">
-                <!-- Links point to RazorPages project hosted at port 7254 -->
-                <a class="sidebar-link" href="https://localhost:7254/">
+                <!-- Chỉ giữ các liên kết trỏ nội bộ MVC hoặc mock để không bấm nhảy sang RazorPages -->
+                <a class="sidebar-link" asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-compass-fill"></i> Khám phá
                 </a>
-                <a class="sidebar-link" href="https://localhost:7254/Bookmarks">
+                <a class="sidebar-link" href="#" onclick="alert('Tính năng Bookmarks thuộc phân hệ RazorPages (FE-11)'); return false;">
                     <i class="bi bi-bookmark-heart-fill"></i> Bookmarks
                 </a>
-                <a class="sidebar-link" href="https://localhost:7254/Organizers">
+                <a class="sidebar-link" href="#" onclick="alert('Tính năng Organizers thuộc phân hệ RazorPages (FE-02)'); return false;">
                     <i class="bi bi-person-badge-fill"></i> Organizers
                 </a>
 
@@ -88,7 +88,7 @@
         <div class="app-content">
             <!-- Mobile Toggle Header (Visible only on smaller screens) -->
             <header class="d-lg-none bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
-                <a class="sidebar-brand mb-0 fs-5" href="https://localhost:7254/">
+                <a class="sidebar-brand mb-0 fs-5" asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-shield-check text-primary"></i> UniEvent Hub
                 </a>
                 <button class="btn btn-outline-primary btn-sm border-0" type="button" onclick="toggleSidebar()">
@@ -105,7 +105,7 @@
                     &copy; 2026 - <strong>UniEvent Hub Team</strong>.
                 </div>
                 <div class="d-flex gap-3">
-                    <a href="https://localhost:7254/Privacy" class="text-decoration-none text-muted">Chính sách bảo mật</a>
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">Chính sách bảo mật</a>
                     <span class="text-muted">|</span>
                     <span class="text-primary fw-bold">FE-01 Identity & Authorization</span>
                 </div>
