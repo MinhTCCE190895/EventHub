@@ -10,6 +10,8 @@ public static class DependencyInjection
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IBookingService, BookingService>();
+        
+        services.AddSignalR();
 
         return services;
     }
