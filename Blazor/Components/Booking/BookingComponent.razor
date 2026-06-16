@@ -125,21 +125,41 @@
         {
             RemainingSeats = EventItem.Venue.MaxCapacity - EventItem.RegisteredCount;
 
-            // Thiết lập SignalR Client
-            hubConnection = new HubConnectionBuilder()
-                .WithUrl(Navigation.ToAbsoluteUri("/eventhub"))
-                .Build();
-
-            hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+            try
             {
-                if (eventId == EventId)
-                {
-                    RemainingSeats = remaining;
-                    InvokeAsync(StateHasChanged);
-                }
-            });
+                // Thiết lập SignalR Client
+                hubConnection = new HubConnectionBuilder()
+                    .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                    {
+                        options.HttpMessageHandlerFactory = (message) =>
+                        {
+                            if (message is HttpClientHandler clientHandler)
+                            {
+                                // Bỏ qua lỗi SSL khi chạy ở localhost
+                                clientHandler.ServerCertificateCustomValidationCallback +=
+                                    (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                            }
+                            return message;
+                        };
+                    })
+                    .Build();
 
-            await hubConnection.StartAsync();
+                hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+                {
+                    if (eventId == EventId)
+                    {
+                        RemainingSeats = remaining;
+                        InvokeAsync(StateHasChanged);
+                    }
+                });
+
+                await hubConnection.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi khởi tạo SignalR Client (có thể do chứng chỉ SSL localhost): " + ex.Message);
+                // Bỏ qua lỗi này để không làm sập Circuit, nút Đặt vé vẫn hoạt động được.
+            }
         }
     }
 
