@@ -7,7 +7,6 @@
 @inject DAL.Data.AppDbContext DbContext
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
-@rendermode InteractiveServer
 
 <div class="app-container">
     <main class="app-content w-100 p-4">
@@ -108,26 +107,39 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Tải Event hiện tại
-        EventItem = await DbContext.Events
-            .Include(e => e.Venue)
-            .FirstOrDefaultAsync(e => e.Id == EventId);
-
-        // Lấy danh sách tất cả Sinh viên có sẵn trong DB (Dữ liệu thật)
-        Students = await DbContext.Users.Where(u => u.Role == "Student").ToListAsync();
-        
-        if (Students.Any())
+        try
         {
-            currentStudentId = Students.First().Id;
+            // Tải Event hiện tại
+            EventItem = await DbContext.Events
+                .Include(e => e.Venue)
+                .FirstOrDefaultAsync(e => e.Id == EventId);
+
+            // Lấy danh sách tất cả Sinh viên có sẵn trong DB (Dữ liệu thật)
+            Students = await DbContext.Users.Where(u => u.Role == "Student").ToListAsync();
+            
+            if (Students.Any())
+            {
+                currentStudentId = Students.First().Id;
+            }
+
+            if (EventItem != null)
+            {
+                RemainingSeats = EventItem.Venue.MaxCapacity - EventItem.RegisteredCount;
+            }
         }
-
-        if (EventItem != null)
+        catch (Exception ex)
         {
-            RemainingSeats = EventItem.Venue.MaxCapacity - EventItem.RegisteredCount;
+            ErrorMessage = "Lỗi khởi tạo trang: " + ex.Message;
+        }
+    }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && EventItem != null)
+        {
             try
             {
-                // Thiết lập SignalR Client
+                // Thiết lập SignalR Client (chỉ khởi tạo sau khi component đã render xong)
                 hubConnection = new HubConnectionBuilder()
                     .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
                     {
@@ -135,8 +147,12 @@
                         {
                             if (message is HttpClientHandler clientHandler)
                             {
-                                // Bỏ qua lỗi SSL khi chạy ở localhost
                                 clientHandler.ServerCertificateCustomValidationCallback +=
+                                    (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                            }
+                            else if (message is SocketsHttpHandler socketsHandler)
+                            {
+                                socketsHandler.SslOptions.RemoteCertificateValidationCallback += 
                                     (sender, certificate, chain, sslPolicyErrors) => { return true; };
                             }
                             return message;
@@ -157,14 +173,16 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Lỗi khởi tạo SignalR Client (có thể do chứng chỉ SSL localhost): " + ex.Message);
-                // Bỏ qua lỗi này để không làm sập Circuit, nút Đặt vé vẫn hoạt động được.
+                Console.WriteLine("Lỗi khởi tạo SignalR Client: " + ex.Message);
             }
         }
     }
 
     private async Task BookTicket()
     {
+        Console.WriteLine(">>> Bắt đầu hàm BookTicket!");
+        Console.WriteLine($">>> EventId: {EventId}, currentStudentId: {currentStudentId}");
+
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
@@ -174,12 +192,15 @@
         {
             if (currentStudentId == Guid.Empty)
             {
+                Console.WriteLine(">>> currentStudentId đang trống!");
                 ErrorMessage = "Không tìm thấy User Sinh viên trong hệ thống để đặt vé.";
                 return;
             }
 
             // Call service
+            Console.WriteLine(">>> Đang gọi BookingService.BookTicketAsync...");
             var ticketCode = await BookingService.BookTicketAsync(EventId, currentStudentId);
+            Console.WriteLine(">>> Đặt vé thành công, ticketCode: " + ticketCode);
             SuccessMessage = ticketCode;
             
             // Note: RemainingSeats sẽ được update tự động qua SignalR, 
