@@ -66,8 +66,13 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
-        if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-            return Redirect(model.ReturnUrl);
+        if (!string.IsNullOrEmpty(model.ReturnUrl))
+        {
+            if (Url.IsLocalUrl(model.ReturnUrl) || model.ReturnUrl.StartsWith("https://localhost:7170"))
+            {
+                return Redirect(model.ReturnUrl);
+            }
+        }
 
         return RedirectToAction("Index", "Home");
     }
