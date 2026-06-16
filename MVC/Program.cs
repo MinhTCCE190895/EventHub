@@ -5,7 +5,7 @@ namespace MVC
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +27,9 @@ namespace MVC
                 });
 
             var app = builder.Build();
+
+            // Chạy migration và seed data khi khởi động
+            await DAL.Data.DbInitializer.SeedAsync(app.Services);
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

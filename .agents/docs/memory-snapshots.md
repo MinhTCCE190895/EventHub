@@ -123,7 +123,6 @@ graph TD
 - **2026-06-16 (Antigravity)**:
   - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
   - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
-<<<<<<< HEAD
   - **LongNH Persona**: Hoàn thành phân hệ **FE-01 Identity & Authorization**:
     - Triển khai Cookie Authentication trong `Program.cs`.
     - Tạo `AccountController` quản lý Login, Register, Logout, AccessDenied.
@@ -131,8 +130,7 @@ graph TD
     - Thiết kế giao diện premium cho Login, Register, AccessDenied bằng `auth.css` theo Style Guide.
     - Liên kết sidebar layout và quản lý trạng thái User Claims toàn diện.
     - Tạo migration thêm cột `PasswordHash` và cập nhật dữ liệu Seed cho tài khoản Admin/Organizer mặc định.
-=======
->>>>>>> 03385c5c83902706415fd31f7e97af8b5a288cca
+  - Sửa lỗi kết nối CSDL LocalDB và cấu hình đồng bộ `DbInitializer.SeedAsync` cho phân hệ MVC. Bổ sung bắt lỗi khi parse sai định dạng BCrypt trong `UserService`.
 - - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).

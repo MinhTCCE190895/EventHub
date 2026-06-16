@@ -70,9 +70,23 @@ public class UserService : IUserService
             return null;
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        try
         {
-            _logger.LogWarning("Login failed — wrong password for {Email}", email);
+            if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
+            {
+                _logger.LogWarning("Login failed — invalid password hash format for {Email}", email);
+                return null;
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                _logger.LogWarning("Login failed — wrong password for {Email}", email);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Login failed — error verifying password for {Email}", email);
             return null;
         }
 
