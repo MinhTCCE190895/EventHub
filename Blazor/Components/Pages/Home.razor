@@ -1,7 +1,56 @@
-﻿@page "/"
+@page "/"
+@using DAL.Data
+@using DAL.Entities
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Danh sách sự kiện (Test FE-04)</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container mt-4">
+    <h2>Danh sách sự kiện (Chỉ dùng để test Booking FE-04)</h2>
+    <p>Bấm vào nút "Đặt vé ngay" để chuyển hướng sang FE-04.</p>
 
-Welcome to your new app.
+    @if (Events == null)
+    {
+        <p>Đang tải...</p>
+    }
+    else if (!Events.Any())
+    {
+        <p>Chưa có sự kiện nào trong Database. Vui lòng chạy project RazorPages trước để nó Seed Data, sau đó chạy lại Blazor.</p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Tên sự kiện</th>
+                    <th>Thời gian</th>
+                    <th>Đã đăng ký / Tổng số vé</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ev in Events)
+                {
+                    <tr>
+                        <td>@ev.Title</td>
+                        <td>@ev.StartTime.ToString("g")</td>
+                        <td>@ev.RegisteredCount / @ev.Venue?.MaxCapacity</td>
+                        <td>
+                            <a href="/events/@ev.Id/book" class="btn btn-primary btn-sm">Đặt vé ngay</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<Event>? Events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Events = await DbContext.Events.Include(e => e.Venue).ToListAsync();
+    }
+}

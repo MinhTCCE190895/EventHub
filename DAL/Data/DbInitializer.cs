@@ -13,34 +13,42 @@ public static class DbInitializer
 
         await context.Database.MigrateAsync();
 
-        if (await context.Users.AnyAsync())
+        if (!await context.Users.AnyAsync())
+        {
+            // --- Users ---
+            var adminId = Guid.NewGuid();
+            var organizerId = Guid.NewGuid();
+
+            await context.Users.AddRangeAsync(
+                new User
+                {
+                    Id = adminId,
+                    FullName = "System Administrator",
+                    Role = "Admin",
+                    Email = "admin@unieventhub.com",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                },
+                new User
+                {
+                    Id = organizerId,
+                    FullName = "Nguyen Van Organizer",
+                    Role = "Organizer",
+                    Email = "organizer@unieventhub.com",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        if (await context.Events.AnyAsync())
             return;
 
-        // --- Users ---
-        var adminId = Guid.NewGuid();
-        var organizerId = Guid.NewGuid();
+        var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
+        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
-        await context.Users.AddRangeAsync(
-            new User
-            {
-                Id = adminId,
-                FullName = "System Administrator",
-                Role = "Admin",
-                Email = "admin@unieventhub.com",
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            },
-            new User
-            {
-                Id = organizerId,
-                FullName = "Nguyen Van Organizer",
-                Role = "Organizer",
-                Email = "organizer@unieventhub.com",
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            }
-        );
-        await context.SaveChangesAsync();
+
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };
@@ -71,7 +79,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Workshop .NET Core nâng cao",
                 Description = "Hội thảo chuyên sâu về ASP.NET Core, EF Core và các best practices trong lập trình .NET hiện đại.",
@@ -84,7 +92,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueB.Id,
                 Title = "Đêm nhạc acoustic sinh viên",
                 Description = "Chương trình âm nhạc do chính sinh viên biểu diễn, không gian ấm cúng và thân thiện.",
@@ -97,7 +105,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Giải bóng đá sinh viên 2025",
                 Description = "Giải đấu bóng đá thường niên dành cho sinh viên toàn trường, tranh cúp vô địch.",
@@ -110,7 +118,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueB.Id,
                 Title = "Seminar Startup & Khởi nghiệp",
                 Description = "Gặp gỡ và chia sẻ kinh nghiệm khởi nghiệp cùng các founder trẻ trong và ngoài trường.",
@@ -123,7 +131,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Kỹ năng phỏng vấn xin việc",
                 Description = "Workshop thực hành kỹ năng mềm: CV, phỏng vấn, và cách tìm kiếm việc làm sau tốt nghiệp.",
@@ -137,7 +145,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Sự kiện chưa duyệt (Draft)",
                 Description = "Event này ở trạng thái Draft, không được hiển thị.",
