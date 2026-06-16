@@ -7,6 +7,10 @@
       "RelativeMoniker": "D:0:0:{4626675D-94A0-4EE6-B1E4-45F039E058F3}|MVC\\MVC.csproj|solutionrelative:mvc\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|c:\\users\\huynhkhoi\\eventhub\\dal\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|solutionrelative:dal\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{4626675D-94A0-4EE6-B1E4-45F039E058F3}|MVC\\MVC.csproj|c:\\users\\huynhkhoi\\eventhub\\mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
       "RelativeMoniker": "D:0:0:{4626675D-94A0-4EE6-B1E4-45F039E058F3}|MVC\\MVC.csproj|solutionrelative:mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
@@ -38,7 +42,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -58,6 +62,19 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "DbInitializer.cs",
+              "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\DAL\\Data\\DbInitializer.cs",
+              "RelativeDocumentMoniker": "DAL\\Data\\DbInitializer.cs",
+              "ToolTip": "C:\\Users\\HUYNHKHOI\\EventHub\\DAL\\Data\\DbInitializer.cs",
+              "RelativeToolTip": "DAL\\Data\\DbInitializer.cs",
+              "ViewState": "AgIAACkAAAAAAAAAAAAYwDIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-16T05:53:16.246Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\MVC\\Program.cs",
@@ -71,7 +88,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "MVC.csproj",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\MVC\\MVC.csproj",
               "RelativeDocumentMoniker": "MVC\\MVC.csproj",
@@ -84,7 +101,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "BLL.csproj",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\BLL\\BLL.csproj",
               "RelativeDocumentMoniker": "BLL\\BLL.csproj",
@@ -97,7 +114,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "BLL",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\BLL\\BLL.csproj",
               "RelativeDocumentMoniker": "BLL\\BLL.csproj",
@@ -109,7 +126,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\BLL\\Class1.cs",
               "RelativeDocumentMoniker": "BLL\\Class1.cs",
@@ -122,7 +139,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "DAL.csproj",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\DAL\\DAL.csproj",
               "RelativeDocumentMoniker": "DAL\\DAL.csproj",
@@ -135,7 +152,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\HUYNHKHOI\\EventHub\\DAL\\Class1.cs",
               "RelativeDocumentMoniker": "DAL\\Class1.cs",

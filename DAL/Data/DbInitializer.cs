@@ -48,7 +48,21 @@ public static class DbInitializer
         var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
         var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
-
+        // Đảm bảo có 1 user sinh viên để test Đặt vé
+        var studentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        if (!await context.Users.AnyAsync(u => u.Id == studentId))
+        {
+            await context.Users.AddAsync(new User
+            {
+                Id = studentId,
+                FullName = "Khoi Sinh Vien",
+                Role = "Student",
+                Email = "khoi.student@fpt.edu.vn",
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            });
+            await context.SaveChangesAsync();
+        }
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };

@@ -146,11 +146,13 @@
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            // Bắt các lỗi khác (ví dụ Khóa ngoại do thiếu StudentId, v.v)
+            ErrorMessage = "Đã xảy ra lỗi khi đặt vé: " + ex.Message;
         }
         finally
         {
             IsProcessing = false;
+            StateHasChanged(); // Ép UI cập nhật lại trạng thái
         }
     }
 
