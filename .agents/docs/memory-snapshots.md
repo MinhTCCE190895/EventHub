@@ -130,3 +130,12 @@ graph TD
 - **Nhánh `feature/trilt-email-worker`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Worker Service gửi mail.
 - **Nhánh `feature/trilt-feedback`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Blazor Feedback Analytics.
 - **Nhánh `feature/trilt-follows`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách chức năng Follows.
+
+---
+
+## 4. QUY ƯỚC LIÊN PHÂN HỆ (CROSS-MODULE CONTRACTS)
+
+### 4.1. Quy ước địa chỉ của Venue & Weather Widget (MinhTC - FE-02/FE-05)
+- Khi thiết kế Form tạo/sửa địa điểm (Venue) hoặc sự kiện (Event), **bắt buộc** phải cung cấp một Dropdown để người dùng chọn cơ sở/tỉnh thành (Campus: *Hồ Chí Minh, Hà Nội, Cần Thơ, Đà Nẵng, Quy Nhơn*).
+- Giá trị tỉnh thành được chọn này sẽ được nối vào cuối trường địa chỉ (`Venue.Address`) dưới dạng `, [Tỉnh/Thành phố]` để đảm bảo phân hệ `FE-08 (Weather Widget)` trích xuất và hiển thị thông tin thời tiết chính xác.
+
