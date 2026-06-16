@@ -80,8 +80,8 @@
     private string? ErrorMessage;
     private string? SuccessMessage;
 
-    // Giả lập StudentId (tạm thời)
-    private Guid currentStudentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    // Lấy StudentId thật từ Database thay vì hardcode
+    private Guid currentStudentId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,6 +89,13 @@
         EventItem = await DbContext.Events
             .Include(e => e.Venue)
             .FirstOrDefaultAsync(e => e.Id == EventId);
+
+        // Lấy 1 Sinh viên có sẵn trong DB (Dữ liệu thật)
+        var student = await DbContext.Users.FirstOrDefaultAsync(u => u.Role == "Student");
+        if (student != null)
+        {
+            currentStudentId = student.Id;
+        }
 
         if (EventItem != null)
         {
@@ -121,6 +128,12 @@
 
         try
         {
+            if (currentStudentId == Guid.Empty)
+            {
+                ErrorMessage = "Không tìm thấy User Sinh viên trong hệ thống để đặt vé.";
+                return;
+            }
+
             // Call service
             var ticketCode = await BookingService.BookTicketAsync(EventId, currentStudentId);
             SuccessMessage = ticketCode;
