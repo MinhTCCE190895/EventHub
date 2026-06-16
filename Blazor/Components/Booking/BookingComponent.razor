@@ -36,6 +36,28 @@
                             </p>
                         </div>
 
+                        <!-- Dropdown để test chọn User thật -->
+                        <div class="mt-4">
+                            <label class="form-label fw-bold">Tài khoản sinh viên (Mô phỏng Đăng nhập)</label>
+                            @if (Students == null || !Students.Any())
+                            {
+                                <p class="text-danger small">Không tìm thấy sinh viên nào trong CSDL.</p>
+                            }
+                            else
+                            {
+                                <select class="form-select" @bind="currentStudentId">
+                                    <option value="@Guid.Empty">-- Vui lòng chọn 1 Sinh viên --</option>
+                                    @foreach (var s in Students)
+                                    {
+                                        <option value="@s.Id">@s.FullName (@s.Email)</option>
+                                    }
+                                </select>
+                            }
+                            <p class="small text-muted mt-1">
+                                <em>Ghi chú (FE-04): Vì tính năng Authentication (FE-01) chưa hoàn thiện, anh Khôi hãy chọn một sinh viên có thật trong DB từ danh sách này để lấy User ID.</em>
+                            </p>
+                        </div>
+
                         @if (!string.IsNullOrEmpty(ErrorMessage))
                         {
                             <div class="alert alert-danger mt-3">@ErrorMessage</div>
@@ -50,7 +72,7 @@
 
                         <button class="btn btn-primary w-100 mt-4" 
                                 style="border-radius: var(--radius-md);"
-                                disabled="@(RemainingSeats <= 0 || IsProcessing)"
+                                disabled="@(RemainingSeats <= 0 || IsProcessing || currentStudentId == Guid.Empty)"
                                 @onclick="BookTicket">
                             @if (IsProcessing)
                             {
@@ -82,6 +104,7 @@
 
     // Lấy StudentId thật từ Database thay vì hardcode
     private Guid currentStudentId;
+    private List<User> Students = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,11 +113,12 @@
             .Include(e => e.Venue)
             .FirstOrDefaultAsync(e => e.Id == EventId);
 
-        // Lấy 1 Sinh viên có sẵn trong DB (Dữ liệu thật)
-        var student = await DbContext.Users.FirstOrDefaultAsync(u => u.Role == "Student");
-        if (student != null)
+        // Lấy danh sách tất cả Sinh viên có sẵn trong DB (Dữ liệu thật)
+        Students = await DbContext.Users.Where(u => u.Role == "Student").ToListAsync();
+        
+        if (Students.Any())
         {
-            currentStudentId = student.Id;
+            currentStudentId = Students.First().Id;
         }
 
         if (EventItem != null)

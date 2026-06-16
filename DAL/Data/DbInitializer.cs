@@ -42,12 +42,6 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        if (await context.Events.AnyAsync())
-            return;
-
-        var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
-        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
-
         // Đảm bảo có 1 user sinh viên để test Đặt vé
         var studentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         if (!await context.Users.AnyAsync(u => u.Id == studentId))
@@ -63,6 +57,12 @@ public static class DbInitializer
             });
             await context.SaveChangesAsync();
         }
+
+        if (await context.Events.AnyAsync())
+            return;
+
+        var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
+        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };
