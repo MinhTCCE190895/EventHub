@@ -25,7 +25,7 @@ graph TD
     RP_Explore["Explore (Search & Filter)"]:::completed
     RP_Bookmark["Bookmarks (Saved Events)"]:::completed
     MVC_Auth["Identity & Authorization"]:::pending
-    BZ_Dash["Registration Dashboard"]:::pending
+    BZ_Dash["Registration Dashboard"]:::completed
     BZ_Feed["Feedback Analytics"]:::pending
 
     %% Document Connections
@@ -58,7 +58,6 @@ graph TD
 
 ## 1. PHÂN HỆ ĐÃ HOÀN THÀNH (COMPLETED MODULES)
 
-
 ### 1.1. Kiến trúc chung & Cấu hình Luật (System Architecture & Rules)
 - **Môi trường:** Đã đồng bộ 100% sang **.NET 8** và **C# 12** trên toàn bộ cấu hình, rules và tài liệu.
 - **Tài liệu hệ thống:**
@@ -79,6 +78,10 @@ graph TD
   - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
   - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
 
+### 1.3. Phân hệ Blazor (Live Booking & Dashboard)
+- **FE-04 Live Ticket Booking (`BookingComponent.razor`):** Đặt vé thời gian thực, đồng bộ số lượng vé.
+- **FE-10 Live Dashboard (`DashboardComponent.razor`):** Trang hiển thị trạng thái số lượng vé của các sự kiện qua dạng lưới, kết nối SignalR bắt sự kiện `ReceiveTicketUpdate` và nhảy số Real-time không tải lại trang.
+
 ---
 
 ## 2. PHÂN HỆ CHƯA HOÀN THÀNH (PENDING MODULES - PROJECT SCAFFOLD ONLY)
@@ -87,9 +90,9 @@ graph TD
 - **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
 - **File thực tế:** Chỉ có duy nhất `HomeController.cs` mặc định. Chưa triển khai AccountController, Login/Register Views hay phân quyền Role chi tiết.
 
-### 2.2. Phân hệ Blazor (Registration Dashboard & Feedback Analytics)
+### 2.2. Phân hệ Blazor (Feedback Analytics)
 - **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
-- **File thực tế:** Chỉ có các component mặc định (`Home.razor`, `Counter.razor`, `Weather.razor`). Chưa cài đặt MudBlazor, chưa tạo dashboard quản lý đăng ký hay các biểu đồ phân tích phản hồi.
+- **File thực tế:** Chưa tạo dashboard biểu đồ phân tích phản hồi.
 
 ---
 
@@ -112,6 +115,7 @@ graph TD
 
 ### 3.2. Cập nhật của Agent (Antigravity)
 - **2026-06-16**:
+  - Triển khai thành công tính năng Live Dashboard (FE-10), kết nối SignalR lắng nghe `ReceiveTicketUpdate` cho các event và cập nhật progress bar real-time tại màn hình điều khiển.
   - Triển khai thành công tính năng Live Ticket Booking (FE-04) cho user KhôiTH.
   - Cập nhật `Event` entity để thêm `RegisteredCount`, cấu hình Optimistic Concurrency cho chức năng Booking.
   - Thêm `IBookingService`, SignalR `EventHub` và `BookingComponent` trong Blazor.

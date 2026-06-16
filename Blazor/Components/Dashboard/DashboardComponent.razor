@@ -1,0 +1,199 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using DAL.Data
+@using DAL.Entities
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<div class="app-container">
+    <main class="app-content w-100 p-4">
+        <div class="content-header mb-4">
+            <h1 class="display-6 fw-bold">🚀 Live Dashboard</h1>
+            <p class="text-muted">Theo dõi trực tiếp số lượng vé của các sự kiện (Cập nhật Real-time)</p>
+        </div>
+
+        <div class="content-body">
+            @if (Events == null)
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <div class="col">
+                            <div class="skeleton-card">
+                                <div class="skeleton-image"></div>
+                                <div class="skeleton-body">
+                                    <div class="skeleton-line title"></div>
+                                    <div class="skeleton-line text"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (!Events.Any())
+            {
+                <div class="alert alert-info">Không có sự kiện nào đang diễn ra.</div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @foreach (var ev in Events)
+                    {
+                        var remaining = ev.MaxCapacity - ev.RegisteredCount;
+                        var progressPercentage = ev.MaxCapacity > 0 ? (ev.RegisteredCount * 100 / ev.MaxCapacity) : 0;
+                        var isSoldOut = remaining <= 0;
+                        var urgencyClass = isSoldOut ? "bg-danger" : (remaining <= 10 ? "bg-warning" : "bg-success");
+                        var textClass = isSoldOut ? "text-danger" : (remaining <= 10 ? "text-warning" : "text-success");
+
+                        <div class="col">
+                            <div class="card-minimal h-100 position-relative @(isSoldOut ? "border-danger" : "")" style="transition: transform 0.2s, box-shadow 0.2s;">
+                                <!-- Badge nổi -->
+                                @if (isSoldOut)
+                                {
+                                    <span class="card-badge-overlay bg-danger text-white">Sold Out</span>
+                                }
+                                else if (remaining <= 10)
+                                {
+                                    <span class="card-badge-overlay bg-warning text-dark">Sắp hết vé</span>
+                                }
+
+                                <div class="card-minimal-body">
+                                    <h5 class="fw-bold text-truncate" title="@ev.Title">@ev.Title</h5>
+                                    
+                                    <div class="d-flex justify-content-between text-muted small mt-2 mb-1">
+                                        <span>Đã đặt: @ev.RegisteredCount</span>
+                                        <span>Tổng vé: @ev.MaxCapacity</span>
+                                    </div>
+                                    
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated @urgencyClass" 
+                                             role="progressbar" 
+                                             style="width: @progressPercentage%" 
+                                             aria-valuenow="@ev.RegisteredCount" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="@ev.MaxCapacity">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3 text-center">
+                                        <h3 class="fw-bold mb-0 @textClass">
+                                            @if (isSoldOut)
+                                            {
+                                                <span>Hết vé</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Còn @remaining chỗ</span>
+                                            }
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </main>
+</div>
+
+@code {
+    private List<DashboardEventDto>? Events;
+    private HubConnection? hubConnection;
+
+    public class DashboardEventDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public int MaxCapacity { get; set; }
+        public int RegisteredCount { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Lấy danh sách event hiển thị trên Dashboard (loại bỏ Draft và Past events nếu cần)
+            var now = DateTime.UtcNow;
+            Events = await DbContext.Events
+                .Where(e => e.Status == "Published" && e.EndTime > now)
+                .Select(e => new DashboardEventDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    MaxCapacity = e.Venue.MaxCapacity,
+                    RegisteredCount = e.RegisteredCount
+                })
+                .OrderBy(e => e.Title)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi load events: " + ex.Message);
+            Events = new List<DashboardEventDto>();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    hubConnection = new HubConnectionBuilder()
+                        .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                        {
+                            options.HttpMessageHandlerFactory = (message) =>
+                            {
+                                if (message is HttpClientHandler clientHandler)
+                                {
+                                    clientHandler.ServerCertificateCustomValidationCallback +=
+                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                                }
+                                else if (message is SocketsHttpHandler socketsHandler)
+                                {
+                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += 
+                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                                }
+                                return message;
+                            };
+                        })
+                        .Build();
+
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remainingSeats) =>
+                    {
+                        if (Events != null)
+                        {
+                            var ev = Events.FirstOrDefault(e => e.Id == eventId);
+                            if (ev != null)
+                            {
+                                // Cập nhật lại số lượng đã đăng ký dựa trên số ghế còn lại
+                                ev.RegisteredCount = ev.MaxCapacity - remainingSeats;
+                                InvokeAsync(StateHasChanged);
+                            }
+                        }
+                    });
+
+                    await hubConnection.StartAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi khởi tạo SignalR Client (Dashboard): " + ex.Message);
+                }
+            });
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
