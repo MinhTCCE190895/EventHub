@@ -1,6 +1,7 @@
 using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using BCrypt.Net;
 
 namespace DAL.Data;
 
@@ -12,6 +13,21 @@ public static class DbInitializer
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         await context.Database.MigrateAsync();
+
+        // Cập nhật địa chỉ đầy đủ có tỉnh thành cho các Venue đã tồn tại từ trước để đồng bộ tính năng thời tiết
+        var existingA = await context.Venues.FirstOrDefaultAsync(v => v.Name == "Hội trường A");
+        if (existingA != null && !existingA.Address.Contains("TP. Hồ Chí Minh"))
+        {
+            existingA.Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh";
+            context.Venues.Update(existingA);
+        }
+        var existingB = await context.Venues.FirstOrDefaultAsync(v => v.Name == "Hội trường B");
+        if (existingB != null && !existingB.Address.Contains("TP. Hồ Chí Minh"))
+        {
+            existingB.Address = "Cơ sở 2 - 456 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh";
+            context.Venues.Update(existingB);
+        }
+        await context.SaveChangesAsync();
 
         if (!await context.Users.AnyAsync())
         {
@@ -26,6 +42,7 @@ public static class DbInitializer
                     FullName = "System Administrator",
                     Role = "Admin",
                     Email = "admin@unieventhub.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 },
@@ -35,6 +52,7 @@ public static class DbInitializer
                     FullName = "Nguyen Van Organizer",
                     Role = "Organizer",
                     Email = "organizer@unieventhub.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Organizer@123"),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 }
@@ -52,6 +70,7 @@ public static class DbInitializer
                 FullName = "Khoi Sinh Vien",
                 Role = "Student",
                 Email = "khoi.student@fpt.edu.vn",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Student@123"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             });
@@ -79,8 +98,8 @@ public static class DbInitializer
         await context.Tags.AddRangeAsync(tagIT, tagSkill, tagMusic, tagSport, tagStartup);
 
         // --- Venues ---
-        var venueA = new Venue { Name = "Hội trường A", Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ", MaxCapacity = 500 };
-        var venueB = new Venue { Name = "Hội trường B", Address = "Cơ sở 2 - 456 Võ Văn Ngân", MaxCapacity = 200 };
+        var venueA = new Venue { Name = "Hội trường A", Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh", MaxCapacity = 500 };
+        var venueB = new Venue { Name = "Hội trường B", Address = "Cơ sở 2 - 456 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh", MaxCapacity = 200 };
         await context.Venues.AddRangeAsync(venueA, venueB);
 
         await context.SaveChangesAsync();

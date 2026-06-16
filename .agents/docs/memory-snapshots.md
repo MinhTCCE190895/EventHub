@@ -21,9 +21,9 @@ graph TD
         DAL[DAL - Data Access]
     end
 
-    %% Modules and Status
     RP_Explore["Explore (Search & Filter)"]:::completed
     RP_Bookmark["Bookmarks (Saved Events)"]:::completed
+    RP_Weather["Weather Widget (API & Caching)"]:::completed
     MVC_Auth["Identity & Authorization"]:::pending
     BZ_Dash["Registration Dashboard"]:::completed
     BZ_Feed["Feedback Analytics"]:::pending
@@ -36,6 +36,7 @@ graph TD
     %% Relationships
     RP --> RP_Explore
     RP --> RP_Bookmark
+    RP --> RP_Weather
     MVC --> MVC_Auth
     BZ --> BZ_Dash
     BZ --> BZ_Feed
@@ -46,6 +47,7 @@ graph TD
 
     RP_Explore --> BLL
     RP_Bookmark --> BLL
+    RP_Weather --> BLL
     BLL --> DAL
 
     %% Apply Classes to main projects
@@ -67,7 +69,7 @@ graph TD
   - **[File CSS Toàn cục (site.css)](../../RazorPages/wwwroot/css/site.css)**: CSS style sheet chính của dự án.
   - **[Layout chính của dự án (_Layout.cshtml)](../../RazorPages/Pages/Shared/_Layout.cshtml)**: Khung chứa sidebar và content body.
 
-### 1.2. Phân hệ Razor Pages (Explore & Bookmarks)
+### 1.2. Phân hệ Razor Pages (Explore, Bookmarks & Organizers)
 - **Trang chủ / Explore (`Pages/Index.cshtml` & `Pages/Index.cshtml.cs`):**
   - Đã tích hợp Form tìm kiếm thu gọn (.search-card-minimal) và bộ lọc thời gian (All, Upcoming, Ongoing, Past).
   - Tự động hiển thị dấu chấm LED (`status-upcoming`/`ongoing`/`past`) trên ảnh thẻ sự kiện.
@@ -77,6 +79,13 @@ graph TD
 - **Trang đã lưu Bookmarks (`Pages/Bookmarks/Index.cshtml` & `Pages/Bookmarks/Index.cshtml.cs`):**
   - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
   - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
+- **Weather Widget / API & Caching (`FE-08`):**
+  - Tích hợp API thời tiết thực tế tại địa điểm tổ chức, lưu cache IMemoryCache 30 phút.
+  - Thiết kế giao diện sidebar weather card sang trọng, trực quan theo đúng Style Guide.
+  - `NormalizeLocation` tự động trích xuất tỉnh thành phố cuối địa chỉ Venue để gọi API thời tiết chính xác.
+- **Quản lý Organizer (`Pages/Organizers/*`):**
+  - Thực hiện các thao tác CRUD cơ bản cho Organizer (User với Role "Organizer").
+  - Áp dụng các quy tắc bảo mật với `[BindProperty]` chống Over-posting và xử lý lỗi DB Exception.
 
 ### 1.3. Phân hệ Blazor (Live Booking & Dashboard)
 - **FE-04 Live Ticket Booking (`BookingComponent.razor`):** Đặt vé thời gian thực, đồng bộ số lượng vé.
@@ -87,8 +96,8 @@ graph TD
 ## 2. PHÂN HỆ CHƯA HOÀN THÀNH (PENDING MODULES - PROJECT SCAFFOLD ONLY)
 
 ### 2.1. Phân hệ MVC (Identity)
-- **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
-- **File thực tế:** Chỉ có duy nhất `HomeController.cs` mặc định. Chưa triển khai AccountController, Login/Register Views hay phân quyền Role chi tiết.
+- **Trạng thái:** Đã hoàn thành (FE-01).
+- **File thực tế:** Đã triển khai Cookie Authentication, AccountController (Register/Login/Logout), views Login/Register/AccessDenied, stylesheet auth.css và liên kết layout với RazorPages.
 
 ### 2.2. Phân hệ Blazor (Feedback Analytics)
 - **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
@@ -114,7 +123,17 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
-- **2026-06-16**:
+- **2026-06-16 (Antigravity)**:
+  - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
+  - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
+  - **LongNH Persona**: Hoàn thành phân hệ **FE-01 Identity & Authorization**:
+    - Triển khai Cookie Authentication trong `Program.cs`.
+    - Tạo `AccountController` quản lý Login, Register, Logout, AccessDenied.
+    - Cài đặt `IUserService` / `UserService` tích hợp mã hóa mật khẩu qua BCrypt.Net.
+    - Thiết kế giao diện premium cho Login, Register, AccessDenied bằng `auth.css` theo Style Guide.
+    - Liên kết sidebar layout và quản lý trạng thái User Claims toàn diện.
+    - Tạo migration thêm cột `PasswordHash` và cập nhật dữ liệu Seed cho tài khoản Admin/Organizer mặc định.
+  - Sửa lỗi kết nối CSDL LocalDB và cấu hình đồng bộ `DbInitializer.SeedAsync` cho phân hệ MVC. Bổ sung bắt lỗi khi parse sai định dạng BCrypt trong `UserService`.
   - Triển khai thành công tính năng Live Dashboard (FE-10), kết nối SignalR lắng nghe `ReceiveTicketUpdate` cho các event và cập nhật progress bar real-time tại màn hình điều khiển.
   - Triển khai thành công tính năng Live Ticket Booking (FE-04) cho user KhôiTH.
   - Cập nhật `Event` entity để thêm `RegisteredCount`, cấu hình Optimistic Concurrency cho chức năng Booking.
@@ -123,9 +142,23 @@ graph TD
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
   - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
+  - **MinhTC Persona**: Hoàn thành tính năng CRUD cho Organizer (Razor Pages):
+    - Thêm các DTO (`OrganizerDTO`, `OrganizerCreateDTO`, `OrganizerUpdateDTO`).
+    - Bổ sung `IOrganizerService` và `OrganizerService` (với PRN222 Compliance).
+    - Tạo giao diện Razor Pages (`Index`, `Create`, `Edit`, `Details`, `Delete`) sử dụng `[BindProperty]`.
+    - Cấu hình AutoMapper cho `User` ↔ `OrganizerDTO`.
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
 - **Nhánh `feature/trilt-email-worker`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Worker Service gửi mail.
 - **Nhánh `feature/trilt-feedback`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Blazor Feedback Analytics.
 - **Nhánh `feature/trilt-follows`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách chức năng Follows.
+
+---
+
+## 4. QUY ƯỚC LIÊN PHÂN HỆ (CROSS-MODULE CONTRACTS)
+
+### 4.1. Quy ước địa chỉ của Venue & Weather Widget (MinhTC - FE-02/FE-05)
+- Khi thiết kế Form tạo/sửa địa điểm (Venue) hoặc sự kiện (Event), **bắt buộc** phải cung cấp một Dropdown để người dùng chọn cơ sở/tỉnh thành (Campus: *Hồ Chí Minh, Hà Nội, Cần Thơ, Đà Nẵng, Quy Nhơn*).
+- Giá trị tỉnh thành được chọn này sẽ được nối vào cuối trường địa chỉ (`Venue.Address`) dưới dạng `, [Tỉnh/Thành phố]` để đảm bảo phân hệ `FE-08 (Weather Widget)` trích xuất và hiển thị thông tin thời tiết chính xác.
+

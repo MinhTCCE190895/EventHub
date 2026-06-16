@@ -1,0 +1,71 @@
+@model MVC.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <a href="/" class="auth-logo">
+                <i class="bi bi-shield-check"></i> UniEvent Hub
+            </a>
+            <h2 class="auth-title">Chào mừng trở lại</h2>
+            <p class="auth-subtitle">Vui lòng đăng nhập tài khoản của bạn</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success border-0 rounded-3 text-center py-2" style="font-size: 0.88rem; background-color: rgba(74, 222, 128, 0.1); color: #15803d;" role="alert">
+                <i class="bi bi-check-circle-fill me-1"></i> @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="form-group-minimal">
+                <label asp-for="Email"></label>
+                <div class="auth-input-group">
+                    <input asp-for="Email" class="auth-input-control" placeholder="example@unieventhub.com" autocomplete="username" />
+                    <i class="bi bi-envelope-fill"></i>
+                </div>
+                <span asp-validation-for="Email" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal">
+                <label asp-for="Password"></label>
+                <div class="auth-input-group">
+                    <input asp-for="Password" class="auth-input-control" placeholder="••••••••" autocomplete="current-password" />
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <span asp-validation-for="Password" class="text-danger-custom"></span>
+            </div>
+
+            <div class="auth-checkbox-group">
+                <label class="auth-checkbox-label">
+                    <input asp-for="RememberMe" class="auth-checkbox-input" />
+                    <span>@Html.DisplayNameFor(m => m.RememberMe)</span>
+                </label>
+                <a href="#" class="auth-link font-weight-bold" style="font-size: 0.85rem;">Quên mật khẩu?</a>
+            </div>
+
+            <button type="submit" class="btn-auth-submit">
+                <span>Đăng nhập</span>
+                <i class="bi bi-arrow-right-short"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Chưa có tài khoản? <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Đăng ký ngay</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

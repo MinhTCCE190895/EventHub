@@ -5,7 +5,7 @@ namespace MVC
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +16,20 @@ namespace MVC
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
 
+            // Register Cookie Authentication
+            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Account/AccessDenied";
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                    options.SlidingExpiration = true;
+                });
+
             var app = builder.Build();
+
+            // Chạy migration và seed data khi khởi động
+            await DAL.Data.DbInitializer.SeedAsync(app.Services);
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -31,6 +44,7 @@ namespace MVC
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

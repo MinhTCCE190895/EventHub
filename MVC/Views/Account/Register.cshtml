@@ -1,0 +1,122 @@
+@model MVC.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 480px;">
+        <div class="auth-header">
+            <a href="/" class="auth-logo">
+                <i class="bi bi-shield-check"></i> UniEvent Hub
+            </a>
+            <h2 class="auth-title">Đăng ký tài khoản</h2>
+            <p class="auth-subtitle">Tạo tài khoản để tham gia và quản lý các sự kiện sinh viên</p>
+        </div>
+
+        <form asp-action="Register" method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="form-group-minimal">
+                <label>Vai trò của bạn</label>
+                <div class="role-selector-group">
+                    <label>
+                        <input type="radio" asp-for="Role" value="Student" class="role-selector-input" checked />
+                        <div class="role-pill">
+                            <i class="bi bi-mortarboard me-1"></i> Sinh viên
+                        </div>
+                    </label>
+                    <label>
+                        <input type="radio" asp-for="Role" value="Organizer" class="role-selector-input" />
+                        <div class="role-pill">
+                            <i class="bi bi-building me-1"></i> Ban tổ chức
+                        </div>
+                    </label>
+                </div>
+                <span asp-validation-for="Role" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal">
+                <label asp-for="FullName"></label>
+                <div class="auth-input-group">
+                    <input asp-for="FullName" class="auth-input-control" placeholder="Nguyễn Văn A" />
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <span asp-validation-for="FullName" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal">
+                <label asp-for="Email"></label>
+                <div class="auth-input-group">
+                    <input asp-for="Email" class="auth-input-control" placeholder="email@unieventhub.com" />
+                    <i class="bi bi-envelope-fill"></i>
+                </div>
+                <span asp-validation-for="Email" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal" id="studentCodeGroup">
+                <label asp-for="StudentCode"></label>
+                <div class="auth-input-group">
+                    <input asp-for="StudentCode" class="auth-input-control" placeholder="MSSV ví dụ: SE180000" />
+                    <i class="bi bi-card-text"></i>
+                </div>
+                <span asp-validation-for="StudentCode" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal">
+                <label asp-for="Password"></label>
+                <div class="auth-input-group">
+                    <input asp-for="Password" class="auth-input-control" placeholder="••••••••" autocomplete="new-password" />
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <span asp-validation-for="Password" class="text-danger-custom"></span>
+            </div>
+
+            <div class="form-group-minimal">
+                <label asp-for="ConfirmPassword"></label>
+                <div class="auth-input-group">
+                    <input asp-for="ConfirmPassword" class="auth-input-control" placeholder="••••••••" autocomplete="new-password" />
+                    <i class="bi bi-lock-check-fill"></i>
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="text-danger-custom"></span>
+            </div>
+
+            <button type="submit" class="btn-auth-submit mt-3">
+                <span>Tạo tài khoản</span>
+                <i class="bi bi-person-plus-fill"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Đã có tài khoản? <a asp-action="Login" class="auth-link">Đăng nhập</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Tự động ẩn/hiện mã sinh viên dựa trên Role
+        document.querySelectorAll('input[name="Role"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const studentCodeGroup = document.getElementById('studentCodeGroup');
+                if (this.value === 'Student') {
+                    studentCodeGroup.style.display = 'block';
+                } else {
+                    studentCodeGroup.style.display = 'none';
+                    // Reset input
+                    studentCodeGroup.querySelector('input').value = '';
+                }
+            });
+        });
+        
+        // Kích hoạt trạng thái ban đầu
+        const activeRole = document.querySelector('input[name="Role"]:checked').value;
+        if (activeRole !== 'Student') {
+            document.getElementById('studentCodeGroup').style.display = 'none';
+        }
+    </script>
+}
