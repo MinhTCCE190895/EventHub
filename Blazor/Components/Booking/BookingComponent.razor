@@ -138,44 +138,48 @@
     {
         if (firstRender && EventItem != null)
         {
-            try
+            // Khởi chạy ngầm để không làm block UI / Circuit nếu mạng bị treo
+            _ = Task.Run(async () =>
             {
-                // Thiết lập SignalR Client (chỉ khởi tạo sau khi component đã render xong)
-                hubConnection = new HubConnectionBuilder()
-                    .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
-                    {
-                        options.HttpMessageHandlerFactory = (message) =>
-                        {
-                            if (message is HttpClientHandler clientHandler)
-                            {
-                                clientHandler.ServerCertificateCustomValidationCallback +=
-                                    (sender, certificate, chain, sslPolicyErrors) => { return true; };
-                            }
-                            else if (message is SocketsHttpHandler socketsHandler)
-                            {
-                                socketsHandler.SslOptions.RemoteCertificateValidationCallback += 
-                                    (sender, certificate, chain, sslPolicyErrors) => { return true; };
-                            }
-                            return message;
-                        };
-                    })
-                    .Build();
-
-                hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+                try
                 {
-                    if (eventId == EventId)
-                    {
-                        RemainingSeats = remaining;
-                        InvokeAsync(StateHasChanged);
-                    }
-                });
+                    // Thiết lập SignalR Client
+                    hubConnection = new HubConnectionBuilder()
+                        .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                        {
+                            options.HttpMessageHandlerFactory = (message) =>
+                            {
+                                if (message is HttpClientHandler clientHandler)
+                                {
+                                    clientHandler.ServerCertificateCustomValidationCallback +=
+                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                                }
+                                else if (message is SocketsHttpHandler socketsHandler)
+                                {
+                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += 
+                                        (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                                }
+                                return message;
+                            };
+                        })
+                        .Build();
 
-                await hubConnection.StartAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Lỗi khởi tạo SignalR Client: " + ex.Message);
-            }
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+                    {
+                        if (eventId == EventId)
+                        {
+                            RemainingSeats = remaining;
+                            InvokeAsync(StateHasChanged);
+                        }
+                    });
+
+                    await hubConnection.StartAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi khởi tạo SignalR Client: " + ex.Message);
+                }
+            });
         }
     }
 
@@ -198,9 +202,21 @@
                 return;
             }
 
-            // Call service
+            // Gọi thử BookingService nhưng kèm theo Timeout để tránh EF Core bị treo vĩnh viễn
             Console.WriteLine(">>> Đang gọi BookingService.BookTicketAsync...");
-            var ticketCode = await BookingService.BookTicketAsync(EventId, currentStudentId);
+            
+            var bookingTask = BookingService.BookTicketAsync(EventId, currentStudentId);
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10)); // Timeout 10 giây
+            
+            var completedTask = await Task.WhenAny(bookingTask, timeoutTask);
+            
+            if (completedTask == timeoutTask)
+            {
+                // Timeout! EF Core bị treo!
+                throw new Exception("Lỗi: Quá thời gian kết nối Database. Có thể bảng Bookings đang bị lock bởi SSMS hoặc một transaction chưa được commit!");
+            }
+
+            var ticketCode = await bookingTask; // Lấy kết quả nếu thành công
             Console.WriteLine(">>> Đặt vé thành công, ticketCode: " + ticketCode);
             SuccessMessage = ticketCode;
             
