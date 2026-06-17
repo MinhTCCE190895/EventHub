@@ -30,11 +30,46 @@ public static class DbInitializer
         await context.SaveChangesAsync();
 
         if (await context.Users.AnyAsync())
+        {
+            var users = await context.Users.ToListAsync();
+            bool hasChanges = false;
+
+            // Reset password cho tất cả user hiện tại thành 123456
+            foreach (var u in users)
+            {
+                u.PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456");
+                hasChanges = true;
+            }
+
+            // Đảm bảo luôn có ít nhất 1 tài khoản Student để test
+            if (!users.Any(u => u.Role == "Student"))
+            {
+                context.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    FullName = "Tran Van Student",
+                    Role = "Student",
+                    Email = "student@unieventhub.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                });
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                context.Users.UpdateRange(users);
+                await context.SaveChangesAsync();
+            }
+
             return;
+        }
 
         // --- Users ---
         var adminId = Guid.NewGuid();
         var organizerId = Guid.NewGuid();
+        var studentId = Guid.NewGuid();
 
         await context.Users.AddRangeAsync(
             new User
@@ -43,7 +78,7 @@ public static class DbInitializer
                 FullName = "System Administrator",
                 Role = "Admin",
                 Email = "admin@unieventhub.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             },
@@ -53,7 +88,17 @@ public static class DbInitializer
                 FullName = "Nguyen Van Organizer",
                 Role = "Organizer",
                 Email = "organizer@unieventhub.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Organizer@123"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            },
+            new User
+            {
+                Id = studentId,
+                FullName = "Tran Van Student",
+                Role = "Student",
+                Email = "student@unieventhub.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             }

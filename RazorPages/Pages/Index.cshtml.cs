@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RazorPages.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RazerPages.Pages;
 
@@ -19,7 +21,10 @@ public class IndexModel : PageModel
     private readonly AppDbContext _context;
     private readonly ILogger<IndexModel> _logger;
 
-    public static readonly Guid CurrentStudentId = new("77777777-7777-7777-7777-777777777777");
+    // Lấy ID thật thay vì fix cứng
+    public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true 
+        ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) 
+        : null;
 
     public IndexModel(
         ISearchService searchService,
@@ -40,16 +45,21 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public EventSearchViewModel SearchVm { get; set; } = new();
 
-
+    public List<Guid> BookmarkedEventIds { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return Page();
 
-        await EnsureStudentExistsAsync(cancellationToken);
-
-
+        // Lấy Bookmark nếu User đã đăng nhập và là Student
+        if (CurrentStudentId.HasValue && User.IsInRole("Student"))
+        {
+            BookmarkedEventIds = await _context.Bookmarks
+                .Where(b => b.StudentId == CurrentStudentId.Value)
+                .Select(b => b.EventId)
+                .ToListAsync(cancellationToken);
+        }
 
         try
         {
@@ -82,25 +92,5 @@ public class IndexModel : PageModel
         SearchVm.PageNumber = Math.Clamp(SearchVm.PageNumber, 1, Math.Max(1, SearchVm.TotalPages));
 
         return Page();
-    }
-
-    private async Task EnsureStudentExistsAsync(CancellationToken cancellationToken)
-    {
-        var exists = await _userRepo.ExistsAsync(u => u.Id == CurrentStudentId, cancellationToken);
-        if (!exists)
-        {
-            // Create a mock student if not exists to ensure db constraints are satisfied
-            var student = new User
-            {
-                Id = CurrentStudentId,
-                FullName = "Demo Student (QuiNC)",
-                Role = "Student",
-                Email = "student.demo@unieventhub.com",
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-            await _userRepo.AddAsync(student, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
     }
 }

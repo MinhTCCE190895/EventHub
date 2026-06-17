@@ -1,6 +1,8 @@
 using Blazor.Components;
 using BLL;
 using DAL;
+using DAL.Data;
+using Blazor.Configurations;
 
 namespace Blazor
 {
@@ -18,6 +20,11 @@ namespace Blazor
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
 
+            // Modular Configurations
+            builder.Services.AddCustomAuthorization();
+            builder.Services.AddCustomAuthentication();
+            builder.Services.AddCustomDataProtection();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -32,6 +39,9 @@ namespace Blazor
 
             app.UseStaticFiles();
             app.UseAntiforgery();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
