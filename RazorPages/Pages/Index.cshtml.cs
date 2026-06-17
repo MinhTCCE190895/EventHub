@@ -15,7 +15,6 @@ public class IndexModel : PageModel
     private readonly ISearchService _searchService;
     private readonly IRepository<Category> _categoryRepo;
     private readonly IRepository<Tag> _tagRepo;
-    private readonly IBookmarkService _bookmarkService;
     private readonly IRepository<User> _userRepo;
     private readonly AppDbContext _context;
     private readonly ILogger<IndexModel> _logger;
@@ -26,7 +25,6 @@ public class IndexModel : PageModel
         ISearchService searchService,
         IRepository<Category> categoryRepo,
         IRepository<Tag> tagRepo,
-        IBookmarkService bookmarkService,
         IRepository<User> userRepo,
         AppDbContext context,
         ILogger<IndexModel> logger)
@@ -34,7 +32,6 @@ public class IndexModel : PageModel
         _searchService = searchService;
         _categoryRepo = categoryRepo;
         _tagRepo = tagRepo;
-        _bookmarkService = bookmarkService;
         _userRepo = userRepo;
         _context = context;
         _logger = logger;
@@ -43,7 +40,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public EventSearchViewModel SearchVm { get; set; } = new();
 
-    public List<Guid> BookmarkedEventIds { get; set; } = new();
+
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
@@ -52,11 +49,7 @@ public class IndexModel : PageModel
 
         await EnsureStudentExistsAsync(cancellationToken);
 
-        // Fetch all bookmarked event IDs for the current student to display active states on UI cards
-        BookmarkedEventIds = await _context.Bookmarks
-            .Where(b => b.StudentId == CurrentStudentId)
-            .Select(b => b.EventId)
-            .ToListAsync(cancellationToken);
+
 
         try
         {
@@ -89,21 +82,6 @@ public class IndexModel : PageModel
         SearchVm.PageNumber = Math.Clamp(SearchVm.PageNumber, 1, Math.Max(1, SearchVm.TotalPages));
 
         return Page();
-    }
-
-    public async Task<IActionResult> OnPostToggleBookmarkAsync(Guid eventId, CancellationToken cancellationToken)
-    {
-        await EnsureStudentExistsAsync(cancellationToken);
-        try
-        {
-            var isBookmarked = await _bookmarkService.ToggleBookmarkAsync(CurrentStudentId, eventId, cancellationToken);
-            return new JsonResult(new { success = true, isBookmarked });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error toggling bookmark for event {EventId}", eventId);
-            return new JsonResult(new { success = false, error = "Failed to toggle bookmark" });
-        }
     }
 
     private async Task EnsureStudentExistsAsync(CancellationToken cancellationToken)
