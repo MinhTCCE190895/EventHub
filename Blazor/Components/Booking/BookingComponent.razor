@@ -1,122 +1,87 @@
 @page "/events/{EventId:guid}/book"
-
 @using Microsoft.AspNetCore.SignalR.Client
-@using BLL.Services
+@using DAL.Data
 @using DAL.Entities
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.Extensions.DependencyInjection
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.Web
-
+@using BLL.Services
+@inject AppDbContext DbContext
 @inject NavigationManager Navigation
-@inject IServiceScopeFactory ScopeFactory
+@inject IBookingService BookingService
 @implements IAsyncDisposable
 
 <div class="app-container">
     <main class="app-content w-100 p-4">
-        <div class="content-body">
+        <div class="content-header mb-4 text-center">
+            <h1 class="display-6 fw-bold">🎫 Đặt Vé Sự Kiện</h1>
+            <p class="text-muted">Cập nhật chỗ trống theo thời gian thực (Live SignalR)</p>
+        </div>
+
+        <div class="content-body d-flex justify-content-center">
             @if (EventItem == null)
             {
-                // Skeleton loading
-                <div class="skeleton-card">
-                    <div class="skeleton-image"></div>
-                    <div class="skeleton-body">
-                        <div class="skeleton-line title"></div>
-                        <div class="skeleton-line text"></div>
-                    </div>
-                </div>
+                <div class="alert alert-info">Đang tải thông tin sự kiện...</div>
             }
             else
             {
-                <div class="card-minimal booking-card shadow-lg border-0" style="max-width: 600px; margin: 0 auto;">
-                    
-                    <!-- Cover Image -->
-                    <div class="booking-cover position-relative">
-                        <img src="@(string.IsNullOrEmpty(EventItem.BannerUrl) ? "https://placehold.co/600x300/e9ecef/495057?text=No+Banner" : EventItem.BannerUrl)" 
-                             class="w-100 object-fit-cover" 
-                             style="height: 200px; border-radius: var(--radius-lg) var(--radius-lg) 0 0;" alt="Event Cover" />
-                        <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
-                            <h3 class="text-white mb-0 text-shadow">@EventItem.Title</h3>
-                        </div>
-                    </div>
+                var remaining = EventItem.MaxCapacity - EventItem.RegisteredCount;
+                var progressPercentage = EventItem.MaxCapacity > 0 ? (EventItem.RegisteredCount * 100 / EventItem.MaxCapacity) : 0;
+                var isSoldOut = remaining <= 0;
 
-                    <div class="card-minimal-body p-4">
-                        <p class="text-muted mb-4">
-                            <i class="bi bi-geo-alt-fill text-danger me-2"></i> @EventItem.Venue.Name
-                            <br/>
-                            <i class="bi bi-clock-fill text-primary me-2"></i> @EventItem.StartTime.ToString("dd/MM/yyyy HH:mm")
-                        </p>
+                <div class="card-minimal" style="max-width: 500px; width: 100%;">
+                    @if (isSoldOut)
+                    {
+                        <span class="card-badge-overlay bg-danger text-white">Sold Out</span>
+                    }
+
+                    <div class="card-minimal-body">
+                        <h3 class="fw-bold text-center mb-3">@EventItem.Title</h3>
                         
-                        <!-- Progress Bar (Số lượng ghế) -->
-                        <div class="seats-status mb-4 p-3 rounded" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="fw-bold"><i class="bi bi-people-fill me-2"></i> Tình trạng vé</span>
-                                <span class="fw-bold @(RemainingSeats <= 0 ? "text-danger" : "text-success")">
-                                    Còn @RemainingSeats / @EventItem.Venue.MaxCapacity
-                                </span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar @(ProgressPercent > 90 ? "bg-danger" : ProgressPercent > 70 ? "bg-warning" : "bg-success")" 
-                                     role="progressbar" 
-                                     style="width: @ProgressPercent%" 
-                                     aria-valuenow="@ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
+                        <div class="d-flex justify-content-between text-muted small mt-2 mb-1">
+                            <span>Địa điểm: @EventItem.VenueName</span>
+                            <span>Giới hạn: @EventItem.MaxCapacity người</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3 mb-1">
+                            <strong>Trạng thái vé:</strong>
+                            <span class="@(isSoldOut ? "text-danger" : "text-success") fw-bold">
+                                @(isSoldOut ? "Đã Hết Vé" : $"Còn {remaining} chỗ")
+                            </span>
                         </div>
 
-                        <!-- Trạng thái Thông báo -->
-                        @if (Status == BookingStatus.Error)
-                        {
-                            <div class="alert alert-danger d-flex align-items-center">
-                                <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
-                                <div>@ErrorMessage</div>
+                        <div class="progress mb-4" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @(isSoldOut ? "bg-danger" : "bg-success")" 
+                                 role="progressbar" 
+                                 style="width: @progressPercentage%" 
+                                 aria-valuenow="@EventItem.RegisteredCount" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="@EventItem.MaxCapacity">
                             </div>
-                        }
-                        
-                        @if (Status == BookingStatus.Success)
-                        {
-                            <div class="ticket-success-card text-center p-4 mb-4">
-                                <div class="ticket-icon mb-3">
-                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-                                </div>
-                                <h4 class="text-success fw-bold">Đặt Vé Thành Công!</h4>
-                                <p class="text-muted mb-2">Mã vé điện tử của bạn là:</p>
-                                <div class="ticket-code d-inline-block px-4 py-2 fw-bold fs-4 rounded bg-light border border-success border-2 border-dashed">
-                                    @SuccessTicketCode
-                                </div>
-                                <p class="small text-muted mt-3">Vui lòng xuất trình mã này khi check-in tại sự kiện.</p>
-                            </div>
-                        }
+                        </div>
 
-                        <!-- Action Area -->
-                        @if (Status != BookingStatus.Success)
+                        <button class="btn @(isSoldOut ? "btn-secondary" : "btn-primary") w-100 py-3 fw-bold shadow-sm" 
+                                disabled="@(isSoldOut || IsProcessing)"
+                                @onclick="BookTicketAsync">
+                            @if (IsProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Đang xử lý...</span>
+                            }
+                            else if (isSoldOut)
+                            {
+                                <i class="bi bi-x-circle-fill me-2"></i>
+                                <span>Sự Kiện Hết Vé</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-ticket-perforated-fill me-2"></i>
+                                <span>Xác Nhận Đặt Vé</span>
+                            }
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(Message))
                         {
-                                    <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" 
-                                            style="border-radius: var(--radius-md); font-size: 1.1rem; transition: all 0.3s;"
-                                            disabled="@(Status == BookingStatus.Processing || RemainingSeats <= 0)"
-                                            @onclick="BookTicketAsync">
-                                        @if (Status == BookingStatus.Processing)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2"></span>
-                                            <span>Đang xử lý giao dịch...</span>
-                                        }
-                                        else if (RemainingSeats <= 0)
-                                        {
-                                            <i class="bi bi-x-circle-fill me-2"></i>
-                                            <span>Sự Kiện Đã Hết Vé</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-ticket-perforated-fill me-2"></i>
-                                            <span>Xác Nhận Đặt Vé</span>
-                                        }
-                                    </button>
-                        }
-                        
-                        @if (!string.IsNullOrEmpty(ClickMessage))
-                        {
-                            <div class="alert alert-success mt-3 text-center fw-bold">
-                                @ClickMessage
+                            <div class="alert @(IsSuccess ? "alert-success" : "alert-danger") mt-3 text-center fw-bold">
+                                @Message
                             </div>
                         }
                     </div>
@@ -126,71 +91,50 @@
     </main>
 </div>
 
-<style>
-    .booking-card {
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        background: var(--card-bg, #ffffff);
-    }
-    .text-shadow {
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-    }
-    .ticket-success-card {
-        background-color: rgba(25, 135, 84, 0.05);
-        border: 1px dashed var(--success-color, #198754);
-        border-radius: var(--radius-md);
-    }
-    .border-dashed {
-        border-style: dashed !important;
-    }
-</style>
-
 @code {
     [Parameter]
     public Guid EventId { get; set; }
 
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-    [Inject]
-    private IJSRuntime JS { get; set; } = default!;
-
-    private Event? EventItem;
-    private int RemainingSeats;
-    private double ProgressPercent => EventItem?.Venue.MaxCapacity > 0 
-        ? ((double)EventItem.RegisteredCount / EventItem.Venue.MaxCapacity) * 100 
-        : 0;
-
+    private EventDto? EventItem;
     private HubConnection? hubConnection;
+    private bool IsProcessing = false;
+    private string Message = "";
+    private bool IsSuccess = false;
 
-    private enum BookingStatus { Idle, Processing, Success, Error }
-    private BookingStatus Status = BookingStatus.Idle;
-    
-    private string? ErrorMessage;
-    private string? SuccessTicketCode;
-    private string? ClickMessage;
+    public class EventDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string VenueName { get; set; } = string.Empty;
+        public int MaxCapacity { get; set; }
+        public int RegisteredCount { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            using var scope = ScopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<DAL.Data.AppDbContext>();
-
-            EventItem = await dbContext.Events
+            // Lấy data bằng Entity Framework (viết theo style của QuiNC)
+            var ev = await DbContext.Events
                 .Include(e => e.Venue)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == EventId);
 
-            if (EventItem != null)
+            if (ev != null)
             {
-                RemainingSeats = EventItem.Venue.MaxCapacity - EventItem.RegisteredCount;
+                EventItem = new EventDto
+                {
+                    Id = ev.Id,
+                    Title = ev.Title,
+                    VenueName = ev.Venue.Name,
+                    MaxCapacity = ev.Venue.MaxCapacity,
+                    RegisteredCount = ev.RegisteredCount
+                };
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Lỗi khởi tạo: " + ex.Message;
-            Status = BookingStatus.Error;
+            Console.WriteLine("Lỗi load chi tiết sự kiện: " + ex.Message);
         }
     }
 
@@ -202,6 +146,7 @@
             {
                 try
                 {
+                    // Khởi tạo connection y hệt DashboardComponent
                     hubConnection = new HubConnectionBuilder()
                         .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
                         {
@@ -209,21 +154,18 @@
                             {
                                 if (message is HttpClientHandler clientHandler)
                                     clientHandler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                else if (message is SocketsHttpHandler socketsHandler)
+                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += (sender, cert, chain, sslErrors) => true;
                                 return message;
                             };
                         })
-                        .WithAutomaticReconnect()
                         .Build();
 
-                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remaining) =>
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (id, remainingSeats) =>
                     {
-                        if (eventId == EventId)
+                        if (EventItem != null && EventItem.Id == id)
                         {
-                            RemainingSeats = remaining;
-                            if (EventItem != null)
-                            {
-                                EventItem.RegisteredCount = EventItem.Venue.MaxCapacity - remaining;
-                            }
+                            EventItem.RegisteredCount = EventItem.MaxCapacity - remainingSeats;
                             InvokeAsync(StateHasChanged);
                         }
                     });
@@ -232,7 +174,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Lỗi SignalR: " + ex.Message);
+                    Console.WriteLine("Lỗi khởi tạo SignalR Client (Booking): " + ex.Message);
                 }
             });
         }
@@ -240,8 +182,39 @@
 
     private async Task BookTicketAsync()
     {
-        ClickMessage = "Hệ thống C# đã nhận được tín hiệu bấm nút của bạn vào lúc " + DateTime.Now.ToString("HH:mm:ss");
+        if (EventItem == null || IsProcessing) return;
+
+        IsProcessing = true;
+        Message = "";
         StateHasChanged();
+
+        try
+        {
+            // Lấy đại 1 user đầu tiên trong DB để test vì Auth đã gỡ bỏ khỏi Blazor
+            var user = await DbContext.Users.FirstOrDefaultAsync();
+            if (user == null)
+            {
+                Message = "Không có user nào trong hệ thống để test.";
+                IsSuccess = false;
+                return;
+            }
+
+            // Book vé
+            var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, user.Id);
+            
+            IsSuccess = true;
+            Message = $"🎉 Đặt vé thành công! Mã vé: {ticketCode}";
+        }
+        catch (Exception ex)
+        {
+            IsSuccess = false;
+            Message = ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+            StateHasChanged();
+        }
     }
 
     public async ValueTask DisposeAsync()
