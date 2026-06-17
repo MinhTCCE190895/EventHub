@@ -22,10 +22,24 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Organizer.Email" class="form-label fw-medium"></label>
-                            <input asp-for="Organizer.Email" type="email" class="form-control" placeholder="name@example.com" />
-                            <span asp-validation-for="Organizer.Email" class="text-danger small"></span>
-                        </div>
+                <label asp-for="Organizer.Email" class="form-label">Email <span class="text-danger">*</span></label>
+                <input asp-for="Organizer.Email" class="form-control" placeholder="example@unieventhub.com" />
+                <span asp-validation-for="Organizer.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Organizer.Password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                <input asp-for="Organizer.Password" class="form-control" placeholder="••••••••" />
+                <span asp-validation-for="Organizer.Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Organizer.ConfirmPassword" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                <input asp-for="Organizer.ConfirmPassword" class="form-control" placeholder="••••••••" />
+                <span asp-validation-for="Organizer.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
 
                         <div class="mb-4">
                             <label asp-for="Organizer.StudentCode" class="form-label fw-medium"></label>
