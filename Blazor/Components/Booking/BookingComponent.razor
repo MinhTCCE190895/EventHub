@@ -91,8 +91,6 @@
                         <!-- Action Area -->
                         @if (Status != BookingStatus.Success)
                         {
-                            <AuthorizeView>
-                                <Authorized>
                                     <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" 
                                             style="border-radius: var(--radius-md); font-size: 1.1rem; transition: all 0.3s;"
                                             disabled="@(Status == BookingStatus.Processing || RemainingSeats <= 0)"
@@ -113,18 +111,6 @@
                                             <span>Xác Nhận Đặt Vé</span>
                                         }
                                     </button>
-                                </Authorized>
-                                <NotAuthorized>
-                                    <div class="alert alert-warning text-center">
-                                        <i class="bi bi-lock-fill fs-3 mb-2 d-block"></i>
-                                        <strong>Chưa đăng nhập!</strong>
-                                        <p class="mb-3 mt-2">Bạn cần đăng nhập bằng tài khoản Sinh viên để tiếp tục đặt vé.</p>
-                                        <a href="https://localhost:7298/Account/Login?returnUrl=https://localhost:7170/events/@EventId/book" class="btn btn-dark px-4 fw-bold shadow-sm">
-                                            Đi tới trang Đăng nhập
-                                        </a>
-                                    </div>
-                                </NotAuthorized>
-                            </AuthorizeView>
                         }
                         
                         @if (!string.IsNullOrEmpty(ClickMessage))
