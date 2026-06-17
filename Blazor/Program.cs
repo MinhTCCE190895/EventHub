@@ -12,7 +12,7 @@ namespace Blazor
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
+                .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
@@ -26,7 +26,6 @@ namespace Blazor
                     options.LoginPath = "/Account/Login";
                 });
             builder.Services.AddCascadingAuthenticationState();
-            builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider>();
 
             var app = builder.Build();
 
@@ -38,7 +37,7 @@ namespace Blazor
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseAntiforgery();

@@ -1,4 +1,5 @@
 @page "/events/{EventId:guid}/book"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @using DAL.Data
 @using DAL.Entities
@@ -59,7 +60,7 @@
                         </div>
 
                         <button class="btn @(isSoldOut ? "btn-secondary" : "btn-primary") w-100 py-3 fw-bold shadow-sm" 
-                                disabled="@(isSoldOut || IsProcessing)"
+                                disabled="@(isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student")"
                                 @onclick="BookTicketAsync">
                             @if (IsProcessing)
                             {
@@ -78,6 +79,19 @@
                             }
                         </button>
 
+                        @if (CurrentUserId == null)
+                        {
+                            <div class="alert alert-warning mt-3 text-center small">
+                                🔒 Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> làm sinh viên để đặt vé.
+                            </div>
+                        }
+                        else if (CurrentUserRole != "Student")
+                        {
+                            <div class="alert alert-danger mt-3 text-center small">
+                                🚫 Chỉ tài khoản sinh viên mới được đặt vé.
+                            </div>
+                        }
+
                         @if (!string.IsNullOrEmpty(Message))
                         {
                             <div class="alert @(IsSuccess ? "alert-success" : "alert-danger") mt-3 text-center fw-bold">
@@ -92,6 +106,9 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
     [Parameter]
     public Guid EventId { get; set; }
 
@@ -100,6 +117,8 @@
     private bool IsProcessing = false;
     private string Message = "";
     private bool IsSuccess = false;
+    private Guid? CurrentUserId;
+    private string? CurrentUserRole;
 
     public class EventDto
     {
@@ -112,6 +131,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthState != null)
+        {
+            var authState = await AuthState;
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(nameIdentifier, out var userId))
+                {
+                    CurrentUserId = userId;
+                    CurrentUserRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                }
+            }
+        }
+
         try
         {
             // Lấy data bằng Entity Framework (viết theo style của QuiNC)
@@ -184,23 +218,28 @@
     {
         if (EventItem == null || IsProcessing) return;
 
+        if (CurrentUserId == null)
+        {
+            Message = "Bạn cần đăng nhập trước khi thực hiện đặt vé.";
+            IsSuccess = false;
+            return;
+        }
+
+        if (CurrentUserRole != "Student")
+        {
+            Message = "Chỉ tài khoản sinh viên mới được phép đặt vé.";
+            IsSuccess = false;
+            return;
+        }
+
         IsProcessing = true;
         Message = "";
         StateHasChanged();
 
         try
         {
-            // Lấy đại 1 user đầu tiên trong DB để test vì Auth đã gỡ bỏ khỏi Blazor
-            var user = await DbContext.Users.FirstOrDefaultAsync();
-            if (user == null)
-            {
-                Message = "Không có user nào trong hệ thống để test.";
-                IsSuccess = false;
-                return;
-            }
-
-            // Book vé
-            var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, user.Id);
+            // Book vé dùng User ID thật từ Auth
+            var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, CurrentUserId.Value);
             
             IsSuccess = true;
             Message = $"🎉 Đặt vé thành công! Mã vé: {ticketCode}";
@@ -215,6 +254,13 @@
             IsProcessing = false;
             StateHasChanged();
         }
+    }
+
+    private string GetLoginUrl()
+    {
+        var isHttps = Navigation.Uri.StartsWith("https");
+        var baseLoginUrl = isHttps ? "https://localhost:7298/Account/Login" : "http://localhost:5259/Account/Login";
+        return $"{baseLoginUrl}?returnUrl={Uri.EscapeDataString(Navigation.Uri)}";
     }
 
     public async ValueTask DisposeAsync()
