@@ -129,6 +129,8 @@ graph TD
   - Viết script kiểm thử tự động `test.js` dùng Puppeteer để mô phỏng và xác thực luồng đặt vé: kết nối WebSocket thành công, click nút đặt vé hoạt động, cập nhật số lượng chỗ trống real-time qua SignalR và render thông báo thành công mà không bị sập circuit.
   - Khôi phục cơ chế xác thực toàn diện (CascadingAuthenticationState) và kiểm tra quyền đặt vé (chỉ cho phép user đăng nhập với vai trò `Student`).
   - Gỡ bỏ hoàn toàn logic mock user cũ dùng để test trong `BookingComponent.razor`.
+  - Thiết kế và phát triển giao diện premium Dark Mode Deep Tech mới cho Live Dashboard (`DashboardComponent.razor` & `DashboardComponent.razor.css`).
+  - Tích hợp biểu đồ xu hướng SVG Area Chart (gradient fill), thẻ KPI động với hiệu ứng pulse, cùng với Live Activity Log hiển thị lịch sử đặt vé trực tiếp.
 - **2026-06-16 (Antigravity)**:
   - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
   - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
