@@ -26,6 +26,7 @@ namespace Blazor
                     options.LoginPath = "/Account/Login";
                 });
             builder.Services.AddCascadingAuthenticationState();
+            builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider>();
 
             var app = builder.Build();
 

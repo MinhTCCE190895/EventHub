@@ -1,5 +1,4 @@
 @page "/events/{EventId:guid}/book"
-@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.SignalR.Client
 @using BLL.Services
@@ -127,6 +126,13 @@
                                 </NotAuthorized>
                             </AuthorizeView>
                         }
+                        
+                        @if (!string.IsNullOrEmpty(ClickMessage))
+                        {
+                            <div class="alert alert-success mt-3 text-center fw-bold">
+                                @ClickMessage
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -176,6 +182,7 @@
     
     private string? ErrorMessage;
     private string? SuccessTicketCode;
+    private string? ClickMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -247,68 +254,8 @@
 
     private async Task BookTicketAsync()
     {
-        await JS.InvokeVoidAsync("alert", "Nút đặt vé đã được bấm! C# đang xử lý...");
-        
-        Status = BookingStatus.Processing;
-        ErrorMessage = null;
+        ClickMessage = "Hệ thống C# đã nhận được tín hiệu bấm nút của bạn vào lúc " + DateTime.Now.ToString("HH:mm:ss");
         StateHasChanged();
-
-        try
-        {
-            // Xác thực user chuẩn Blazor
-            var authState = await AuthStateTask!;
-            if (authState == null) throw new Exception("Không thể tải trạng thái đăng nhập.");
-
-            var user = authState.User;
-
-            if (user.Identity == null || !user.Identity.IsAuthenticated)
-            {
-                throw new UnauthorizedAccessException("Bạn chưa đăng nhập.");
-            }
-
-            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-            if (idClaim == null || !Guid.TryParse(idClaim.Value, out var studentId))
-            {
-                throw new InvalidOperationException("Không thể xác định danh tính tài khoản của bạn.");
-            }
-
-            // Dùng Scope mới để thực thi BookingService (chống lỗi DbContext Concurrency)
-            using var scope = ScopeFactory.CreateScope();
-            var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-
-            var ticketCode = await bookingService.BookTicketAsync(EventId, studentId);
-
-            SuccessTicketCode = ticketCode;
-            Status = BookingStatus.Success;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            Status = BookingStatus.Error;
-            ErrorMessage = "Có người khác vừa đặt vé, hệ thống đang bị quá tải nhẹ. Vui lòng thử lại!";
-            
-            // Sync lại số ghế
-            using var scope = ScopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<DAL.Data.AppDbContext>();
-            var latestEvent = await dbContext.Events.AsNoTracking().Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == EventId);
-            if (latestEvent != null)
-            {
-                EventItem = latestEvent;
-                RemainingSeats = latestEvent.Venue.MaxCapacity - latestEvent.RegisteredCount;
-            }
-        }
-        catch (Exception ex)
-        {
-            Status = BookingStatus.Error;
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            if (Status == BookingStatus.Processing)
-            {
-                Status = BookingStatus.Idle;
-            }
-            StateHasChanged();
-        }
     }
 
     public async ValueTask DisposeAsync()
