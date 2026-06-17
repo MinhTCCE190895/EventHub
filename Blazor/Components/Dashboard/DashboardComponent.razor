@@ -14,10 +14,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
                 <span class="text-primary fw-bold text-uppercase tracking-wider small">Real-time Analytics</span>
-                <h1 class="display-5 fw-bold text-white mb-0">🚀 Live Activity Dashboard</h1>
+                <h1 class="display-5 fw-bold mb-0">🚀 Live Activity Dashboard</h1>
                 <p class="text-muted mb-0">Theo dõi tiến độ đặt vé và hoạt động hệ thống theo thời gian thực</p>
             </div>
-            <div class="d-flex align-items-center bg-dark px-3 py-2 rounded-pill border border-secondary border-opacity-25">
+            <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
                 <span class="pulse-green"></span>
                 <span class="text-success small fw-bold ms-2">LIVE MONITORING ACTIVE</span>
             </div>
@@ -58,7 +58,7 @@
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
                         <span class="text-muted small fw-bold text-uppercase">Vé đã đặt (Live)</span>
-                        <h2 class="display-6 fw-bold text-white mb-0 mt-1 glow-text-blue">
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-blue">
                             @TotalRegisteredCount
                         </h2>
                         <span class="text-success small mt-1">
@@ -74,7 +74,7 @@
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
                         <span class="text-muted small fw-bold text-uppercase">Tỷ lệ lấp đầy</span>
-                        <h2 class="display-6 fw-bold text-white mb-0 mt-1 glow-text-amber">
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-amber">
                             @FillRate.ToString("F1")%
                         </h2>
                         <span class="text-muted small mt-1">
@@ -90,7 +90,7 @@
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
                         <span class="text-muted small fw-bold text-uppercase">Tốc độ đặt vé</span>
-                        <h2 class="display-6 fw-bold text-white mb-0 mt-1 glow-text-green">
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-green">
                             @Velocity.ToString("F1") <span class="small fs-6 text-muted">vé/phút</span>
                         </h2>
                         <span class="text-success small mt-1">
@@ -110,16 +110,16 @@
                     <!-- Dynamic Live Trend Chart (SVG) -->
                     <div class="card-glass">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold text-white mb-0">📈 Biểu Đồ Xu Hướng Đặt Vé (Live)</h5>
-                            <span class="badge bg-primary bg-opacity-25 text-primary-light px-2.5 py-1 text-xs fw-semibold">10 ticks gần nhất</span>
+                            <h5 class="fw-bold mb-0">📈 Biểu Đồ Xu Hướng Đặt Vé (Live)</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 text-xs fw-semibold">10 ticks gần nhất</span>
                         </div>
                         
                         <div class="chart-wrapper">
                             <svg class="svg-chart" viewBox="0 0 500 200" preserveAspectRatio="none">
                                 <defs>
                                     <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#3b82f6" />
-                                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+                                        <stop offset="0%" stop-color="var(--primary)" />
+                                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
                                     </linearGradient>
                                 </defs>
 
@@ -147,7 +147,7 @@
 
                     <!-- Live Event Seats Progress -->
                     <div class="card-glass">
-                        <h5 class="fw-bold text-white mb-4">📊 Trạng Thái Vé Sự Kiện Đang Diễn Ra</h5>
+                        <h5 class="fw-bold mb-4">📊 Trạng Thế Vé Sự Kiện Đang Diễn Ra</h5>
                         <div class="event-progress-list">
                             @foreach (var ev in Events ?? new())
                             {
@@ -159,7 +159,7 @@
 
                                 <div class="event-progress-item">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="fw-bold text-white text-truncate" style="max-width: 60%;" title="@ev.Title">@ev.Title</span>
+                                        <span class="fw-bold text-truncate" style="max-width: 60%;" title="@ev.Title">@ev.Title</span>
                                         <span class="@textClass fw-bold small">
                                             @(isSoldOut ? "Đã hết vé" : $"Còn {remaining} / {ev.MaxCapacity} chỗ")
                                         </span>
@@ -176,7 +176,7 @@
                 <!-- Right Column: Live Event Log -->
                 <div class="card-glass d-flex flex-column h-100">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-white mb-0">⚡ Nhật Ký Hoạt Động (Live Log)</h5>
+                        <h5 class="fw-bold mb-0">⚡ Nhật Ký Hoạt Động (Live Log)</h5>
                         <div class="spinner-grow spinner-grow-sm text-success" role="status"></div>
                     </div>
                     
@@ -194,8 +194,8 @@
                                         <span class="badge @log.StatusClass">@log.StatusText</span>
                                         <span class="log-time">@log.Timestamp.ToString("HH:mm:ss")</span>
                                     </div>
-                                    <div class="text-white-50 small mt-1">@log.Message</div>
-                                    <div class="text-muted text-xs" style="font-size: 0.7rem;">Sự kiện: <span class="text-white-50">@log.EventTitle</span></div>
+                                    <div class="text-dark small mt-1" style="opacity: 0.85;">@log.Message</div>
+                                    <div class="text-muted text-xs" style="font-size: 0.7rem;">Sự kiện: <span class="text-dark" style="opacity: 0.75;">@log.EventTitle</span></div>
                                 </div>
                             }
                         }
@@ -209,18 +209,17 @@
 @code {
     private List<DashboardEventDto>? Events;
     private HubConnection? hubConnection;
-    private System.Timers.Timer? mockTimer;
     private bool IsLoading = true;
 
     // KPI and Stats
     private int TotalRegisteredCount = 0;
     private int TotalCapacity = 0;
     private double FillRate = 0;
-    private double Velocity = 1.2;
+    private double Velocity = 0;
     private int RecentBookingsCount = 0;
 
     // SVG Chart Data Points (Last 10 intervals)
-    private List<int> ChartData = new() { 120, 125, 122, 130, 135, 131, 142, 145, 140, 148 };
+    private List<int> ChartData = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     // Activity Log Entries
     private List<ActivityLog> LiveLogs = new();
@@ -244,15 +243,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Bật Trạng thái Skeleton Loading
         IsLoading = true;
-        await Task.Delay(1000); // Giả lập thời gian kết nối/load dữ liệu ban đầu
+        await Task.Delay(800); // Giả lập thời gian load ban đầu cực nhanh
 
         try
         {
             // Seed log hệ thống ban đầu
             LiveLogs.Add(new() { Message = "Hệ thống giám sát Live Dashboard khởi chạy thành công.", EventTitle = "Hệ Thống", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "SYSTEM" });
-            LiveLogs.Add(new() { Message = "Đang kết nối WebSocket tới máy chủ SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-500), StatusClass = "badge-warning", StatusText = "CONNECTING" });
+            LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "LISTENING" });
 
             // 2. Tải danh sách các sự kiện đang hoạt động từ cơ sở dữ liệu
             var now = DateTime.UtcNow;
@@ -270,8 +268,8 @@
 
             CalculateKpis();
 
-            // Cập nhật giá trị xuất phát của đồ thị khớp với số vé thực tế
-            ChartData = Enumerable.Range(1, 10).Select(i => Math.Max(0, TotalRegisteredCount - (10 - i) * 2)).ToList();
+            // Khởi tạo đồ thị với số vé thực tế
+            ChartData = Enumerable.Repeat(TotalRegisteredCount, 10).ToList();
         }
         catch (Exception ex)
         {
@@ -309,14 +307,14 @@
 
                     hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remainingSeats) =>
                     {
-                        HandleTicketUpdate(eventId, remainingSeats, false);
+                        HandleTicketUpdate(eventId, remainingSeats);
                     });
 
                     await hubConnection.StartAsync();
 
                     await InvokeAsync(() =>
                     {
-                        LiveLogs.Insert(0, new() { Message = "Kết nối SignalR hoạt động qua WebSocket.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "CONNECTED" });
+                        LiveLogs.Insert(0, new() { Message = "Đã thiết lập kết nối SignalR thành công.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "CONNECTED" });
                         StateHasChanged();
                     });
                 }
@@ -325,16 +323,11 @@
                     Console.WriteLine("Lỗi khởi tạo SignalR (Dashboard): " + ex.Message);
                     await InvokeAsync(() =>
                     {
-                        LiveLogs.Insert(0, new() { Message = $"Không thể thiết lập SignalR: {ex.Message}. Sử dụng cơ chế dự phòng Mock Data.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-danger", StatusText = "OFFLINE" });
+                        LiveLogs.Insert(0, new() { Message = $"Lỗi kết nối SignalR: {ex.Message}. Vui lòng kiểm tra lại dịch vụ.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-danger", StatusText = "DISCONNECTED" });
                         StateHasChanged();
                     });
                 }
             });
-
-            // 4. Khởi tạo Timer giả lập Mock Data (Đúng theo yêu cầu 4.2 của User)
-            mockTimer = new System.Timers.Timer(4000);
-            mockTimer.Elapsed += async (sender, e) => await SimulateBookingActivityAsync();
-            mockTimer.Start();
         }
     }
 
@@ -348,7 +341,7 @@
         }
     }
 
-    private void HandleTicketUpdate(Guid eventId, int remainingSeats, bool isMock)
+    private void HandleTicketUpdate(Guid eventId, int remainingSeats)
     {
         if (Events == null) return;
 
@@ -361,19 +354,19 @@
 
             if (diff != 0)
             {
-                // Cập nhật thống kê
+                // Cập nhật thống kê thực tế
                 CalculateKpis();
                 RecentBookingsCount += Math.Abs(diff);
-                Velocity = Velocity * 0.7 + Math.Abs(diff) * 0.3 * 15; // Smooth velocity formula
+                Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; // Cập nhật tốc độ giao dịch thực tế
 
                 // Trượt dữ liệu đồ thị
                 ChartData.Add(TotalRegisteredCount);
                 if (ChartData.Count > 10) ChartData.RemoveAt(0);
 
-                // Thêm vào Log
+                // Thêm vào Nhật Ký
                 var logMessage = diff > 0 
-                    ? $"{(isMock ? "[Simulated] " : "")}Người dùng đặt vé thành công (+{diff} vé)" 
-                    : $"{(isMock ? "[Simulated] " : "")}Người dùng hủy đặt vé thành công ({diff} vé)";
+                    ? $"Cập nhật thời gian thực: Đăng ký vé thành công (+{diff} vé)" 
+                    : $"Cập nhật thời gian thực: Hủy đăng ký vé thành công ({diff} vé)";
                 
                 LiveLogs.Insert(0, new()
                 {
@@ -388,34 +381,6 @@
 
                 InvokeAsync(StateHasChanged);
             }
-        }
-    }
-
-    private async Task SimulateBookingActivityAsync()
-    {
-        if (Events == null || !Events.Any()) return;
-
-        // Chọn ngẫu nhiên một sự kiện để mock giao dịch đặt vé
-        var random = new Random();
-        var idx = random.Next(Events.Count);
-        var selectedEvent = Events[idx];
-
-        int remaining = selectedEvent.MaxCapacity - selectedEvent.RegisteredCount;
-        if (remaining > 0)
-        {
-            // 85% cơ hội đặt vé, 15% hủy vé
-            bool isBooking = random.Next(100) < 85;
-            int change = isBooking ? 1 : -1;
-
-            // Đảm bảo không hủy dưới mức 0
-            if (selectedEvent.RegisteredCount == 0 && change < 0) change = 1;
-
-            int newRemaining = selectedEvent.MaxCapacity - (selectedEvent.RegisteredCount + change);
-
-            await InvokeAsync(() =>
-            {
-                HandleTicketUpdate(selectedEvent.Id, newRemaining, true);
-            });
         }
     }
 
@@ -459,11 +424,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (mockTimer is not null)
-        {
-            mockTimer.Stop();
-            mockTimer.Dispose();
-        }
         if (hubConnection is not null)
         {
             await hubConnection.DisposeAsync();
