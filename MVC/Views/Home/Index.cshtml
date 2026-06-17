@@ -1,8 +1,49 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Bắt đầu - UniEvent Hub";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 65vh; padding: 2rem 1rem;">
+    <!-- Minimalist Slogan & Intro Block -->
+    <div class="mb-5">
+        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 56px; height: 56px; font-size: 1.8rem; background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        
+        <span class="d-block text-primary fw-bold text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 2px;">
+            UniEvent Hub Authentication Portal
+        </span>
+        
+        <h1 class="fw-extrabold text-dark mb-3" style="font-size: 2.5rem; letter-spacing: -1.5px; font-weight: 800;">
+            Kết nối & Khám phá <span class="text-primary">Sự kiện</span>
+        </h1>
+        
+        <p class="text-muted mx-auto" style="max-width: 520px; font-size: 0.95rem; line-height: 1.6;">
+            Chào mừng bạn đến với hệ thống quản lý sự kiện nội bộ. Vui lòng đăng nhập bằng tài khoản sinh viên/tổ chức để tiếp cận các sự kiện mới nhất, xem dự báo thời tiết tại Campus và đặt chỗ nhanh chóng.
+        </p>
+    </div>
+
+    <!-- Portal Cards Navigation -->
+    <div class="d-flex flex-column flex-sm-row gap-3 w-100 justify-content-center" style="max-width: 500px;">
+        <!-- Card Đăng nhập -->
+        <a asp-controller="Account" asp-action="Login" class="card-portal-minimal flex-fill text-decoration-none">
+            <div class="portal-icon">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </div>
+            <div class="portal-info text-start">
+                <span class="portal-title">Đăng nhập</span>
+                <span class="portal-desc">Truy cập tài khoản của bạn</span>
+            </div>
+        </a>
+
+        <!-- Card Đăng ký -->
+        <a asp-controller="Account" asp-action="Register" class="card-portal-minimal flex-fill text-decoration-none">
+            <div class="portal-icon portal-icon-secondary">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <div class="portal-info text-start">
+                <span class="portal-title">Đăng ký</span>
+                <span class="portal-desc">Tạo tài khoản sinh viên</span>
+            </div>
+        </a>
+    </div>
 </div>

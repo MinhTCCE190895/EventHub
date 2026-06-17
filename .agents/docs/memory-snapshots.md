@@ -152,6 +152,7 @@ graph TD
     - Thay thế `AuthenticationStateProvider` bằng `[CascadingParameter] Task<AuthenticationState>` và `<AuthorizeView>` để bắt chính xác trạng thái đăng nhập trong Blazor 8.
     - Cải tiến toàn diện UI/UX: Áp dụng Glassmorphism, Ticket Mockup UI, và Progress bar số lượng vé real-time theo chuẩn `SYSTEM_DESIGN_STYLEGUIDE`.
     - Dọn dẹp logic async/await, loại bỏ Timeout dễ gây treo `DbContext`.
+  - Thiết kế cổng Portal trang chủ MVC tối giản và tích hợp giao diện Top Navbar dạng Glassmorphism thay thế Sidebar cho các trang Auth/Portal.
 - `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
 - **2026-06-14**: 
   - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).

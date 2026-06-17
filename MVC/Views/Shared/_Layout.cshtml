@@ -2,6 +2,7 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var useTopNavbar = currentController == "Account" || (currentController == "Home" && currentAction == "Index");
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var userName = User.Identity?.Name;
     var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -19,7 +20,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container @(useTopNavbar ? "layout-top-nav" : "")">
         <!-- Sleek Left Sidebar -->
         <aside class="app-sidebar">
             <a class="sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
@@ -86,15 +87,58 @@
 
         <!-- Main Content Wrapper -->
         <div class="app-content">
-            <!-- Mobile Toggle Header (Visible only on smaller screens) -->
-            <header class="d-lg-none bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
-                <a class="sidebar-brand mb-0 fs-5" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-shield-check text-primary"></i> UniEvent Hub
-                </a>
-                <button class="btn btn-outline-primary btn-sm border-0" type="button" onclick="toggleSidebar()">
-                    <i class="bi bi-list fs-4"></i>
-                </button>
-            </header>
+            @if (useTopNavbar)
+            {
+                <!-- Sleek Top Navbar for Auth Pages and Home Page -->
+                <header class="app-navbar-top">
+                    <div class="navbar-top-container">
+                        <a class="navbar-top-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-shield-check"></i> UniEvent Hub
+                        </a>
+                        <div class="navbar-top-actions">
+                            @if (isAuthenticated)
+                            {
+                                @if (userRole == "Admin")
+                                {
+                                    <a class="navbar-top-link" asp-controller="Admin" asp-action="Index">
+                                        <i class="bi bi-speedometer2"></i> Admin Panel
+                                    </a>
+                                }
+                                <div class="d-flex align-items-center gap-2 border-start ps-3">
+                                    <span class="fw-semibold text-dark" style="font-size: 0.9rem;">Chào, @userName</span>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle p-1" title="Đăng xuất">
+                                            <i class="bi bi-power fs-5"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <a class="navbar-top-link" asp-controller="Account" asp-action="Login">
+                                    Đăng nhập
+                                </a>
+                                <a class="btn btn-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold text-white text-decoration-none" asp-controller="Account" asp-action="Register">
+                                    Đăng ký
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </header>
+            }
+            else
+            {
+                <!-- Mobile Toggle Header (Visible only on smaller screens) -->
+                <header class="d-lg-none bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+                    <a class="sidebar-brand mb-0 fs-5" asp-area="" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-shield-check text-primary"></i> UniEvent Hub
+                    </a>
+                    <button class="btn btn-outline-primary btn-sm border-0" type="button" onclick="toggleSidebar()">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                </header>
+            }
 
             <main class="content-body">
                 @RenderBody()
