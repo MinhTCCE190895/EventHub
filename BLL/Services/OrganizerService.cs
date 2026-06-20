@@ -55,6 +55,7 @@ public class OrganizerService : IOrganizerService
         newOrganizer.Role = "Organizer";
         newOrganizer.IsActive = true;
         newOrganizer.CreatedAt = DateTime.UtcNow;
+        newOrganizer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
         await _userRepository.AddAsync(newOrganizer, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);

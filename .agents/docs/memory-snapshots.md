@@ -131,6 +131,8 @@ graph TD
   - Gỡ bỏ hoàn toàn logic mock user cũ dùng để test trong `BookingComponent.razor`.
   - Thiết kế và phát triển giao diện premium Dark Mode Deep Tech mới cho Live Dashboard (`DashboardComponent.razor` & `DashboardComponent.razor.css`).
   - Tích hợp biểu đồ xu hướng SVG Area Chart (gradient fill), thẻ KPI động với hiệu ứng pulse, cùng với Live Activity Log hiển thị lịch sử đặt vé trực tiếp.
+- **2026-06-17 (quinc)**:
+  - Tạm thời tháo gỡ các UI Bookmark (menu link Bookmarks khỏi layout, nút bookmark nổi trên thẻ sự kiện ở Grid/List) và xóa hoàn toàn các file `BookmarkService.cs`, `IBookmarkService.cs` (BLL) cũng như thư mục `RazorPages/Pages/Bookmarks` cùng file đăng ký DI để khớp chính xác phạm vi backlog.
 - **2026-06-16 (Antigravity)**:
   - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
   - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.

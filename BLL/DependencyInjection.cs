@@ -14,9 +14,7 @@ public static class DependencyInjection
             .SetApplicationName("UniEventHub");
 
         services.AddScoped<ISearchService, SearchService>();
-        services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IBookingService, BookingService>();
-        
         services.AddSignalR();
         services.AddScoped<IOrganizerService, OrganizerService>();
         services.AddScoped<IUserService, UserService>();
