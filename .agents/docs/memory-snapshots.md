@@ -123,6 +123,9 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
+- **2026-06-20 (Antigravity)**:
+  - Cấu hình lại điều hướng chính (routing) của dự án Blazor: chuyển trang Live Dashboard làm trang mặc định (`/`), chuyển trang danh sách sự kiện sang đường dẫn `/events`.
+  - Cập nhật liên kết điều hướng tương ứng tại `NavMenu.razor` với thuộc tính `Match="NavLinkMatch.All"`.
 - **2026-06-17 (Antigravity)**:
   - Khắc phục triệt để lỗi sập WebSocket/mất kết nối của Blazor Server (`System.MissingMethodException` liên quan đến SignalR Client).
   - Hạ cấp `Microsoft.AspNetCore.SignalR.Client` từ `9.0` xuống `8.0.*` trong `Blazor.csproj` để tương thích hoàn toàn với SDK .NET 8.
