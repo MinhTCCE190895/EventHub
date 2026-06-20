@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using MVC.Models;
 using System.Diagnostics;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace MVC.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

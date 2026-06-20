@@ -1,6 +1,8 @@
 using BLL;
 using DAL;
 using DAL.Data;
+using DAL.Data;
+using RazerPages.Configurations;
 
 namespace RazerPages
 {
@@ -10,8 +12,10 @@ namespace RazerPages
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddRazorPages();
+            // Modular Configurations
+            builder.Services.AddCustomAuthorization();
+            builder.Services.AddCustomAuthentication();
+            builder.Services.AddCustomDataProtection();
 
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);

@@ -1,5 +1,8 @@
 using BLL;
 using DAL;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using MVC.Configurations;
 
 namespace MVC
 {
@@ -9,22 +12,14 @@ namespace MVC
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-
+            // Modular Configurations
+            builder.Services.AddCustomAuthorization();
+            builder.Services.AddCustomAuthentication();
+            builder.Services.AddCustomDataProtection();
+            
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
-
-            // Register Cookie Authentication
-            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.LoginPath = "/Account/Login";
-                    options.AccessDeniedPath = "/Account/AccessDenied";
-                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
-                    options.SlidingExpiration = true;
-                });
 
             var app = builder.Build();
 

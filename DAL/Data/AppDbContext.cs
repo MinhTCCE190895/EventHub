@@ -1,10 +1,11 @@
 using DAL.Entities;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace DAL.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IDataProtectionKeyContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -25,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<Follow> Follows { get; set; }
     public DbSet<Feedback> Feedbacks { get; set; }
     public DbSet<FeedbackDetail> FeedbackDetails { get; set; }
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

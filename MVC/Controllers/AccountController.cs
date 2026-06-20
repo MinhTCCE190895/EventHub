@@ -2,6 +2,7 @@ using BLL.DTOs;
 using BLL.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MVC.ViewModels;
 using System.Security.Claims;
@@ -21,6 +22,7 @@ public class AccountController : Controller
 
     // GET /Account/Login
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -31,6 +33,7 @@ public class AccountController : Controller
 
     // POST /Account/Login
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
@@ -66,12 +69,19 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
-        if (!string.IsNullOrEmpty(model.ReturnUrl))
+        if (!string.IsNullOrEmpty(model.ReturnUrl) && 
+           (Url.IsLocalUrl(model.ReturnUrl) || 
+            model.ReturnUrl.StartsWith("http://localhost:5129") || 
+            model.ReturnUrl.StartsWith("https://localhost:7129") ||
+            model.ReturnUrl.StartsWith("https://localhost:7170")))
         {
-            if (Url.IsLocalUrl(model.ReturnUrl) || model.ReturnUrl.StartsWith("https://localhost:7170"))
-            {
-                return Redirect(model.ReturnUrl);
-            }
+            return Redirect(model.ReturnUrl);
+        }
+
+        // Nếu là Admin, tự động chuyển hướng sang trang Quản lý ở RazorPages
+        if (user.Role == "Admin")
+        {
+            return Redirect("http://localhost:5129/Organizers");
         }
 
         return RedirectToAction("Index", "Home");
@@ -79,6 +89,7 @@ public class AccountController : Controller
 
     // GET /Account/Register
     [HttpGet]
+    [AllowAnonymous]
     public IActionResult Register()
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -89,6 +100,7 @@ public class AccountController : Controller
 
     // POST /Account/Register
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {

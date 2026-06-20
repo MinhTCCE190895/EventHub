@@ -29,7 +29,47 @@ public static class DbInitializer
         }
         await context.SaveChangesAsync();
 
-        if (!await context.Users.AnyAsync())
+        var studentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+        if (await context.Users.AnyAsync())
+        {
+            var users = await context.Users.ToListAsync();
+            bool hasChanges = false;
+
+            // Reset password cho tất cả user hiện tại thành 123456
+            foreach (var u in users)
+            {
+                // To avoid rehashing every time, check if it matches
+                if (!BCrypt.Net.BCrypt.Verify("123456", u.PasswordHash))
+                {
+                    u.PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456");
+                    hasChanges = true;
+                }
+            }
+
+            // Đảm bảo luôn có ít nhất 1 tài khoản Student để test
+            if (!users.Any(u => u.Id == studentId))
+            {
+                context.Users.Add(new User
+                {
+                    Id = studentId,
+                    FullName = "Khoi Sinh Vien",
+                    Role = "Student",
+                    Email = "khoi.student@fpt.edu.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                });
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                context.Users.UpdateRange(users);
+                await context.SaveChangesAsync();
+            }
+        }
+        else
         {
             // --- Users ---
             var adminId = Guid.NewGuid();
@@ -42,7 +82,7 @@ public static class DbInitializer
                     FullName = "System Administrator",
                     Role = "Admin",
                     Email = "admin@unieventhub.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 },
@@ -52,28 +92,21 @@ public static class DbInitializer
                     FullName = "Nguyen Van Organizer",
                     Role = "Organizer",
                     Email = "organizer@unieventhub.com",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Organizer@123"),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                },
+                new User
+                {
+                    Id = studentId,
+                    FullName = "Khoi Sinh Vien",
+                    Role = "Student",
+                    Email = "khoi.student@fpt.edu.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 }
             );
-            await context.SaveChangesAsync();
-        }
-
-        // Đảm bảo có 1 user sinh viên để test Đặt vé
-        var studentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        if (!await context.Users.AnyAsync(u => u.Id == studentId))
-        {
-            await context.Users.AddAsync(new User
-            {
-                Id = studentId,
-                FullName = "Khoi Sinh Vien",
-                Role = "Student",
-                Email = "khoi.student@fpt.edu.vn",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Student@123"),
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            });
             await context.SaveChangesAsync();
         }
 

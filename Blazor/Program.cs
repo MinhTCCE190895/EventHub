@@ -1,6 +1,8 @@
 using Blazor.Components;
 using BLL;
 using DAL;
+using DAL.Data;
+using Blazor.Configurations;
 
 namespace Blazor
 {
@@ -18,13 +20,10 @@ namespace Blazor
             builder.Services.AddDataAccessLayer(builder.Configuration);
             builder.Services.AddBusinessLogicLayer();
 
-            // Register Cookie Authentication
-            builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    // Vì trang Login nằm bên MVC, cứ để tạm (bên Blazor không có UI login, ta sẽ redirect tay nếu cần)
-                    options.LoginPath = "/Account/Login";
-                });
+            // Modular Configurations
+            builder.Services.AddCustomAuthorization();
+            builder.Services.AddCustomAuthentication();
+            builder.Services.AddCustomDataProtection();
             builder.Services.AddCascadingAuthenticationState();
 
             var app = builder.Build();
