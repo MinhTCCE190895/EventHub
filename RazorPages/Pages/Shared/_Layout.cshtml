@@ -29,6 +29,15 @@
                 <a class="sidebar-link @(currentPage?.StartsWith("/Organizers") == true ? "active" : "")" asp-page="/Organizers/Index">
                     <i class="bi bi-person-badge-fill"></i> Organizers
                 </a>
+                <a class="sidebar-link @(currentPage?.StartsWith("/Categories") == true ? "active" : "")" asp-page="/Categories/Index">
+                    <i class="bi bi-tags-fill"></i> Categories
+                </a>
+                <a class="sidebar-link @(currentPage?.StartsWith("/Tags") == true ? "active" : "")" asp-page="/Tags/Index">
+                    <i class="bi bi-hash"></i> Tags
+                </a>
+                <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
+                    <i class="bi bi-building"></i> Venues
+                </a>
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư
                 </a>

@@ -14,6 +14,9 @@ public static class DependencyInjection
         services.AddSignalR();
         services.AddScoped<IOrganizerService, OrganizerService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<ITagService, TagService>();
+        services.AddScoped<IVenueService, VenueService>();
 
         services.AddAutoMapper(config => 
         {

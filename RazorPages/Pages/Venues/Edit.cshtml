@@ -1,0 +1,72 @@
+@page
+@model RazorPages.Pages.Venues.EditModel
+@{
+    ViewData["Title"] = "Edit Venue";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-page="Index" class="text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <h3 class="fw-bold mb-0">Edit Venue</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <input type="hidden" asp-for="VenueUpdateDTO.Id" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="VenueUpdateDTO.Name" class="form-label fw-medium"></label>
+                            <input asp-for="VenueUpdateDTO.Name" class="form-control" placeholder="Enter venue name" />
+                            <span asp-validation-for="VenueUpdateDTO.Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="VenueUpdateDTO.MaxCapacity" class="form-label fw-medium"></label>
+                            <input asp-for="VenueUpdateDTO.MaxCapacity" class="form-control" type="number" min="1" placeholder="Enter max capacity" />
+                            <span asp-validation-for="VenueUpdateDTO.MaxCapacity" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label asp-for="VenueUpdateDTO.Address" class="form-label fw-medium"></label>
+                                <input asp-for="VenueUpdateDTO.Address" class="form-control" placeholder="Enter specific address details" />
+                                <span asp-validation-for="VenueUpdateDTO.Address" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="SelectedCampus" class="form-label fw-medium">Append Campus</label>
+                                <select asp-for="SelectedCampus" asp-items="Model.Campuses" class="form-select">
+                                    <option value="">-- No changes --</option>
+                                </select>
+                                <span asp-validation-for="SelectedCampus" class="text-danger small"></span>
+                                <div class="form-text small">Select to append to address.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="VenueUpdateDTO.Description" class="form-label fw-medium"></label>
+                            <textarea asp-for="VenueUpdateDTO.Description" class="form-control" rows="4" placeholder="Enter venue description"></textarea>
+                            <span asp-validation-for="VenueUpdateDTO.Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-page="Index" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

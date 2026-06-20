@@ -1,0 +1,74 @@
+@page
+@model RazorPages.Pages.Venues.IndexModel
+@{
+    ViewData["Title"] = "Venue Configuration";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Venue Configuration</h2>
+        <a asp-page="./Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add Venue
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Max Capacity</th>
+                            <th>Address</th>
+                            <th>Description</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Venues)
+                        {
+                            <tr>
+                                <td><span class="fw-medium">@item.Name</span></td>
+                                <td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1">@item.MaxCapacity</span></td>
+                                <td>@item.Address</td>
+                                <td>@(string.IsNullOrEmpty(item.Description) ? "-" : (item.Description.Length > 50 ? item.Description.Substring(0, 47) + "..." : item.Description))</td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-outline-secondary" title="Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        
+                        @if (!Model.Venues.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                    No venues configured.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

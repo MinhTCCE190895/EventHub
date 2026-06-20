@@ -170,6 +170,14 @@ graph TD
     - Bổ sung `IOrganizerService` và `OrganizerService` (với PRN222 Compliance).
     - Tạo giao diện Razor Pages (`Index`, `Create`, `Edit`, `Details`, `Delete`) sử dụng `[BindProperty]`.
     - Cấu hình AutoMapper cho `User` ↔ `OrganizerDTO`.
+  - **2026-06-20 (MinhTC)**:
+    - Hoàn thành tính năng CRUD cho Category, Tag, và Venue:
+      - Thêm các DTO (`CategoryDTO`, `TagDTO`, `VenueDTO`,...).
+      - Thêm Mapping Profiles (`CategoryProfile`, `TagProfile`, `VenueProfile`).
+      - Bổ sung Service interfaces và implementations (`ICategoryService`, `ITagService`, `IVenueService`...).
+      - Thêm các giao diện Razor Pages tương ứng.
+      - Xử lý logic nối trường Campus vào Venue.Address trong `VenueCreateDTO` và `VenueUpdateDTO` theo đúng quy tắc UI/UX "Không trích xuất".
+      - Cập nhật thanh Sidebar Layout với điều hướng mới.
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
