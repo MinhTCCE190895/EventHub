@@ -23,67 +23,26 @@
             </a>
             
             <nav class="sidebar-nav">
-<<<<<<< HEAD
                 @{
-                    var isAdminOrOrganizer = User.IsInRole("Admin") || User.IsInRole("Organizer");
-                    var isStudent = User.IsInRole("Student");
+                    var isAdminOrOrganizer = User.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Organizer"));
+                    var isStudent = User.Identity?.IsAuthenticated == true && User.IsInRole("Student");
                 }
 
-                @* Tab chung: tất cả đều thấy sau khi đăng nhập *@
-=======
-                <!-- Links visible to everyone -->
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
-                <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
-                    <i class="bi bi-compass-fill"></i> Khám phá sự kiện
-                </a>
-<<<<<<< HEAD
-
-                @if (isAdminOrOrganizer)
+                @if (!isStudent)
                 {
-                    @* CRUD tabs — chỉ Admin và Organizer *@
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true ? "active" : "")" asp-page="/Events/Index">
-                        <i class="bi bi-calendar-event-fill"></i> Events
-                    </a>
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Categories") == true ? "active" : "")" asp-page="/Categories/Index">
-                        <i class="bi bi-tags-fill"></i> Categories
-                    </a>
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Tags") == true ? "active" : "")" asp-page="/Tags/Index">
-                        <i class="bi bi-hash"></i> Tags
-                    </a>
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
-                        <i class="bi bi-building"></i> Venues
-                    </a>
-                    <a class="sidebar-link" href="https://localhost:7170/feedback-analytics" target="_blank">
-                        <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
+                    <!-- Links visible to Admin/Organizer/Guest -->
+                    <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
+                        <i class="bi bi-compass-fill"></i> Khám phá sự kiện
                     </a>
                 }
-
-                @if (isStudent)
-                {
-                    @* Student-only tabs *@
-=======
                 
-                <a class="sidebar-link" href="https://localhost:7170/" target="_blank">
+                <a class="sidebar-link" href="http://localhost:5210/" target="_blank">
                     <i class="bi bi-activity"></i> Live Dashboard
                 </a>
 
-                <!-- Links visible only to Student -->
-                @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+                @if (isAdminOrOrganizer)
                 {
-                    <a class="sidebar-link" href="https://localhost:7170/events" target="_blank">
-                        <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
-                    </a>
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
-                    <a class="sidebar-link @(currentPage == "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/MyFeedbacks">
-                        <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
-                    </a>
-                }
-<<<<<<< HEAD
-=======
-
-                <!-- Links visible to Admin or Organizer -->
-                @if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Organizer")))
-                {
+                    <!-- Admin & Organizer only links -->
                     <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true && currentPage != "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/Index">
                         <i class="bi bi-calendar-event-fill"></i> Quản lý sự kiện
                     </a>
@@ -96,20 +55,25 @@
                     <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
                         <i class="bi bi-building"></i> Quản lý địa điểm
                     </a>
-                    <a class="sidebar-link" href="https://localhost:7170/feedback-analytics" target="_blank">
+                    <a class="sidebar-link" href="http://localhost:5210/feedback-analytics" target="_blank">
                         <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
                     </a>
                 }
-                
+
+                @if (isStudent)
+                {
+                    <!-- Student-only tabs -->
+                    <a class="sidebar-link" href="http://localhost:5210/events" target="_blank">
+                        <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
+                    </a>
+                    <a class="sidebar-link @(currentPage == "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/MyFeedbacks">
+                        <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
+                    </a>
+                }
+
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư
                 </a>
-
-                <!-- Cổng Portal MVC -->
-                <a class="sidebar-link" href="http://localhost:5259/">
-                    <i class="bi bi-door-open-fill"></i> Cổng Portal (Auth)
-                </a>
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
             </nav>
 
             @if (campusWeather != null)
@@ -137,26 +101,6 @@
                 </div>
             }
 
-<<<<<<< HEAD
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <div class="mt-auto p-3 border-top border-light">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">
-                            @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
-                        </div>
-                        <div class="text-truncate fw-bold" style="font-size: 0.85rem;" title="@User.Identity.Name">
-                            @User.Identity.Name
-                        </div>
-                    </div>
-                    <a href="http://localhost:5259/Account/Logout" class="btn btn-outline-danger w-100 btn-sm rounded-3 py-1 fw-semibold">
-                        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
-                    </a>
-                </div>
-            }
-
-            <div class="sidebar-footer">
-=======
             <!-- User Auth status block inside Sidebar -->
             <div class="mt-auto pt-3 border-top border-light">
                 @if (User.Identity?.IsAuthenticated == true)
@@ -172,11 +116,9 @@
                             </span>
                         </div>
                     </div>
-                    <form asp-page="/Logout" method="post" class="d-inline w-100">
-                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm rounded-3 py-2 fw-semibold">
-                            <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
-                        </button>
-                    </form>
+                    <a href="http://localhost:5259/Account/Logout" class="btn btn-outline-danger w-100 btn-sm rounded-3 py-2 fw-semibold">
+                        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                    </a>
                 }
                 else
                 {
@@ -192,7 +134,6 @@
             </div>
 
             <div class="sidebar-footer mt-3">
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
                 <div>&copy; 2026 - UniEvent Hub</div>
             </div>
         </aside>

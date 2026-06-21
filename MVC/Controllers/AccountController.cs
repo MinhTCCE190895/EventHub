@@ -81,9 +81,6 @@ public class AccountController : Controller
         // Redirect theo role
         if (user.Role == "Admin")
         {
-<<<<<<< HEAD
-            // Tạm thời Admin redirect về trang quản lý Organizers (sẽ làm trong tương lai) 
-            // hoặc chuyển về trang chủ RazorPages
             return Redirect("http://localhost:5129/");
         }
 
@@ -97,9 +94,6 @@ public class AccountController : Controller
         {
             // Student chuyển thẳng đến Blazor app (local 5210)
             return Redirect("http://localhost:5210/");
-=======
-            return Redirect("http://localhost:5129/Events");
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
         }
 
         return RedirectToAction("Index", "Home");

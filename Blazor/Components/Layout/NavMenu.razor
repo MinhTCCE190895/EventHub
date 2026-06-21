@@ -6,8 +6,6 @@
         <span>EventHub</span>
     </a>
     <nav class="sidebar-nav">
-<<<<<<< HEAD
-        @* Live Dashboard — tất cả role đều thấy sau khi đăng nhập *@
         <AuthorizeView>
             <Authorized>
                 <NavLink class="sidebar-link" href="" Match="NavLinkMatch.All">
@@ -17,41 +15,14 @@
             </Authorized>
         </AuthorizeView>
 
-        @* Đặt vé — chỉ Student *@
-        <AuthorizeView Roles="Student">
-            <NavLink class="sidebar-link" href="events">
-                <i class="bi bi-ticket-perforated"></i>
-                <span>Đặt vé sự kiện</span>
-            </NavLink>
-        </AuthorizeView>
-
-        @* Phân tích đánh giá — Admin và Organizer *@
-        <AuthorizeView Roles="Admin,Organizer">
-            <NavLink class="sidebar-link" href="feedback-analytics">
-                <i class="bi bi-bar-chart-line-fill"></i>
-                <span>Phân tích đánh giá</span>
-=======
-        <!-- Links visible to everyone -->
-        <a class="sidebar-link" href="http://localhost:5259/">
-            <i class="bi bi-door-open-fill"></i>
-            <span>Portal Trang chủ</span>
-        </a>
-        <a class="sidebar-link" href="http://localhost:5129/">
-            <i class="bi bi-compass-fill"></i>
-            <span>Khám phá sự kiện</span>
-        </a>
-        <NavLink class="sidebar-link" href="" Match="NavLinkMatch.All">
-            <i class="bi bi-activity"></i>
-            <span>Live Dashboard</span>
-        </NavLink>
-
         <!-- Student only links -->
         <AuthorizeView Roles="Student">
-            <NavLink class="sidebar-link" href="events">
-                <i class="bi bi-ticket-perforated-fill"></i>
-                <span>Đặt vé sự kiện</span>
->>>>>>> 3a80dc34ea7197f93f06bbd1534d86841b78b35b
-            </NavLink>
+            <Authorized>
+                <NavLink class="sidebar-link" href="events">
+                    <i class="bi bi-ticket-perforated-fill"></i>
+                    <span>Đặt vé sự kiện</span>
+                </NavLink>
+            </Authorized>
         </AuthorizeView>
 
         <!-- Admin & Organizer only links -->
