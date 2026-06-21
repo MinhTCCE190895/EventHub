@@ -18,7 +18,7 @@
             <!-- Tiêu chí 1: Diễn giả -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label-minimal fw-bold mb-0">🗣️ Chất lượng Diễn giả (Speakers)</label>
+                    <label class="form-label-minimal fw-bold mb-0">Chất lượng Diễn giả (Speakers)</label>
                     <span id="speakerVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
                 </div>
                 <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.SpeakerScore" id="speakerRange" oninput="updateVal('speakerRange', 'speakerVal')" />
@@ -27,7 +27,7 @@
             <!-- Tiêu chí 2: Hậu cần -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label-minimal fw-bold mb-0">🏢 Khâu Hậu cần & Địa điểm (Logistics)</label>
+                    <label class="form-label-minimal fw-bold mb-0">Khâu Hậu cần & Địa điểm (Logistics)</label>
                     <span id="logisticsVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
                 </div>
                 <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.LogisticsScore" id="logisticsRange" oninput="updateVal('logisticsRange', 'logisticsVal')" />
@@ -36,7 +36,7 @@
             <!-- Tiêu chí 3: Nội dung -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label-minimal fw-bold mb-0">📚 Giá trị Nội dung mang lại (Content)</label>
+                    <label class="form-label-minimal fw-bold mb-0">Giá trị Nội dung mang lại (Content)</label>
                     <span id="contentVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
                 </div>
                 <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.ContentScore" id="contentRange" oninput="updateVal('contentRange', 'contentVal')" />
@@ -45,7 +45,7 @@
             <!-- Tiêu chí 4: Tổ chức -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label-minimal fw-bold mb-0">⚙️ Khâu Tổ chức & Điều phối (Organization)</label>
+                    <label class="form-label-minimal fw-bold mb-0">Khâu Tổ chức & Điều phối (Organization)</label>
                     <span id="organizationVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
                 </div>
                 <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.OrganizationScore" id="organizationRange" oninput="updateVal('organizationRange', 'organizationVal')" />
@@ -53,7 +53,7 @@
 
             <!-- Nhận xét chung -->
             <div class="mb-4">
-                <label asp-for="Input.GeneralComment" class="form-label-minimal fw-bold">✍️ Ý kiến đóng góp khác (Tùy chọn)</label>
+                <label asp-for="Input.GeneralComment" class="form-label-minimal fw-bold">Ý kiến đóng góp khác (Tùy chọn)</label>
                 <textarea asp-for="Input.GeneralComment" class="form-control form-control-minimal" rows="3" placeholder="Nhập đóng góp ý kiến hoặc phản hồi của bạn..." maxlength="500"></textarea>
                 <span asp-validation-for="Input.GeneralComment" class="text-danger small"></span>
             </div>

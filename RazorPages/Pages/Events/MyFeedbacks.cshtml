@@ -31,7 +31,7 @@
                         <div class="position-absolute" style="top: 1.5rem; right: 1.5rem; text-align: right;">
                             <span class="d-block text-muted small text-uppercase" style="font-size: 0.7rem;">Điểm TB</span>
                             <span class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 1rem;">
-                                @fb.AverageScore/5 ⭐
+                                @fb.AverageScore/5
                             </span>
                         </div>
 
@@ -55,11 +55,11 @@
                                 var percentage = crit.Value * 100 / 5;
                                 var criteriaIcon = crit.Key switch
                                 {
-                                    "Diễn giả" => "🗣️",
-                                    "Hậu cần" => "🏢",
-                                    "Nội dung" => "📚",
-                                    "Tổ chức" => "⚙️",
-                                    _ => "🌟"
+                                    "Diễn giả" => "",
+                                    "Hậu cần" => "",
+                                    "Nội dung" => "",
+                                    "Tổ chức" => "",
+                                    _ => ""
                                 };
 
                                 <div class="col-6">

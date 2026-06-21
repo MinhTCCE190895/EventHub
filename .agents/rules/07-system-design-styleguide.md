@@ -126,3 +126,4 @@ Giao diện thẻ sự kiện hiển thị danh sách (Grid/List) phải tuân t
 - **Tự tinh chỉnh giá trị**: Không rập khuôn sử dụng thông số mặc định thô cứng của Bootstrap. Sử dụng các biến token đã thiết kế sẵn.
 - **Khoảng trắng phóng khoáng**: Thiết lập điểm nhấn thị giác rõ rệt thông qua padding/margin rộng rãi.
 - **Tối giản chuyển động**: Các hiệu ứng hover, translate chỉ được sử dụng ở mức độ mượt mà, tinh tế và trực tiếp hỗ trợ trải nghiệm điều hướng của người dùng. Tránh các hiệu ứng chuyển màu lòe loẹt hoặc nhấp nháy làm mỏi mắt.
+- **Không sử dụng Icon Emoji**: TUYỆT ĐỐI không sử dụng bất kỳ ký tự emoji nào làm icon trang trí trên toàn bộ giao diện người dùng (ví dụ: 🎟️, 📊, 🚀, 📈, 🗣️, 🏢, 📚, ⚙️, 🔒, 🚫, ✍️, ⭐, 🌟). Chỉ sử dụng Bootstrap Icons (`<i class="bi bi-*"></i>`) hoặc CSS icons chuẩn khi thực sự cần thiết.

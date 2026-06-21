@@ -15,7 +15,7 @@
 <div class="app-container">
     <main class="app-content w-100 p-4">
         <div class="content-header mb-4 text-center">
-            <h1 class="display-6 fw-bold">🎫 Đặt Vé Sự Kiện</h1>
+            <h1 class="display-6 fw-bold">Đặt Vé Sự Kiện</h1>
             <p class="text-muted">Cập nhật chỗ trống theo thời gian thực (Live SignalR)</p>
         </div>
 
@@ -84,13 +84,13 @@
                         @if (CurrentUserId == null)
                         {
                             <div class="alert alert-warning mt-3 text-center small">
-                                🔒 Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> làm sinh viên để đặt vé.
+                                Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> làm sinh viên để đặt vé.
                             </div>
                         }
                         else if (CurrentUserRole != "Student")
                         {
                             <div class="alert alert-danger mt-3 text-center small">
-                                🚫 Chỉ tài khoản sinh viên mới được đặt vé.
+                                Chỉ tài khoản sinh viên mới được đặt vé.
                             </div>
                         }
 
@@ -248,7 +248,7 @@
             var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, CurrentUserId.Value);
             
             IsSuccess = true;
-            Message = $"🎉 Đặt vé thành công! Mã vé: {ticketCode}";
+            Message = $"Đặt vé thành công! Mã vé: {ticketCode}";
         }
         catch (Exception ex)
         {

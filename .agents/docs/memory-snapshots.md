@@ -1,246 +1,113 @@
-# UniEvent Hub - Memory Snapshots & Project Status (AI-Optimized)
+# UniEvent Hub - Memory Snapshots & Project Status
 
-Tài liệu này lưu trữ bản đồ trạng thái thực tế của dự án **UniEvent Hub**. Tất cả các Agent AI khi làm việc **bắt buộc** phải đọc file này trước tiên để tránh quét mã nguồn lặp lại gây lãng phí token và thời gian.
+This file tracks the current state of **UniEvent Hub**. All AI agents **must** read and update this file before and after working to maintain project alignment and traceability.
 
 ```mermaid
 graph TD
-    %% Define Styles
     classDef completed fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a;
     classDef pending fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f;
-    classDef doc fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#334155;
 
-    %% Project Layers
-    subgraph PL [PL - Presentation Layer]
-        RP[RazorPages Project]
-        MVC[MVC Project]
-        BZ[Blazor Project]
-    end
+    RP[RazorPages Project]:::completed
+    MVC[MVC Project]:::completed
+    BZ[Blazor Project]:::pending
 
-    subgraph Backend [Backend & Data]
-        BLL[BLL - Business Logic]
-        DAL[DAL - Data Access]
-    end
-
-    RP_Explore["Explore (Search & Filter)"]:::completed
-    RP_Bookmark["Bookmarks (Saved Events)"]:::completed
-    RP_Weather["Weather Widget (API & Caching)"]:::completed
-    MVC_Auth["Identity & Authorization"]:::pending
-    BZ_Dash["Registration Dashboard"]:::completed
-    BZ_Feed["Feedback Analytics"]:::pending
-
-    %% Document Connections
-    SDG["SYSTEM_DESIGN_STYLEGUIDE.md"]:::doc
-    RULES["07-system-design-styleguide.md"]:::doc
-    FLOW["fe03-flow.md"]:::doc
-
-    %% Relationships
-    RP --> RP_Explore
-    RP --> RP_Bookmark
-    RP --> RP_Weather
-    MVC --> MVC_Auth
-    BZ --> BZ_Dash
-    BZ --> BZ_Feed
-
-    RP_Explore -.-> FLOW
-    RP_Explore -.-> SDG
-    SDG -.-> RULES
-
-    RP_Explore --> BLL
-    RP_Bookmark --> BLL
-    RP_Weather --> BLL
-    BLL --> DAL
-
-    %% Apply Classes to main projects
-    RP:::completed
-    MVC:::pending
-    BZ:::pending
+    RP --> RP_Explore["Explore, Bookmarks, Weather"]:::completed
+    MVC --> MVC_Auth["Identity & Authorization"]:::completed
+    BZ --> BZ_Dash["Booking & Dashboard"]:::completed
+    BZ --> BZ_Feed["Feedback Analytics"]:::pending
 ```
 
 ---
 
-## 1. PHÂN HỆ ĐÃ HOÀN THÀNH (COMPLETED MODULES)
+## 1. COMPLETED MODULES
 
-### 1.1. Kiến trúc chung & Cấu hình Luật (System Architecture & Rules)
-- **Môi trường:** Đã đồng bộ 100% sang **.NET 8** và **C# 12** trên toàn bộ cấu hình, rules và tài liệu.
-- **Tài liệu hệ thống:**
-  - **[Design Style Guide](../../SYSTEM_DESIGN_STYLEGUIDE.md)**: Định nghĩa Design Tokens (Royal Blue & Amber), Layout, cấu trúc DOM thẻ `.card-minimal` và các quy tắc tương phản/accessibility.
-  - **[Styleguide Rules cho AI](../rules/07-system-design-styleguide.md)**: Luật thiết kế giao diện bắt buộc cho AI Agent.
-  - **[FE-03 Explore Search & Filter Flow](fe03-flow.md)**: Đặc tả chi tiết luồng Search & Filter của trang Explore.
-  - **[File CSS Toàn cục (site.css)](../../RazorPages/wwwroot/css/site.css)**: CSS style sheet chính của dự án.
-  - **[Layout chính của dự án (_Layout.cshtml)](../../RazorPages/Pages/Shared/_Layout.cshtml)**: Khung chứa sidebar và content body.
+### 1.1. Architecture & Global Config
+- **Environment**: Upgraded 100% to **.NET 8** and **C# 12**.
+- **Shared Authentication**: SSO implemented via shared Cookie `.EventHub.Auth` using EF Core Data Protection (`Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) across MVC, RazorPages, and Blazor.
 
-### 1.2. Phân hệ Razor Pages (Explore, Bookmarks & Organizers)
-- **Trang chủ / Explore (`Pages/Index.cshtml` & `Pages/Index.cshtml.cs`):**
-  - Đã tích hợp Form tìm kiếm thu gọn (.search-card-minimal) và bộ lọc thời gian (All, Upcoming, Ongoing, Past).
-  - Tự động hiển thị dấu chấm LED (`status-upcoming`/`ongoing`/`past`) trên ảnh thẻ sự kiện.
-  - Hiển thị mức độ khẩn cấp số lượng vé (`seats-urgency-low` và `seats-urgency-soldout`) dựa theo dung lượng.
-  - Hiệu ứng làm mờ và chuyển grayscale (`.is-past`) cho sự kiện đã kết thúc khi render.
-  - Phân trang giữ nguyên tham số lọc URL thông qua `asp-route-*` tag helpers.
-- **Trang đã lưu Bookmarks (`Pages/Bookmarks/Index.cshtml` & `Pages/Bookmarks/Index.cshtml.cs`):**
-  - Hiển thị danh sách sự kiện đã được Bookmark bởi Account hiện tại.
-  - Cho phép click bookmark nhanh qua nút bookmark nổi (`.btn-bookmark-floating`).
-- **Weather Widget / API & Caching (`FE-08`):**
-  - Tích hợp API thời tiết thực tế tại địa điểm tổ chức, lưu cache IMemoryCache 30 phút.
-  - Thiết kế giao diện sidebar weather card sang trọng, trực quan theo đúng Style Guide.
-  - `NormalizeLocation` tự động trích xuất tỉnh thành phố cuối địa chỉ Venue để gọi API thời tiết chính xác.
-- **Quản lý Sự kiện (`Pages/Events/*`):**
-  - Thay thế hoàn toàn chức năng CRUD Organizer (đã bị gỡ bỏ).
-  - Thực hiện các thao tác CRUD đầy đủ cho Event: Index (danh sách), Create, Edit, Delete.
-  - `EventService` sử dụng `IEventRepository.BuildSearchQuery()` kèm `.Include()` để tránh N+1 query.
-  - Dropdown Organizer và Venue được nạp động qua `IEventService.GetOrganizersAsync()` và `IVenueService`.
-  - Áp dụng `[BindProperty]` trên DTO riêng biệt (`EventCreateDTO`, `EventUpdateDTO`) chống Over-posting.
-  - AutoMapper profile `EventProfile` flatten navigation properties `Organizer.FullName` và `Venue.Name`.
+### 1.2. Razor Pages (Explore, Bookmarks & Event CRUD)
+- **Explore & Search (`Pages/Index.cshtml` / `FE-03`)**: Form search (.search-card-minimal) with time filters (All, Upcoming, Ongoing, Past). Dynamic LED status dots, seats capacity urgency warnings, grayscale for past events, skeleton loader, and AJAX pagination.
+- **Bookmarks (`FE-11`)**: Floating bookmark button (`.btn-bookmark-floating`) on events card (disabled for current sprint).
+- **Weather Widget (`FE-08`)**: Integrated wttr.in weather lookup with 30-minute `IMemoryCache`. `NormalizeLocation` automatically extracts the campus city name from Venue address.
+- **Event CRUD (`FE-02`)**: Complete Event CRUD. Uses DTOs (`EventCreateDTO`, `EventUpdateDTO`) to prevent over-posting. Categories and Tags assigned via checkboxes (Many-to-Many). Serviced via `IEventRepository.BuildSearchQuery()` with eager loading to prevent N+1 queries.
+- **My Feedbacks (`/Events/MyFeedbacks`)**: Read-only dashboard for students to review submitted feedbacks.
 
-### 1.3. Phân hệ Blazor (Live Booking & Dashboard)
-- **FE-04 Live Ticket Booking (`BookingComponent.razor`):** Đặt vé thời gian thực, đồng bộ số lượng vé.
-- **FE-10 Live Dashboard (`DashboardComponent.razor`):** Trang hiển thị trạng thái số lượng vé của các sự kiện qua dạng lưới, kết nối SignalR bắt sự kiện `ReceiveTicketUpdate` và nhảy số Real-time không tải lại trang.
+### 1.3. Blazor Server (Live Systems)
+- **Live Ticket Booking (`FE-04`)**: Real-time seat reservation. Integrated with `AuthenticationStateProvider` to retrieve authentic User IDs from the Identity cookie. Features premium Glassmorphism and real-time seat progress bar.
+- **Live Dashboard (`FE-10`)**: Displays dynamic real-time seats progress connected via SignalR `ReceiveTicketUpdate`. Features SVG Area Trend Charts, pulse-green status badges, and a live activity log.
+- **Feedback Analytics (`FE-07`)**: multi-criteria feedback statistics dashboard using PLINQ `.AsParallel()` on BLL. Includes detailed feedback list pop-up modal.
 
 ---
 
-## 2. PHÂN HỆ CHƯA HOÀN THÀNH (PENDING MODULES - PROJECT SCAFFOLD ONLY)
-
-### 2.1. Phân hệ MVC (Identity)
-- **Trạng thái:** Đã hoàn thành (FE-01).
-- **File thực tế:** Đã triển khai Cookie Authentication, AccountController (Register/Login/Logout), views Login/Register/AccessDenied, stylesheet auth.css và liên kết layout với RazorPages.
-
-### 2.2. Phân hệ Blazor (Feedback Analytics)
-- **Trạng thái:** Mới chỉ là khung Project thô tạo từ dotnet template.
-- **File thực tế:** Chưa tạo dashboard biểu đồ phân tích phản hồi.
+## 2. PENDING MODULES
+- **Blazor (Feedback Analytics - Detail Reports)**: Further custom analytics reports if requested.
 
 ---
 
-## 3. NHẬT KÝ THAY ĐỔI & LỊCH SỬ COMMIT (WORK LOG & COMMIT HISTORY)
+## 3. WORK LOG & TRACEABILITY
 
-### 3.1. Các commit gần nhất của QuiNC / quinc-fptu
-- **Nhánh `feature/quinc-bookmark`**:
-  - `acac6ab`: compact search form, style active toggle, dim past events.
-  - `a18638e`: refactor: override hover styling for List View cards to prevent lime line highlight and lift animation.
-  - `6786d94`: refactor: compact search card padding and optimize list view card horizontal layout.
-  - `004735d`: refactor: simplify time filter - select Tất cả displays all events including past ones, remove redundant switch UI.
-  - `012ae32`: feat: add indicator dots to status badges and quota warnings to remaining seats.
-- **Nhánh `feature/quinc-search`**:
-  - `deee61e`: feat: add search filter with date range and skeleton load.
-  - `2477759`: feat: seed test events, wire DbInitializer on startup.
-  - `195dd37`: feat: add search & filter events (FE-03).
-- **Nhánh `feature/quinc-weather`**:
-  - `07f1a7d`: docs: add team task division plan for UniEvent Hub.
-  - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
+### 3.1. Detailed Changes Log
 
-### 3.2. Cập nhật của Agent (Antigravity)
 - **2026-06-22 (Antigravity)**:
-  - **Đồng bộ hóa giao diện và luồng điều hướng (Sync Layout & Push)**:
-    - Giải quyết Git merge conflict ở `NavMenu.razor`, `_Layout.cshtml`, và `AccountController.cs` khi pull từ nhánh `develop` xuống, giữ vững các thay đổi cục bộ (Keep Ours).
-    - Cấu hình lại Redirect sau đăng nhập: Mọi người dùng (bao gồm Student) đều chuyển thẳng vào Razor Pages (Port 5129).
-    - Loại bỏ thuộc tính `target="_blank"` để mở Blazor Dashboard và Booking trên cùng một tab (Single Tab Flow).
-    - Cấu hình đồng bộ 100% Sidebar giữa Blazor và RazorPages cho phép Role `Student` ẩn "Live Dashboard" và bổ sung "Khám phá sự kiện".
-    - Thực hiện Pull, Push và đồng bộ Code lên nhánh `develop` thành công.
-  - **Đồng bộ Luồng và Phân Quyền (Explore & Booking Sync)**:
-    - Cho phép vai trò `Student` truy cập trang Explore tĩnh (`/Index` ở Razor Pages) để tìm kiếm và lọc sự kiện.
-    - Cập nhật `AccountController` để chuyển hướng `Student` về trang Explore Razor Pages (`http://localhost:5129/`) ngay sau khi đăng nhập.
-    - Thêm liên kết quay lại trang Explore ở Blazor Sidebar (`NavMenu.razor`).
-    - Loại bỏ `target="_blank"` trên link đặt vé và bổ sung nút "Quay lại chi tiết sự kiện" tại Blazor Booking (`BookingComponent.razor`) để giữ luồng di chuyển mượt mà trên cùng một tab.
-    - Ẩn số lượng ghế trống chi tiết trên Razor Pages, chỉ hiển thị trạng thái tổng quan "Còn vé" / "Hết chỗ" để tránh dữ liệu tĩnh cũ/lệch pha so với Blazor.
+  - **Emoji Clean-up**: Removed all decorative emojis from UI files (`MyFeedbacks.cshtml`, `Feedback.cshtml`, `Home.razor`, `FeedbackAnalyticsComponent.razor`, `DashboardComponent.razor`, `BookingComponent.razor`).
+  - **Rules Update**: Added rule prohibiting emoji icons to `07-system-design-styleguide.md`.
+  - **Navigation & SSO Sync**: Resolved git merge conflicts. Redirected all users (including Student) to Razor Pages home port 5129 post-login. Converted Blazor links to single tab flow (removed `target="_blank"`). Dynamic sidebar matching for Student role. Hidden detailed remaining seats count in Razor Pages to avoid state sync drift.
+
 - **2026-06-21 (Antigravity)**:
-  - **Điều hướng & Phân quyền (Sidebar Sync)**:
-    - Sửa lỗi redirect của Admin sau khi login thành công trong `AccountController.cs` (MVC) hướng đến `/Events` thay vì `/Organizers` (đã bị xóa).
-    - Đồng bộ hoá Sidebar Layout ở cả 3 phân hệ (MVC, RazorPages, Blazor) thực hiện ẩn/hiện động các chức năng theo vai trò người dùng:
-      - **Student**: Chỉ thấy Khám phá sự kiện, Đặt vé sự kiện (Live), Đánh giá của tôi, và Live Dashboard. Ẩn hoàn toàn các trang quản lý CRUD.
-      - **Admin & Organizer**: Thấy các trang quản lý sự kiện, danh mục, thẻ, địa điểm và phân tích đánh giá.
-    - Tạo trang `Logout` cho RazorPages để hỗ trợ SignOut cục bộ an toàn và đồng bộ Auth Cookie `.EventHub.Auth`.
-  - **TriLT Persona**: Nâng cấp phân hệ **FE-07 Feedback + Metrics**:
-    - Phát triển nút và modal "Xem nhận xét chi tiết" trong Blazor `FeedbackAnalyticsComponent.razor` hiển thị danh sách nhận xét, email, tên sinh viên và điểm số chi tiết cho từng sự kiện.
-    - Phát triển trang "Đánh giá của tôi" (`/Events/MyFeedbacks`) dạng read-only trong RazorPages giúp sinh viên xem lịch sử các đánh giá đã gửi.
-    - Thêm các method `GetFeedbacksByStudentIdAsync` và `GetFeedbacksByEventIdAsync` ở Repository (DAL) và Service (BLL) để hỗ trợ truy vấn dữ liệu song song qua PLINQ.
-  - **TriLT Persona**: Cập nhật điều kiện gửi Email Reminder:
-    - Thêm thuộc tính `IsCanReminder` vào `EventReminder` entity để check điều kiện gửi email nhắc nhở.
-    - Cập nhật phương thức `GetPendingRemindersWithDetailsAsync` của `EventReminderRepository` sử dụng biểu đồ lọc có thể dịch sang SQL (`Event.StartTime.AddDays(-1) <= now && now < Event.StartTime`) để tránh lỗi dịch LINQ (do thuộc tính C# `IsCanReminder` không nằm trong cơ sở dữ liệu).
-    - Cập nhật `EventReminderService` kiểm tra `IsCanReminder` trước khi xử lý gửi email.
-  - **TriLT Persona**: Hoàn thành phân hệ **FE-07 Feedback + Metrics**:
-    - Tạo `IFeedbackRepository` & `FeedbackRepository` (DAL) và nạp kèm thông tin chi tiết.
-    - Tạo `IFeedbackAnalyticsService` & `FeedbackAnalyticsService` (BLL), áp dụng PLINQ `.AsParallel()` để tính toán điểm trung bình song song trên các lõi CPU.
-    - Phát triển trang Gửi đánh giá cho sinh viên tại RazorPages (`/Events/Feedback`).
-    - Phát triển Dashboard Phân tích đánh giá cao cấp cho Admin/Organizer tại Blazor (`/feedback-analytics`).
-  - **TriLT Persona**: Hoàn thành chuẩn hoá phân hệ **FE-06 Email Reminders**:
-    - Tạo `IEventReminderRepository` & `EventReminderRepository` (DAL) thực hiện Eager Loading dữ liệu `Event`, `Booking`, và `Student` đăng ký.
-    - Tạo `IEventReminderService` & `EventReminderService` (BLL) chịu trách nhiệm chính chạy TPL `Parallel.ForEachAsync` gửi email song song.
-    - Cập nhật `EmailReminderWorker` gọi service xử lý thay vì truy vấn trực tiếp DbContext.
-- **2026-06-20 (Antigravity)**:
-  - Cấu hình lại điều hướng chính (routing) của dự án Blazor: chuyển trang Live Dashboard làm trang mặc định (`/`), chuyển trang danh sách sự kiện sang đường dẫn `/events`.
-  - Cập nhật liên kết điều hướng tương ứng tại `NavMenu.razor` với thuộc tính `Match="NavLinkMatch.All"`.
+  - **TriLT - Feedback (`FE-07`) & Email Worker (`FE-06`)**:
+    - Created detailed feedback modal in Blazor `FeedbackAnalyticsComponent.razor`.
+    - Created student's read-only feedback history `MyFeedbacks` page in Razor Pages.
+    - Optimized feedback average calculations using PLINQ `.AsParallel()` in `FeedbackAnalyticsService`.
+    - Upgraded `EventReminderService` (BLL) to dispatch emails concurrently using TPL `Parallel.ForEachAsync`.
+    - Fixed LINQ translation issue in `EventReminderRepository` (DAL) by utilizing SQL-translatable time filter. Added `IsCanReminder` tracking flag in DB.
+  - **MinhTC - Event CRUD (`FE-02`)**:
+    - Removed CRUD Organizer (deleted folder `/Pages/Organizers`, services, and DTOs).
+    - Built Razor Pages Event CRUD with dynamic checkboxes for Category & Tag updates (Many-to-Many). Protected queries using `EventCreateDTO` and `EventUpdateDTO`.
+  - **Access Control & Logouts**:
+    - Unified Sidebar Layout across MVC, RazorPages, and Blazor to restrict Student role permissions.
+    - Created local RazorPages `Logout.cshtml` page to support local cookie invalidation.
+
+- **2026-06-20 (Antigravity / MinhTC)**:
+  - Reconfigured Blazor routing: Live Dashboard to `/` (default) and event bookings to `/events`.
+  - **MinhTC - CRUD Category, Tag, Venue (`FE-05`)**:
+    - Created CRUD Razor Pages and DTOs (`CategoryDTO`, `TagDTO`, `VenueDTO`).
+    - Appended chosen Campus to Venue Address suffix in `VenueCreateDTO`/`VenueUpdateDTO` for weather lookup.
+
 - **2026-06-17 (Antigravity)**:
-  - Khắc phục triệt để lỗi sập WebSocket/mất kết nối của Blazor Server (`System.MissingMethodException` liên quan đến SignalR Client).
-  - Hạ cấp `Microsoft.AspNetCore.SignalR.Client` từ `9.0` xuống `8.0.*` trong `Blazor.csproj` để tương thích hoàn toàn với SDK .NET 8.
-  - Viết script kiểm thử tự động `test.js` dùng Puppeteer để mô phỏng và xác thực luồng đặt vé: kết nối WebSocket thành công, click nút đặt vé hoạt động, cập nhật số lượng chỗ trống real-time qua SignalR và render thông báo thành công mà không bị sập circuit.
-  - Khôi phục cơ chế xác thực toàn diện (CascadingAuthenticationState) và kiểm tra quyền đặt vé (chỉ cho phép user đăng nhập với vai trò `Student`).
-  - Gỡ bỏ hoàn toàn logic mock user cũ dùng để test trong `BookingComponent.razor`.
-  - Thiết kế và phát triển giao diện premium Dark Mode Deep Tech mới cho Live Dashboard (`DashboardComponent.razor` & `DashboardComponent.razor.css`).
-  - Tích hợp biểu đồ xu hướng SVG Area Chart (gradient fill), thẻ KPI động với hiệu ứng pulse, cùng với Live Activity Log hiển thị lịch sử đặt vé trực tiếp.
+  - Resolved Blazor Server WebSocket disconnection issue by downgrading `Microsoft.AspNetCore.SignalR.Client` from 9.0 to 8.0.* to match SDK .NET 8.
+  - Added test automation script `test.js` using Puppeteer.
+  - Designed premium Dark Mode Deep Tech layout for Live Dashboard, featuring SVG Area Chart.
+  - Rewrote `BookingComponent.razor` using Cascading Authentication State for real claims.
+
 - **2026-06-17 (quinc)**:
-  - Tạm thời tháo gỡ các UI Bookmark (menu link Bookmarks khỏi layout, nút bookmark nổi trên thẻ sự kiện ở Grid/List) và xóa hoàn toàn các file `BookmarkService.cs`, `IBookmarkService.cs` (BLL) cũng như thư mục `RazorPages/Pages/Bookmarks` cùng file đăng ký DI để khớp chính xác phạm vi backlog.
-- **2026-06-16 (Antigravity)**:
-  - Hoàn thành phân hệ **FE-08 Weather Widget** tích hợp API wttr.in, hỗ trợ caching `IMemoryCache` 30 phút theo yêu cầu đặc tả và cơ chế fallback offline/failure thông minh.
-  - Tích hợp giao diện Weather Card vào sidebar toàn cục `_Layout.cshtml`.
-  - **LongNH Persona**: Hoàn thành phân hệ **FE-01 Identity & Authorization**:
-    - Triển khai Cookie Authentication trong `Program.cs`.
-    - Tạo `AccountController` quản lý Login, Register, Logout, AccessDenied.
-    - Cài đặt `IUserService` / `UserService` tích hợp mã hóa mật khẩu qua BCrypt.Net.
-    - Thiết kế giao diện premium cho Login, Register, AccessDenied bằng `auth.css` theo Style Guide.
-    - Liên kết sidebar layout và quản lý trạng thái User Claims toàn diện.
-    - Tạo migration thêm cột `PasswordHash` và cập nhật dữ liệu Seed cho tài khoản Admin/Organizer mặc định.
-  - Sửa lỗi kết nối CSDL LocalDB và cấu hình đồng bộ `DbInitializer.SeedAsync` cho phân hệ MVC. Bổ sung bắt lỗi khi parse sai định dạng BCrypt trong `UserService`.
-  - Triển khai thành công tính năng Live Dashboard (FE-10), kết nối SignalR lắng nghe `ReceiveTicketUpdate` cho các event và cập nhật progress bar real-time tại màn hình điều khiển.
-  - Triển khai thành công tính năng Live Ticket Booking (FE-04) cho user KhôiTH.
-  - Cập nhật `Event` entity để thêm `RegisteredCount`, cấu hình Optimistic Concurrency cho chức năng Booking.
-  - Thêm `IBookingService`, SignalR `EventHub` và `BookingComponent` trong Blazor.
-  - **Tích hợp Shared DataProtection** cho BLL, kết nối Cookie Auth chung giữa 3 phân hệ MVC, RazorPages, và Blazor.
-  - Sửa `BookingComponent.razor` (FE-04): Xóa dropdown danh sách sinh viên giả, tích hợp `AuthenticationStateProvider` lấy user ID thật từ Identity cookie.
-  - **Viết lại toàn bộ `BookingComponent.razor`**: 
-    - Thay thế `AuthenticationStateProvider` bằng `[CascadingParameter] Task<AuthenticationState>` và `<AuthorizeView>` để bắt chính xác trạng thái đăng nhập trong Blazor 8.
-    - Cải tiến toàn diện UI/UX: Áp dụng Glassmorphism, Ticket Mockup UI, và Progress bar số lượng vé real-time theo chuẩn `SYSTEM_DESIGN_STYLEGUIDE`.
-    - Dọn dẹp logic async/await, loại bỏ Timeout dễ gây treo `DbContext`.
-  - Thiết kế cổng Portal trang chủ MVC tối giản và tích hợp giao diện Top Navbar dạng Glassmorphism thay thế Sidebar cho các trang Auth/Portal.
-  - Tích hợp EF Core Data Protection (`Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) để chia sẻ Auth Cookie xuyên suốt 3 dự án (MVC, RazorPages, Blazor) nhằm thực hiện SSO (Single Sign-On).
-  - Cập nhật `AccountController` hỗ trợ Role-based Redirect (Admin tự động chuyển hướng sang RazorPages `/Organizers`).
-  - Cập nhật `DbInitializer` để force reset mật khẩu tất cả accounts về `123456` và tự động sinh tài khoản `Student` nếu thiếu.
-- `c0d1141` $\rightarrow$ `7fb8c84` $\rightarrow$ `c0d1141`: feat: configure system styleguide, setup rules and sync workspace to .NET 8 (Gom tất cả các bước cấu hình thiết kế, đồng bộ .NET 8, hướng dẫn Codegraph, và tài liệu luồng fe03-flow thành 1 commit duy nhất).
-- **2026-06-14**: 
-  - Cập nhật file `.agents/rules/00-prn222-compliance.md` tuân thủ các quy tắc cốt lõi của môn PRN222 (Kiến trúc 3-Layer, Bảo mật Connection String, Kiểm soát Transaction/UoW, và Async/Await triệt để).
-  - Thêm file `.agents/rules/08-agent-skills-workflows.md` định nghĩa quy tắc ánh xạ và tự động nạp (load) các file skill và workflow dựa trên tác vụ được yêu cầu.
-  - **MinhTC Persona**: Hoàn thành tính năng CRUD cho Organizer (Razor Pages):
-    - Thêm các DTO (`OrganizerDTO`, `OrganizerCreateDTO`, `OrganizerUpdateDTO`).
-    - Bổ sung `IOrganizerService` và `OrganizerService` (với PRN222 Compliance).
-    - Tạo giao diện Razor Pages (`Index`, `Create`, `Edit`, `Details`, `Delete`) sử dụng `[BindProperty]`.
-    - Cấu hình AutoMapper cho `User` ↔ `OrganizerDTO`.
-  - **2026-06-20 (MinhTC)**:
-    - Hoàn thành tính năng CRUD cho Category, Tag, và Venue:
-      - Thêm các DTO (`CategoryDTO`, `TagDTO`, `VenueDTO`,...).
-      - Thêm Mapping Profiles (`CategoryProfile`, `TagProfile`, `VenueProfile`).
-      - Bổ sung Service interfaces và implementations (`ICategoryService`, `ITagService`, `IVenueService`...).
-      - Thêm các giao diện Razor Pages tương ứng.
-      - Xử lý logic nối trường Campus vào Venue.Address trong `VenueCreateDTO` và `VenueUpdateDTO` theo đúng quy tắc UI/UX "Không trích xuất".
-      - Cập nhật thanh Sidebar Layout với điều hướng mới.
-  - **2026-06-21 (Antigravity — MinhTC Persona)**:
-    - Gỡ bỏ toàn bộ chức năng CRUD Organizer: xóa `OrganizerService`, `IOrganizerService`, `OrganizerProfile`, 3 DTO Organizer, và thư mục `Pages/Organizers`.
-    - Xây dựng mới hoàn toàn chức năng CRUD Event (FE-02) trên Razor Pages:
-      - Tạo `EventDTO`, `EventCreateDTO`, `EventUpdateDTO`.
-      - Tạo `EventProfile` (AutoMapper) với flatten `OrganizerName`, `VenueName`, `VenueMaxCapacity`.
-      - Tạo `IEventService` và `EventService` kế thừa `IEventRepository.BuildSearchQuery()`.
-      - Tạo 4 Razor Pages: `Index`, `Create`, `Edit`, `Delete` với dropdown động Organizer/Venue.
-      - Cập nhật `BLL/DependencyInjection.cs`, `ServiceExtensions.cs` và `_Layout.cshtml`.
-    - Cập nhật Module CRUD Event: Bổ sung tính năng gán Danh mục (Categories) và Thẻ (Tags) qua UI dạng Checkbox (Many-to-Many).
-    - Đồng bộ DTOs, `EventProfile`, `EventService` (.Include, .Clear) và giao diện Razor Pages (`Create.cshtml`, `Edit.cshtml`).
+  - Removed Bookmark UI and deleted `BookmarkService.cs` DI configurations to match backlog.
 
+- **2026-06-16 (Antigravity / LongNH)**:
+  - **LongNH - Identity & SSO (`FE-01`)**:
+    - Configured Cookie Authentication, AccountController, and BCrypt password hashing.
+    - Set up shared EF Core Data Protection keys in BLL/MVC to enable SSO.
+  - Integrated wttr.in weather API with 30-min `IMemoryCache` for Weather Widget.
 
-### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)
-- **Nhánh `feature/trilt-email-worker`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Worker Service gửi mail.
-- **Nhánh `feature/trilt-feedback`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách Blazor Feedback Analytics.
-- **Nhánh `feature/trilt-follows`**: Đang phát triển cục bộ (Commit mới nhất trên remote trùng với base `b91939f`). Phụ trách chức năng Follows.
+- **2026-06-14 (Antigravity / MinhTC / QuiNC)**:
+  - Setup core PRN222 architectural rules (3-Layer structure, connection safety, async/await).
+  - **MinhTC**: Created Organizer CRUD Razor Pages.
+  - **QuiNC**: Added status dots and urgencies to Explore list UI (`FE-03`).
+
+### 3.2. Team Branch Status
+- **`feature/trilt-email-worker`**: Local development for email background worker.
+- **`feature/trilt-feedback`**: Local development for feedback reports.
+- **`feature/trilt-follows`**: Local development for event follows.
 
 ---
 
-## 4. QUY ƯỚC LIÊN PHÂN HỆ (CROSS-MODULE CONTRACTS)
+## 4. CROSS-MODULE CONTRACTS
 
-### 4.1. Quy ước địa chỉ của Venue & Weather Widget (MinhTC - FE-02/FE-05)
-- Khi thiết kế Form tạo/sửa địa điểm (Venue) hoặc sự kiện (Event), **bắt buộc** phải cung cấp một Dropdown để người dùng chọn cơ sở/tỉnh thành (Campus: *Hồ Chí Minh, Hà Nội, Cần Thơ, Đà Nẵng, Quy Nhơn*).
-- Giá trị tỉnh thành được chọn này sẽ được nối vào cuối trường địa chỉ (`Venue.Address`) dưới dạng `, [Tỉnh/Thành phố]` để đảm bảo phân hệ `FE-08 (Weather Widget)` trích xuất và hiển thị thông tin thời tiết chính xác.
+### 4.1. Venue Address & Weather Widget (MinhTC - FE-02/FE-05)
+- Forms creating/editing Venues **must** provide a Campus selection dropdown. The selected value must be appended to the end of `Venue.Address` as `, [Campus Name]` to allow `FE-08 (Weather Widget)` to correctly parse and fetch weather data.
+
+### 4.2. Navigation Flow & Authorization Routing (Global SSO)
+- **SSO Authentication Cookie**: MVC, RazorPages, and Blazor share the cookie `.EventHub.Auth` using EF Core Data Protection.
+- **Post-Login Redirection**: Following successful authentication, all roles (including `Student`) must be redirected to the Razor Pages application (`http://localhost:5129/`) to preserve a unified entry point.
+- **Single Tab Navigation Flow**: Avoid opening Blazor modules (Dashboard or Ticket Booking) in new browser tabs. All links navigating between Razor Pages and Blazor must load on the same tab (no `target="_blank"`), utilizing relative paths or direct port mappings to prevent session breakages.
+- **Role-based Sidebar Visibility**: Sidebar links for CRUD management must be strictly hidden from `Student` users and authorized only for `Admin` and `Organizer` roles across all three presentation apps.
 
