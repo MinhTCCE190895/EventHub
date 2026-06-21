@@ -18,7 +18,10 @@ namespace Blazor
 
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddBusinessLogicLayer();
+            builder.Services.AddBusinessLogicLayer(builder.Configuration);
+
+            // Register background worker
+            builder.Services.AddHostedService<BLL.BackgroundServices.EmailReminderWorker>();
 
             // Modular Configurations
             builder.Services.AddCustomAuthorization();

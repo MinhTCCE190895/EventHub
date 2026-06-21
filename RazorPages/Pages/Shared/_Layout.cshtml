@@ -38,6 +38,18 @@
                 <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
                     <i class="bi bi-building"></i> Venues
                 </a>
+                @if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Organizer")))
+                {
+                    <a class="sidebar-link" href="https://localhost:7170/feedback-analytics" target="_blank">
+                        <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
+                    </a>
+                }
+                @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+                {
+                    <a class="sidebar-link @(currentPage == "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/MyFeedbacks">
+                        <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
+                    </a>
+                }
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư
                 </a>

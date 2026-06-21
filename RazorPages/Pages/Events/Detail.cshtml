@@ -5,6 +5,20 @@
 }
 
 <div class="container mt-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
     <div class="row">
         <div class="col-md-8">
             <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://placehold.co/800x400/0d6efd/white" : Model.EventItem.BannerUrl)" class="img-fluid rounded mb-4" alt="@Model.EventItem.Title" />
@@ -40,6 +54,13 @@
                     <a href="https://localhost:7170/events/@Model.EventItem.Id/book" class="btn btn-primary w-100 py-2 fw-bold" target="_blank">
                         Đặt vé ngay (Blazor App)
                     </a>
+
+                    @if (Model.ShowFeedbackButton)
+                    {
+                        <a asp-page="/Events/Feedback" asp-route-eventId="@Model.EventItem.Id" class="btn btn-warning w-100 py-2 fw-bold mt-2">
+                            <i class="bi bi-star-fill me-1"></i> Gửi đánh giá phản hồi
+                        </a>
+                    }
                     
                     <p class="text-muted small mt-3 text-center">
                         <i class="bi bi-info-circle"></i> Đặt vé được xử lý trên hệ thống Real-time (Blazor).

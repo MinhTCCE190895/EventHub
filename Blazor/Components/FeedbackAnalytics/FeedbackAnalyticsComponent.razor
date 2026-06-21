@@ -1,0 +1,308 @@
+@page "/feedback-analytics"
+@rendermode InteractiveServer
+@using BLL.DTOs
+@using BLL.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Organizer")]
+@inject IFeedbackAnalyticsService FeedbackService
+
+<PageTitle>Phân tích phản hồi sự kiện - EventHub</PageTitle>
+
+<div class="dashboard-container">
+    <div class="dashboard-content">
+        
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <span class="text-primary fw-bold text-uppercase tracking-wider small">Feedback & Metrics</span>
+                <h1 class="display-5 fw-bold mb-0">📊 Live Feedback Analytics</h1>
+                <p class="text-muted mb-0">Thống kê điểm số phản hồi đa tiêu chí được tổng hợp song song bằng PLINQ</p>
+            </div>
+            <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
+                <span class="pulse-green"></span>
+                <span class="text-success small fw-bold ms-2">PLINQ PROCESSING ACTIVE</span>
+            </div>
+        </div>
+
+        @if (MetricsList == null)
+        {
+            <!-- KPI Loading -->
+            <div class="kpi-grid">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="card-glass kpi-card">
+                        <div class="kpi-info w-75">
+                            <div class="skeleton-box mb-2" style="height: 14px; width: 40%;"></div>
+                            <div class="skeleton-box" style="height: 32px; width: 60%;"></div>
+                        </div>
+                        <div class="skeleton-box" style="height: 52px; width: 52px; border-radius: 12px;"></div>
+                    </div>
+                }
+            </div>
+
+            <!-- Content Grid Loading -->
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                @for (int i = 0; i < 2; i++)
+                {
+                    <div class="col">
+                        <div class="card-glass d-flex flex-column gap-3" style="min-height: 250px;">
+                            <div class="skeleton-box" style="height: 24px; width: 50%;"></div>
+                            <div class="skeleton-box" style="height: 14px; width: 80%;"></div>
+                            <div class="skeleton-box flex-grow-1"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (!MetricsList.Any())
+        {
+            <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
+                <div class="display-3 text-muted mb-3"><i class="bi bi-chat-left-heart"></i></div>
+                <h5 class="fw-bold text-slate-700">Chưa có phản hồi nào</h5>
+                <p class="text-muted mb-0">Hệ thống chưa ghi nhận lượt đánh giá phản hồi nào từ sinh viên.</p>
+            </div>
+        }
+        else
+        {
+            <!-- KPI Overview Cards -->
+            <div class="kpi-grid">
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Tổng số phản hồi</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-blue">@TotalFeedbacks</h2>
+                        <span class="text-success small mt-1">
+                            <i class="bi bi-chat-fill"></i> Được gửi từ người tham gia
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-blue">
+                        <i class="bi bi-chat-right-text-fill"></i>
+                    </div>
+                </div>
+
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Điểm đánh giá TB</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-amber">@OverallScore.ToString("F1") <span class="fs-6 text-muted">/5</span></h2>
+                        <span class="text-muted small mt-1">
+                            Tính toán song song qua PLINQ
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-amber">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Sự kiện có đánh giá</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-green">@EventsCount</h2>
+                        <span class="text-success small mt-1">
+                            <i class="bi bi-calendar-event"></i> Hoạt động ổn định
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-green">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid of Feedback Cards -->
+            <div class="row g-4 mb-4">
+                @foreach (var metric in MetricsList)
+                {
+                    <div class="col-md-6 col-12">
+                        <div class="card-glass position-relative overflow-hidden">
+                            
+                            <!-- Overall Score Badge top-right -->
+                            <div class="position-absolute" style="top: 1.5rem; right: 1.5rem; text-align: right;">
+                                <span class="d-block text-muted small text-uppercase" style="font-size: 0.75rem;">Điểm TB</span>
+                                <h3 class="fw-bold mb-0 mt-0.5 glow-text-amber" style="font-size: 2.25rem;">
+                                    @metric.OverallAverageScore <span class="fs-6 text-muted">/5</span>
+                                </h3>
+                            </div>
+
+                            <div style="max-width: 70%;">
+                                <span class="badge mb-2" style="background-color: rgba(37, 99, 235, 0.08); color: var(--primary); border: 1px solid rgba(37, 99, 235, 0.15); font-weight: 600;">
+                                    <i class="bi bi-chat-square-text-fill me-1"></i> @metric.TotalFeedbacks Đánh giá
+                                </span>
+                                <h4 class="fw-bold mb-3 text-truncate" title="@metric.EventTitle" style="color: var(--text-main); font-size: 1.25rem;">@metric.EventTitle</h4>
+                            </div>
+
+                            <hr style="border-top: 1px solid var(--border-color); margin: 1.25rem 0;" />
+
+                            <!-- Averages details -->
+                            <div class="row g-3">
+                                @foreach (var criteria in metric.CriteriaAverages)
+                                {
+                                    var percentage = criteria.Value * 100 / 5;
+                                    var criteriaIcon = criteria.Key switch
+                                    {
+                                        "Diễn giả" => "🗣️",
+                                        "Hậu cần" => "🏢",
+                                        "Nội dung" => "📚",
+                                        "Tổ chức" => "⚙️",
+                                        _ => "🌟"
+                                    };
+
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small text-muted">@criteriaIcon @criteria.Key</span>
+                                            <span class="small fw-bold" style="color: var(--text-main);">@criteria.Value/5</span>
+                                        </div>
+                                        <div class="progress-bar-container" style="height: 6px; margin-top: 0;">
+                                            <div class="progress-bar-fill bg-primary" style="width: @(percentage)%;"></div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="mt-3 pt-2 border-top text-end">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="() => LoadDetailsAsync(metric.EventId, metric.EventTitle)">
+                                    <i class="bi bi-chat-text"></i> Xem nhận xét chi tiết
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (ShowDetailsModal)
+        {
+            <!-- Custom Styled Glass Modal -->
+            <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px); z-index: 1050;">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background: #ffffff;">
+                        <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%); border-bottom: none;">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-chat-right-text-fill me-2"></i> Nhận xét chi tiết: @SelectedEventTitle
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="CloseDetailsModal"></button>
+                        </div>
+                        <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto; background-color: #f8fafc;">
+                            @if (IsLoadingDetails)
+                            {
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="text-muted mt-2">Đang tải nhận xét từ cơ sở dữ liệu...</p>
+                                </div>
+                            }
+                            else if (DetailedFeedbacks == null || !DetailedFeedbacks.Any())
+                            {
+                                <div class="text-center py-5">
+                                    <i class="bi bi-chat-dots text-muted display-4"></i>
+                                    <p class="text-muted mt-2">Sự kiện này chưa có bình luận hay nhận xét chi tiết nào.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var fb in DetailedFeedbacks)
+                                    {
+                                        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+                                            <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-1">
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-slate-800">
+                                                        <i class="bi bi-person-fill text-muted"></i> @fb.StudentName
+                                                    </h6>
+                                                    <small class="text-muted"><i class="bi bi-envelope"></i> @fb.StudentEmail</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-warning text-dark small fw-bold px-2 py-1">
+                                                        TB: @fb.AverageScore/5 ⭐
+                                                    </span>
+                                                    <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                                        @fb.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Criteria grid -->
+                                            <div class="d-flex flex-wrap gap-2 my-2 py-2 border-top border-bottom">
+                                                @foreach (var crit in fb.CriteriaScores)
+                                                {
+                                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.75rem;">
+                                                        @crit.Key: <strong>@crit.Value/5</strong>
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="mt-1">
+                                                <span class="text-muted small d-block mb-1">Ý kiến đóng góp:</span>
+                                                <p class="mb-0 text-slate-700 bg-light p-2.5 rounded-3" style="font-style: italic; font-size: 0.95rem; line-height: 1.5;">
+                                                    @(string.IsNullOrEmpty(fb.GeneralComment) ? "Không có ý kiến đóng góp thêm." : fb.GeneralComment)
+                                                </p>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="modal-footer bg-light px-4 py-3 border-top-0">
+                            <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="CloseDetailsModal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    private IEnumerable<EventFeedbackMetricsDto>? MetricsList;
+    private int TotalFeedbacks = 0;
+    private double OverallScore = 0;
+    private int EventsCount = 0;
+
+    // Details modal fields
+    private Guid? SelectedEventId;
+    private string SelectedEventTitle = string.Empty;
+    private IEnumerable<EventFeedbackDetailDto>? DetailedFeedbacks;
+    private bool IsLoadingDetails = false;
+    private bool ShowDetailsModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Nhận kết quả từ service sử dụng PLINQ để tính toán đồng thời
+        MetricsList = await FeedbackService.GetFeedbackMetricsAsync();
+
+        if (MetricsList != null && MetricsList.Any())
+        {
+            var list = MetricsList.ToList();
+            TotalFeedbacks = list.Sum(m => m.TotalFeedbacks);
+            OverallScore = list.Average(m => m.OverallAverageScore);
+            EventsCount = list.Count;
+        }
+    }
+
+    private async Task LoadDetailsAsync(Guid eventId, string title)
+    {
+        SelectedEventId = eventId;
+        SelectedEventTitle = title;
+        IsLoadingDetails = true;
+        ShowDetailsModal = true;
+        DetailedFeedbacks = null;
+        StateHasChanged();
+
+        try
+        {
+            DetailedFeedbacks = await FeedbackService.GetFeedbacksByEventIdAsync(eventId);
+        }
+        catch (Exception ex)
+        {
+            // Fail silently or log
+        }
+        finally
+        {
+            IsLoadingDetails = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseDetailsModal()
+    {
+        ShowDetailsModal = false;
+        DetailedFeedbacks = null;
+        SelectedEventId = null;
+    }
+}

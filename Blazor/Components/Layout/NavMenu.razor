@@ -17,6 +17,12 @@
             <i class="bi bi-ticket-perforated"></i>
             <span>Đặt vé sự kiện</span>
         </NavLink>
+        <AuthorizeView Roles="Admin,Organizer">
+            <NavLink class="sidebar-link" href="feedback-analytics">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Phân tích đánh giá</span>
+            </NavLink>
+        </AuthorizeView>
     </nav>
     <div class="sidebar-footer">
         &copy; 2026 EventHub.
