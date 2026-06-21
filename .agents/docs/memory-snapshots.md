@@ -128,6 +128,12 @@ graph TD
 
 ### 3.2. Cập nhật của Agent (Antigravity)
 - **2026-06-22 (Antigravity)**:
+  - **Đồng bộ hóa giao diện và luồng điều hướng (Sync Layout & Push)**:
+    - Giải quyết Git merge conflict ở `NavMenu.razor`, `_Layout.cshtml`, và `AccountController.cs` khi pull từ nhánh `develop` xuống, giữ vững các thay đổi cục bộ (Keep Ours).
+    - Cấu hình lại Redirect sau đăng nhập: Mọi người dùng (bao gồm Student) đều chuyển thẳng vào Razor Pages (Port 5129).
+    - Loại bỏ thuộc tính `target="_blank"` để mở Blazor Dashboard và Booking trên cùng một tab (Single Tab Flow).
+    - Cấu hình đồng bộ 100% Sidebar giữa Blazor và RazorPages cho phép Role `Student` ẩn "Live Dashboard" và bổ sung "Khám phá sự kiện".
+    - Thực hiện Pull, Push và đồng bộ Code lên nhánh `develop` thành công.
   - **Đồng bộ Luồng và Phân Quyền (Explore & Booking Sync)**:
     - Cho phép vai trò `Student` truy cập trang Explore tĩnh (`/Index` ở Razor Pages) để tìm kiếm và lọc sự kiện.
     - Cập nhật `AccountController` để chuyển hướng `Student` về trang Explore Razor Pages (`http://localhost:5129/`) ngay sau khi đăng nhập.
