@@ -51,11 +51,7 @@ public class EventReminderService : IEventReminderService
 
         foreach (var reminder in remindersList)
         {
-            if (!reminder.IsCanReminder)
-            {
-                continue;
-            }
-
+            if (!reminder.IsCanReminder) continue;
             // Bước 3: Lọc danh sách đăng ký đã xác nhận (Confirmed)
             var activeBookings = reminder.Event.Bookings
                 .Where(b => b.Status == "Confirmed")
