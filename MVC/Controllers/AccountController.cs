@@ -73,7 +73,8 @@ public class AccountController : Controller
            (Url.IsLocalUrl(model.ReturnUrl) || 
             model.ReturnUrl.StartsWith("http://localhost:5129") || 
             model.ReturnUrl.StartsWith("https://localhost:7129") ||
-            model.ReturnUrl.StartsWith("https://localhost:7170")))
+            model.ReturnUrl.StartsWith("https://localhost:7170") ||
+            model.ReturnUrl.StartsWith("http://localhost:5210")))
         {
             return Redirect(model.ReturnUrl);
         }
