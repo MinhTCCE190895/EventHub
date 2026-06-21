@@ -127,6 +127,13 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
+- **2026-06-22 (Antigravity)**:
+  - **Đồng bộ Luồng và Phân Quyền (Explore & Booking Sync)**:
+    - Cho phép vai trò `Student` truy cập trang Explore tĩnh (`/Index` ở Razor Pages) để tìm kiếm và lọc sự kiện.
+    - Cập nhật `AccountController` để chuyển hướng `Student` về trang Explore Razor Pages (`http://localhost:5129/`) ngay sau khi đăng nhập.
+    - Thêm liên kết quay lại trang Explore ở Blazor Sidebar (`NavMenu.razor`).
+    - Loại bỏ `target="_blank"` trên link đặt vé và bổ sung nút "Quay lại chi tiết sự kiện" tại Blazor Booking (`BookingComponent.razor`) để giữ luồng di chuyển mượt mà trên cùng một tab.
+    - Ẩn số lượng ghế trống chi tiết trên Razor Pages, chỉ hiển thị trạng thái tổng quan "Còn vé" / "Hết chỗ" để tránh dữ liệu tĩnh cũ/lệch pha so với Blazor.
 - **2026-06-21 (Antigravity)**:
   - **Điều hướng & Phân quyền (Sidebar Sync)**:
     - Sửa lỗi redirect của Admin sau khi login thành công trong `AccountController.cs` (MVC) hướng đến `/Events` thay vì `/Organizers` (đã bị xóa).

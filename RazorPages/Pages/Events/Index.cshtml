@@ -53,14 +53,21 @@
                                     @{
                                         var badgeClass = item.Status switch
                                         {
-                                            "Upcoming"  => "bg-primary",
-                                            "Ongoing"   => "bg-success",
-                                            "Past"      => "bg-secondary",
+                                            "Draft"     => "bg-secondary",
+                                            "Published" => "bg-success",
                                             "Cancelled" => "bg-danger",
                                             _           => "bg-light text-dark"
                                         };
+
+                                        var statusText = item.Status switch
+                                        {
+                                            "Draft"     => "Bản nháp",
+                                            "Published" => "Đã xuất bản",
+                                            "Cancelled" => "Đã hủy",
+                                            _           => item.Status
+                                        };
                                     }
-                                    <span class="badge @badgeClass">@item.Status</span>
+                                    <span class="badge @badgeClass">@statusText</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-info bg-opacity-10 text-info px-2 py-1">

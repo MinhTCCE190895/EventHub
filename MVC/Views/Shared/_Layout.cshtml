@@ -37,14 +37,14 @@
                     <i class="bi bi-compass-fill"></i> Khám phá sự kiện (RazorPages)
                 </a>
                 
-                <a class="sidebar-link" href="https://localhost:7170/">
+                <a class="sidebar-link" href="http://localhost:5210/">
                     <i class="bi bi-activity"></i> Live Dashboard (Blazor)
                 </a>
 
                 <!-- Links visible only to Student -->
                 @if (isAuthenticated && userRole == "Student")
                 {
-                    <a class="sidebar-link" href="https://localhost:7170/events">
+                    <a class="sidebar-link" href="http://localhost:5210/events">
                         <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
                     </a>
                 }
@@ -64,7 +64,7 @@
                     <a class="sidebar-link" href="http://localhost:5129/Venues">
                         <i class="bi bi-building"></i> Quản lý địa điểm
                     </a>
-                    <a class="sidebar-link" href="https://localhost:7170/feedback-analytics">
+                    <a class="sidebar-link" href="http://localhost:5210/feedback-analytics">
                         <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá (Live)
                     </a>
                 }
