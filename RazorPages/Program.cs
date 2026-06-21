@@ -1,7 +1,6 @@
 using BLL;
 using DAL;
 using DAL.Data;
-using DAL.Data;
 using RazerPages.Configurations;
 
 namespace RazerPages

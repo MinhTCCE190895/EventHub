@@ -28,18 +28,48 @@
             </a>
             
             <nav class="sidebar-nav">
-                <!-- Chỉ giữ các liên kết trỏ nội bộ MVC hoặc mock để không bấm nhảy sang RazorPages -->
-                <a class="sidebar-link" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-compass-fill"></i> Khám phá
+                <!-- Links visible to everyone -->
+                <a class="sidebar-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-door-open-fill"></i> Portal Trang chủ
                 </a>
-                <a class="sidebar-link" href="#" onclick="alert('Tính năng Bookmarks thuộc phân hệ RazorPages (FE-11)'); return false;">
-                    <i class="bi bi-bookmark-heart-fill"></i> Bookmarks
+                
+                <a class="sidebar-link" href="http://localhost:5129/">
+                    <i class="bi bi-compass-fill"></i> Khám phá sự kiện (RazorPages)
                 </a>
-                <a class="sidebar-link" href="#" onclick="alert('Tính năng Organizers thuộc phân hệ RazorPages (FE-02)'); return false;">
-                    <i class="bi bi-person-badge-fill"></i> Organizers
+                
+                <a class="sidebar-link" href="https://localhost:7170/">
+                    <i class="bi bi-activity"></i> Live Dashboard (Blazor)
                 </a>
 
-                @if (userRole == "Admin")
+                <!-- Links visible only to Student -->
+                @if (isAuthenticated && userRole == "Student")
+                {
+                    <a class="sidebar-link" href="https://localhost:7170/events">
+                        <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
+                    </a>
+                }
+
+                <!-- Links visible to Admin or Organizer -->
+                @if (isAuthenticated && (userRole == "Admin" || userRole == "Organizer"))
+                {
+                    <a class="sidebar-link" href="http://localhost:5129/Events">
+                        <i class="bi bi-calendar-event-fill"></i> Quản lý sự kiện
+                    </a>
+                    <a class="sidebar-link" href="http://localhost:5129/Categories">
+                        <i class="bi bi-tags-fill"></i> Quản lý danh mục
+                    </a>
+                    <a class="sidebar-link" href="http://localhost:5129/Tags">
+                        <i class="bi bi-hash"></i> Quản lý thẻ (Tags)
+                    </a>
+                    <a class="sidebar-link" href="http://localhost:5129/Venues">
+                        <i class="bi bi-building"></i> Quản lý địa điểm
+                    </a>
+                    <a class="sidebar-link" href="https://localhost:7170/feedback-analytics">
+                        <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá (Live)
+                    </a>
+                }
+
+                @if (isAuthenticated && userRole == "Admin")
                 {
                     <a class="sidebar-link @(currentController == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">
                         <i class="bi bi-speedometer2"></i> Admin Panel
