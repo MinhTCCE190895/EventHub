@@ -1,6 +1,7 @@
 using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using BCrypt.Net;
 
 namespace DAL.Data;
 
@@ -13,34 +14,107 @@ public static class DbInitializer
 
         await context.Database.MigrateAsync();
 
+        // Cập nhật địa chỉ đầy đủ có tỉnh thành cho các Venue đã tồn tại từ trước để đồng bộ tính năng thời tiết
+        var existingA = await context.Venues.FirstOrDefaultAsync(v => v.Name == "Hội trường A");
+        if (existingA != null && !existingA.Address.Contains("TP. Hồ Chí Minh"))
+        {
+            existingA.Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh";
+            context.Venues.Update(existingA);
+        }
+        var existingB = await context.Venues.FirstOrDefaultAsync(v => v.Name == "Hội trường B");
+        if (existingB != null && !existingB.Address.Contains("TP. Hồ Chí Minh"))
+        {
+            existingB.Address = "Cơ sở 2 - 456 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh";
+            context.Venues.Update(existingB);
+        }
+        await context.SaveChangesAsync();
+
+        var studentId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
         if (await context.Users.AnyAsync())
+        {
+            var users = await context.Users.ToListAsync();
+            bool hasChanges = false;
+
+            // Reset password cho tất cả user hiện tại thành 123456
+            foreach (var u in users)
+            {
+                // To avoid rehashing every time, check if it matches
+                if (!BCrypt.Net.BCrypt.Verify("123456", u.PasswordHash))
+                {
+                    u.PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456");
+                    hasChanges = true;
+                }
+            }
+
+            // Đảm bảo luôn có ít nhất 1 tài khoản Student để test
+            if (!users.Any(u => u.Id == studentId))
+            {
+                context.Users.Add(new User
+                {
+                    Id = studentId,
+                    FullName = "Khoi Sinh Vien",
+                    Role = "Student",
+                    Email = "khoi.student@fpt.edu.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                });
+                hasChanges = true;
+            }
+
+            if (hasChanges)
+            {
+                context.Users.UpdateRange(users);
+                await context.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            // --- Users ---
+            var adminId = Guid.NewGuid();
+            var organizerId = Guid.NewGuid();
+
+            await context.Users.AddRangeAsync(
+                new User
+                {
+                    Id = adminId,
+                    FullName = "System Administrator",
+                    Role = "Admin",
+                    Email = "admin@unieventhub.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                },
+                new User
+                {
+                    Id = organizerId,
+                    FullName = "Nguyen Van Organizer",
+                    Role = "Organizer",
+                    Email = "organizer@unieventhub.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                },
+                new User
+                {
+                    Id = studentId,
+                    FullName = "Khoi Sinh Vien",
+                    Role = "Student",
+                    Email = "khoi.student@fpt.edu.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        if (await context.Events.AnyAsync())
             return;
 
-        // --- Users ---
-        var adminId = Guid.NewGuid();
-        var organizerId = Guid.NewGuid();
-
-        await context.Users.AddRangeAsync(
-            new User
-            {
-                Id = adminId,
-                FullName = "System Administrator",
-                Role = "Admin",
-                Email = "admin@unieventhub.com",
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            },
-            new User
-            {
-                Id = organizerId,
-                FullName = "Nguyen Van Organizer",
-                Role = "Organizer",
-                Email = "organizer@unieventhub.com",
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            }
-        );
-        await context.SaveChangesAsync();
+        var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
+        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };
@@ -57,8 +131,8 @@ public static class DbInitializer
         await context.Tags.AddRangeAsync(tagIT, tagSkill, tagMusic, tagSport, tagStartup);
 
         // --- Venues ---
-        var venueA = new Venue { Name = "Hội trường A", Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ", MaxCapacity = 500 };
-        var venueB = new Venue { Name = "Hội trường B", Address = "Cơ sở 2 - 456 Võ Văn Ngân", MaxCapacity = 200 };
+        var venueA = new Venue { Name = "Hội trường A", Address = "Cơ sở 1 - 123 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh", MaxCapacity = 500 };
+        var venueB = new Venue { Name = "Hội trường B", Address = "Cơ sở 2 - 456 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh", MaxCapacity = 200 };
         await context.Venues.AddRangeAsync(venueA, venueB);
 
         await context.SaveChangesAsync();
@@ -71,7 +145,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Workshop .NET Core nâng cao",
                 Description = "Hội thảo chuyên sâu về ASP.NET Core, EF Core và các best practices trong lập trình .NET hiện đại.",
@@ -84,7 +158,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueB.Id,
                 Title = "Đêm nhạc acoustic sinh viên",
                 Description = "Chương trình âm nhạc do chính sinh viên biểu diễn, không gian ấm cúng và thân thiện.",
@@ -97,7 +171,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Giải bóng đá sinh viên 2025",
                 Description = "Giải đấu bóng đá thường niên dành cho sinh viên toàn trường, tranh cúp vô địch.",
@@ -110,7 +184,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueB.Id,
                 Title = "Seminar Startup & Khởi nghiệp",
                 Description = "Gặp gỡ và chia sẻ kinh nghiệm khởi nghiệp cùng các founder trẻ trong và ngoài trường.",
@@ -123,7 +197,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Kỹ năng phỏng vấn xin việc",
                 Description = "Workshop thực hành kỹ năng mềm: CV, phỏng vấn, và cách tìm kiếm việc làm sau tốt nghiệp.",
@@ -137,7 +211,7 @@ public static class DbInitializer
             new Event
             {
                 Id = Guid.NewGuid(),
-                OrganizerId = organizerId,
+                OrganizerId = orgId,
                 VenueId = venueA.Id,
                 Title = "Sự kiện chưa duyệt (Draft)",
                 Description = "Event này ở trạng thái Draft, không được hiển thị.",

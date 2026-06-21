@@ -1,0 +1,433 @@
+@page "/"
+@page "/dashboard"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using DAL.Data
+@using DAL.Entities
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<div class="dashboard-container">
+    <div class="dashboard-content">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <span class="text-primary fw-bold text-uppercase tracking-wider small">Real-time Analytics</span>
+                <h1 class="display-5 fw-bold mb-0">🚀 Live Activity Dashboard</h1>
+                <p class="text-muted mb-0">Theo dõi tiến độ đặt vé và hoạt động hệ thống theo thời gian thực</p>
+            </div>
+            <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
+                <span class="pulse-green"></span>
+                <span class="text-success small fw-bold ms-2">LIVE MONITORING ACTIVE</span>
+            </div>
+        </div>
+
+        @if (IsLoading)
+        {
+            <!-- Skeleton Loader State -->
+            <div class="kpi-grid">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="card-glass kpi-card">
+                        <div class="kpi-info w-75">
+                            <div class="skeleton-box mb-2" style="height: 14px; width: 40%;"></div>
+                            <div class="skeleton-box" style="height: 32px; width: 60%;"></div>
+                        </div>
+                        <div class="skeleton-box" style="height: 52px; width: 52px; border-radius: 12px;"></div>
+                    </div>
+                }
+            </div>
+
+            <div class="main-grid">
+                <div class="card-glass d-flex flex-column gap-3" style="min-height: 300px;">
+                    <div class="skeleton-box" style="height: 24px; width: 30%;"></div>
+                    <div class="skeleton-box flex-grow-1"></div>
+                </div>
+                <div class="card-glass d-flex flex-column gap-3" style="min-height: 300px;">
+                    <div class="skeleton-box" style="height: 24px; width: 50%;"></div>
+                    <div class="skeleton-box flex-grow-1"></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- KPI Cards Section -->
+            <div class="kpi-grid">
+                <!-- Total Bookings KPI -->
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Vé đã đặt (Live)</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-blue">
+                            @TotalRegisteredCount
+                        </h2>
+                        <span class="text-success small mt-1">
+                            <i class="bi bi-graph-up-arrow"></i> +@RecentBookingsCount tick vừa qua
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-blue">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                </div>
+
+                <!-- Fill Rate KPI -->
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Tỷ lệ lấp đầy</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-amber">
+                            @FillRate.ToString("F1")%
+                        </h2>
+                        <span class="text-muted small mt-1">
+                            Dung lượng: @TotalRegisteredCount/@TotalCapacity
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-amber">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                </div>
+
+                <!-- Booking Velocity KPI -->
+                <div class="card-glass kpi-card">
+                    <div class="kpi-info">
+                        <span class="text-muted small fw-bold text-uppercase">Tốc độ đặt vé</span>
+                        <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-green">
+                            @Velocity.ToString("F1") <span class="small fs-6 text-muted">vé/phút</span>
+                        </h2>
+                        <span class="text-success small mt-1">
+                            <i class="bi bi-lightning-fill"></i> Hoạt động ổn định
+                        </span>
+                    </div>
+                    <div class="kpi-icon-wrapper kpi-green">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Layout Grid -->
+            <div class="main-grid">
+                <!-- Left Column: Charts and Progress -->
+                <div class="d-flex flex-column gap-4">
+                    <!-- Dynamic Live Trend Chart (SVG) -->
+                    <div class="card-glass">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">📈 Biểu Đồ Xu Hướng Đặt Vé (Live)</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 text-xs fw-semibold">10 ticks gần nhất</span>
+                        </div>
+                        
+                        <div class="chart-wrapper">
+                            <svg class="svg-chart" viewBox="0 0 500 200" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="var(--primary)" />
+                                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Grid Lines -->
+                                <line x1="0" y1="50" x2="500" y2="50" class="chart-grid" />
+                                <line x1="0" y1="100" x2="500" y2="100" class="chart-grid" />
+                                <line x1="0" y1="150" x2="500" y2="150" class="chart-grid" />
+
+                                <!-- Area Path -->
+                                <path d="@GetAreaPath()" class="chart-area" />
+
+                                <!-- Line Path -->
+                                <path d="@GetLinePath()" class="chart-line" />
+
+                                <!-- Dots for data points -->
+                                @for (int i = 0; i < ChartData.Count; i++)
+                                {
+                                    var (cx, cy) = GetPointCoords(i);
+                                    var val = ChartData[i];
+                                    <circle cx="@cx" cy="@cy" r="4.5" class="chart-dot" title="Vé: @val" />
+                                }
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Live Event Seats Progress -->
+                    <div class="card-glass">
+                        <h5 class="fw-bold mb-4">📊 Trạng Thế Vé Sự Kiện Đang Diễn Ra</h5>
+                        <div class="event-progress-list">
+                            @foreach (var ev in Events ?? new())
+                            {
+                                var remaining = ev.MaxCapacity - ev.RegisteredCount;
+                                var progressPercentage = ev.MaxCapacity > 0 ? (ev.RegisteredCount * 100 / ev.MaxCapacity) : 0;
+                                var isSoldOut = remaining <= 0;
+                                var textClass = isSoldOut ? "text-danger" : (remaining <= 10 ? "text-warning" : "text-success");
+                                var barColor = isSoldOut ? "bg-danger" : (remaining <= 10 ? "bg-warning" : "bg-primary");
+
+                                <div class="event-progress-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold text-truncate" style="max-width: 60%;" title="@ev.Title">@ev.Title</span>
+                                        <span class="@textClass fw-bold small">
+                                            @(isSoldOut ? "Đã hết vé" : $"Còn {remaining} / {ev.MaxCapacity} chỗ")
+                                        </span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill @barColor" style="width: @progressPercentage%"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Event Log -->
+                <div class="card-glass d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">⚡ Nhật Ký Hoạt Động (Live Log)</h5>
+                        <div class="spinner-grow spinner-grow-sm text-success" role="status"></div>
+                    </div>
+                    
+                    <div class="log-container flex-grow-1">
+                        @if (!LiveLogs.Any())
+                        {
+                            <p class="text-muted small text-center my-4">Chưa có nhật ký hoạt động nào...</p>
+                        }
+                        else
+                        {
+                            @foreach (var log in LiveLogs)
+                            {
+                                <div class="log-item">
+                                    <div class="log-meta">
+                                        <span class="badge @log.StatusClass">@log.StatusText</span>
+                                        <span class="log-time">@log.Timestamp.ToString("HH:mm:ss")</span>
+                                    </div>
+                                    <div class="text-dark small mt-1" style="opacity: 0.85;">@log.Message</div>
+                                    <div class="text-muted text-xs" style="font-size: 0.7rem;">Sự kiện: <span class="text-dark" style="opacity: 0.75;">@log.EventTitle</span></div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<DashboardEventDto>? Events;
+    private HubConnection? hubConnection;
+    private bool IsLoading = true;
+
+    // KPI and Stats
+    private int TotalRegisteredCount = 0;
+    private int TotalCapacity = 0;
+    private double FillRate = 0;
+    private double Velocity = 0;
+    private int RecentBookingsCount = 0;
+
+    // SVG Chart Data Points (Last 10 intervals)
+    private List<int> ChartData = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    // Activity Log Entries
+    private List<ActivityLog> LiveLogs = new();
+
+    public class DashboardEventDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public int MaxCapacity { get; set; }
+        public int RegisteredCount { get; set; }
+    }
+
+    public class ActivityLog
+    {
+        public string Message { get; set; } = string.Empty;
+        public string EventTitle { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+        public string StatusClass { get; set; } = "badge-success";
+        public string StatusText { get; set; } = "SUCCESS";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        await Task.Delay(800); // Giả lập thời gian load ban đầu cực nhanh
+
+        try
+        {
+            // Seed log hệ thống ban đầu
+            LiveLogs.Add(new() { Message = "Hệ thống giám sát Live Dashboard khởi chạy thành công.", EventTitle = "Hệ Thống", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "SYSTEM" });
+            LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "LISTENING" });
+
+            // 2. Tải danh sách các sự kiện đang hoạt động từ cơ sở dữ liệu
+            var now = DateTime.UtcNow;
+            Events = await DbContext.Events
+                .Where(e => e.Status == "Published" && e.EndTime > now)
+                .Select(e => new DashboardEventDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    MaxCapacity = e.Venue.MaxCapacity,
+                    RegisteredCount = e.RegisteredCount
+                })
+                .OrderBy(e => e.Title)
+                .ToListAsync();
+
+            CalculateKpis();
+
+            // Khởi tạo đồ thị với số vé thực tế
+            ChartData = Enumerable.Repeat(TotalRegisteredCount, 10).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khởi tạo Dashboard: " + ex.Message);
+            Events = new List<DashboardEventDto>();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 3. Khởi tạo SignalR Client
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    hubConnection = new HubConnectionBuilder()
+                        .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                        {
+                            options.HttpMessageHandlerFactory = (message) =>
+                            {
+                                if (message is HttpClientHandler clientHandler)
+                                    clientHandler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                else if (message is SocketsHttpHandler socketsHandler)
+                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                return message;
+                            };
+                        })
+                        .Build();
+
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remainingSeats) =>
+                    {
+                        HandleTicketUpdate(eventId, remainingSeats);
+                    });
+
+                    await hubConnection.StartAsync();
+
+                    await InvokeAsync(() =>
+                    {
+                        LiveLogs.Insert(0, new() { Message = "Đã thiết lập kết nối SignalR thành công.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "CONNECTED" });
+                        StateHasChanged();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi khởi tạo SignalR (Dashboard): " + ex.Message);
+                    await InvokeAsync(() =>
+                    {
+                        LiveLogs.Insert(0, new() { Message = $"Lỗi kết nối SignalR: {ex.Message}. Vui lòng kiểm tra lại dịch vụ.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-danger", StatusText = "DISCONNECTED" });
+                        StateHasChanged();
+                    });
+                }
+            });
+        }
+    }
+
+    private void CalculateKpis()
+    {
+        if (Events != null)
+        {
+            TotalRegisteredCount = Events.Sum(e => e.RegisteredCount);
+            TotalCapacity = Events.Sum(e => e.MaxCapacity);
+            FillRate = TotalCapacity > 0 ? ((double)TotalRegisteredCount * 100 / TotalCapacity) : 0;
+        }
+    }
+
+    private void HandleTicketUpdate(Guid eventId, int remainingSeats)
+    {
+        if (Events == null) return;
+
+        var ev = Events.FirstOrDefault(e => e.Id == eventId);
+        if (ev != null)
+        {
+            int oldRegistered = ev.RegisteredCount;
+            ev.RegisteredCount = ev.MaxCapacity - remainingSeats;
+            int diff = ev.RegisteredCount - oldRegistered;
+
+            if (diff != 0)
+            {
+                // Cập nhật thống kê thực tế
+                CalculateKpis();
+                RecentBookingsCount += Math.Abs(diff);
+                Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; // Cập nhật tốc độ giao dịch thực tế
+
+                // Trượt dữ liệu đồ thị
+                ChartData.Add(TotalRegisteredCount);
+                if (ChartData.Count > 10) ChartData.RemoveAt(0);
+
+                // Thêm vào Nhật Ký
+                var logMessage = diff > 0 
+                    ? $"Cập nhật thời gian thực: Đăng ký vé thành công (+{diff} vé)" 
+                    : $"Cập nhật thời gian thực: Hủy đăng ký vé thành công ({diff} vé)";
+                
+                LiveLogs.Insert(0, new()
+                {
+                    Message = logMessage,
+                    EventTitle = ev.Title,
+                    Timestamp = DateTime.Now,
+                    StatusClass = diff > 0 ? "badge-success" : "badge-warning",
+                    StatusText = diff > 0 ? "BOOKED" : "CANCELLED"
+                });
+
+                if (LiveLogs.Count > 25) LiveLogs.RemoveAt(25);
+
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    // --- SVG Chart Helpers ---
+    private string GetLinePath()
+    {
+        if (ChartData == null || ChartData.Count < 2) return "";
+        var points = new List<string>();
+        for (int i = 0; i < ChartData.Count; i++)
+        {
+            var (x, y) = GetPointCoords(i);
+            points.Add($"{x.ToString("F1")},{y.ToString("F1")}");
+        }
+        return "M " + string.Join(" L ", points);
+    }
+
+    private string GetAreaPath()
+    {
+        var linePath = GetLinePath();
+        if (string.IsNullOrEmpty(linePath)) return "";
+        return $"{linePath} L 500.0,200.0 L 0.0,200.0 Z";
+    }
+
+    private (double x, double y) GetPointCoords(int index)
+    {
+        if (ChartData == null || ChartData.Count == 0) return (0, 0);
+
+        double x = index * (500.0 / (ChartData.Count - 1));
+
+        int min = ChartData.Min();
+        int max = ChartData.Max();
+        int range = max - min;
+        if (range == 0) range = 1;
+
+        double normalized = (double)(ChartData[index] - min) / range;
+        // SVG tọa độ Y = 0 nằm ở trên cùng, do đó đảo ngược: y = 180 - (normalized * 140)
+        double y = 175.0 - (normalized * 130.0); // Chừa 25px lề trên dưới
+
+        return (x, y);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

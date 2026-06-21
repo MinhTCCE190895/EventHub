@@ -1,30 +1,24 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">UniEvent Hub</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+<aside class="app-sidebar">
+    <a href="" class="sidebar-brand">
+        <i class="bi bi-calendar-event"></i>
+        <span>EventHub</span>
+    </a>
+    <nav class="sidebar-nav">
+        <!-- Link Trang chủ (Trỏ về trang chủ RazorPages/MVC ở cổng khác, hoặc trang chủ Blazor nếu có) -->
+        <a class="sidebar-link" href="http://localhost:5259/">
+            <i class="bi bi-house"></i>
+            <span>Trang chủ</span>
+        </a>
+        <NavLink class="sidebar-link" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-activity"></i>
+            <span>Live Dashboard</span>
+        </NavLink>
+        <NavLink class="sidebar-link" href="events">
+            <i class="bi bi-ticket-perforated"></i>
+            <span>Đặt vé sự kiện</span>
+        </NavLink>
     </nav>
-</div>
-
+    <div class="sidebar-footer">
+        &copy; 2026 EventHub.
+    </div>
+</aside>

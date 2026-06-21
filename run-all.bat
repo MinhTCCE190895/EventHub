@@ -1,0 +1,9 @@
+@echo off
+echo Starting MVC...
+start "MVC (Port 5259)" dotnet run --project MVC
+echo Starting RazorPages...
+start "RazorPages (Port 5129)" dotnet run --project RazorPages
+echo Starting Blazor...
+start "Blazor" dotnet run --project Blazor
+echo All projects started in separate windows!
+exit

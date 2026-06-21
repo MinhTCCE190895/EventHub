@@ -1,6 +1,8 @@
 using Blazor.Components;
 using BLL;
 using DAL;
+using DAL.Data;
+using Blazor.Configurations;
 
 namespace Blazor
 {
@@ -12,7 +14,7 @@ namespace Blazor
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
+                .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
             // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
@@ -20,6 +22,12 @@ namespace Blazor
 
             // Register background worker
             builder.Services.AddHostedService<BLL.BackgroundServices.EmailReminderWorker>();
+
+            // Modular Configurations
+            builder.Services.AddCustomAuthorization();
+            builder.Services.AddCustomAuthentication();
+            builder.Services.AddCustomDataProtection();
+            builder.Services.AddCascadingAuthenticationState();
 
             var app = builder.Build();
 
@@ -31,13 +39,18 @@ namespace Blazor
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseAntiforgery();
 
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
+
+            app.MapHub<BLL.SignalR.EventHub>("/eventhub");
 
             // Seed Data
             using (var scope = app.Services.CreateScope())

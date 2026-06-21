@@ -14,6 +14,7 @@ public class Event
     public DateTime EndTime { get; set; }
     public string Status { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public int RegisteredCount { get; set; } = 0;
 
     [Timestamp]
     public byte[] RowVersion { get; set; } = null!;

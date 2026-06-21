@@ -1,0 +1,273 @@
+@page "/events/{EventId:guid}/book"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using DAL.Data
+@using DAL.Entities
+@using Microsoft.EntityFrameworkCore
+@using BLL.Services
+@inject AppDbContext DbContext
+@inject NavigationManager Navigation
+@inject IBookingService BookingService
+@implements IAsyncDisposable
+
+<div class="app-container">
+    <main class="app-content w-100 p-4">
+        <div class="content-header mb-4 text-center">
+            <h1 class="display-6 fw-bold">🎫 Đặt Vé Sự Kiện</h1>
+            <p class="text-muted">Cập nhật chỗ trống theo thời gian thực (Live SignalR)</p>
+        </div>
+
+        <div class="content-body d-flex justify-content-center">
+            @if (EventItem == null)
+            {
+                <div class="alert alert-info">Đang tải thông tin sự kiện...</div>
+            }
+            else
+            {
+                var remaining = EventItem.MaxCapacity - EventItem.RegisteredCount;
+                var progressPercentage = EventItem.MaxCapacity > 0 ? (EventItem.RegisteredCount * 100 / EventItem.MaxCapacity) : 0;
+                var isSoldOut = remaining <= 0;
+
+                <div class="card-minimal" style="max-width: 500px; width: 100%;">
+                    @if (isSoldOut)
+                    {
+                        <span class="card-badge-overlay bg-danger text-white">Sold Out</span>
+                    }
+
+                    <div class="card-minimal-body">
+                        <h3 class="fw-bold text-center mb-3">@EventItem.Title</h3>
+                        
+                        <div class="d-flex justify-content-between text-muted small mt-2 mb-1">
+                            <span>Địa điểm: @EventItem.VenueName</span>
+                            <span>Giới hạn: @EventItem.MaxCapacity người</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-3 mb-1">
+                            <strong>Trạng thái vé:</strong>
+                            <span class="@(isSoldOut ? "text-danger" : "text-success") fw-bold">
+                                @(isSoldOut ? "Đã Hết Vé" : $"Còn {remaining} chỗ")
+                            </span>
+                        </div>
+
+                        <div class="progress mb-4" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @(isSoldOut ? "bg-danger" : "bg-success")" 
+                                 role="progressbar" 
+                                 style="width: @progressPercentage%" 
+                                 aria-valuenow="@EventItem.RegisteredCount" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="@EventItem.MaxCapacity">
+                            </div>
+                        </div>
+
+                        <button class="btn @(isSoldOut ? "btn-secondary" : "btn-primary") w-100 py-3 fw-bold shadow-sm" 
+                                disabled="@(isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student")"
+                                @onclick="BookTicketAsync">
+                            @if (IsProcessing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Đang xử lý...</span>
+                            }
+                            else if (isSoldOut)
+                            {
+                                <i class="bi bi-x-circle-fill me-2"></i>
+                                <span>Sự Kiện Hết Vé</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-ticket-perforated-fill me-2"></i>
+                                <span>Xác Nhận Đặt Vé</span>
+                            }
+                        </button>
+
+                        @if (CurrentUserId == null)
+                        {
+                            <div class="alert alert-warning mt-3 text-center small">
+                                🔒 Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> làm sinh viên để đặt vé.
+                            </div>
+                        }
+                        else if (CurrentUserRole != "Student")
+                        {
+                            <div class="alert alert-danger mt-3 text-center small">
+                                🚫 Chỉ tài khoản sinh viên mới được đặt vé.
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Message))
+                        {
+                            <div class="alert @(IsSuccess ? "alert-success" : "alert-danger") mt-3 text-center fw-bold">
+                                @Message
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </main>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    private EventDto? EventItem;
+    private HubConnection? hubConnection;
+    private bool IsProcessing = false;
+    private string Message = "";
+    private bool IsSuccess = false;
+    private Guid? CurrentUserId;
+    private string? CurrentUserRole;
+
+    public class EventDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string VenueName { get; set; } = string.Empty;
+        public int MaxCapacity { get; set; }
+        public int RegisteredCount { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState != null)
+        {
+            var authState = await AuthState;
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(nameIdentifier, out var userId))
+                {
+                    CurrentUserId = userId;
+                    CurrentUserRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                }
+            }
+        }
+
+        try
+        {
+            // Lấy data bằng Entity Framework (viết theo style của QuiNC)
+            var ev = await DbContext.Events
+                .Include(e => e.Venue)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == EventId);
+
+            if (ev != null)
+            {
+                EventItem = new EventDto
+                {
+                    Id = ev.Id,
+                    Title = ev.Title,
+                    VenueName = ev.Venue.Name,
+                    MaxCapacity = ev.Venue.MaxCapacity,
+                    RegisteredCount = ev.RegisteredCount
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi load chi tiết sự kiện: " + ex.Message);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && EventItem != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Khởi tạo connection y hệt DashboardComponent
+                    hubConnection = new HubConnectionBuilder()
+                        .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                        {
+                            options.HttpMessageHandlerFactory = (message) =>
+                            {
+                                if (message is HttpClientHandler clientHandler)
+                                    clientHandler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                else if (message is SocketsHttpHandler socketsHandler)
+                                    socketsHandler.SslOptions.RemoteCertificateValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                return message;
+                            };
+                        })
+                        .Build();
+
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (id, remainingSeats) =>
+                    {
+                        if (EventItem != null && EventItem.Id == id)
+                        {
+                            EventItem.RegisteredCount = EventItem.MaxCapacity - remainingSeats;
+                            InvokeAsync(StateHasChanged);
+                        }
+                    });
+
+                    await hubConnection.StartAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi khởi tạo SignalR Client (Booking): " + ex.Message);
+                }
+            });
+        }
+    }
+
+    private async Task BookTicketAsync()
+    {
+        if (EventItem == null || IsProcessing) return;
+
+        if (CurrentUserId == null)
+        {
+            Message = "Bạn cần đăng nhập trước khi thực hiện đặt vé.";
+            IsSuccess = false;
+            return;
+        }
+
+        if (CurrentUserRole != "Student")
+        {
+            Message = "Chỉ tài khoản sinh viên mới được phép đặt vé.";
+            IsSuccess = false;
+            return;
+        }
+
+        IsProcessing = true;
+        Message = "";
+        StateHasChanged();
+
+        try
+        {
+            // Book vé dùng User ID thật từ Auth
+            var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, CurrentUserId.Value);
+            
+            IsSuccess = true;
+            Message = $"🎉 Đặt vé thành công! Mã vé: {ticketCode}";
+        }
+        catch (Exception ex)
+        {
+            IsSuccess = false;
+            Message = ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetLoginUrl()
+    {
+        var isHttps = Navigation.Uri.StartsWith("https");
+        var baseLoginUrl = isHttps ? "https://localhost:7298/Account/Login" : "http://localhost:5259/Account/Login";
+        return $"{baseLoginUrl}?returnUrl={Uri.EscapeDataString(Navigation.Uri)}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

@@ -3,28 +3,32 @@
   "WorkspaceRootPath": "D:\\NRP\\EventHub\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{710EABD3-B405-447C-AA5F-34C53AF25C06}|MVC\\MVC.csproj|d:\\nrp\\eventhub\\mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{710EABD3-B405-447C-AA5F-34C53AF25C06}|MVC\\MVC.csproj|solutionrelative:mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{69D0715C-E2AD-49D0-9F79-66A338BC30FC}|RazorPages\\RazorPages.csproj|d:\\nrp\\eventhub\\razorpages\\pages\\organizers\\create.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{69D0715C-E2AD-49D0-9F79-66A338BC30FC}|RazorPages\\RazorPages.csproj|solutionrelative:razorpages\\pages\\organizers\\create.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\bll.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|solutionrelative:bll\\bll.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{4626675D-94A0-4EE6-B1E4-45F039E058F3}|MVC\\MVC.csproj|d:\\nrp\\eventhub\\mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{4626675D-94A0-4EE6-B1E4-45F039E058F3}|MVC\\MVC.csproj|solutionrelative:mvc\\mvc.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\bll.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
-      "RelativeMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|solutionrelative:bll\\bll.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
+      "AbsoluteMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\bll.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|solutionrelative:bll\\bll.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6D87E5B6-AA32-4D7F-B762-32BDE3127BC5}|BLL\\BLL.csproj|solutionrelative:bll\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\bll.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|",
+      "RelativeMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|solutionrelative:bll\\bll.csproj||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{1A340EB0-9F6A-496C-8ECF-84645B0AFADE}|DAL\\DAL.csproj|d:\\nrp\\eventhub\\dal\\dal.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{1A340EB0-9F6A-496C-8ECF-84645B0AFADE}|DAL\\DAL.csproj|solutionrelative:dal\\dal.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|d:\\nrp\\eventhub\\bll\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FC0DABC7-0807-49EB-A22F-6F20BA664B73}|BLL\\BLL.csproj|solutionrelative:bll\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{1A340EB0-9F6A-496C-8ECF-84645B0AFADE}|DAL\\DAL.csproj|d:\\nrp\\eventhub\\dal\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{1A340EB0-9F6A-496C-8ECF-84645B0AFADE}|DAL\\DAL.csproj|solutionrelative:dal\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|d:\\nrp\\eventhub\\dal\\dal.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|solutionrelative:dal\\dal.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|d:\\nrp\\eventhub\\dal\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C92CC4C6-2DFF-4C34-A1CB-0A11599D149D}|DAL\\DAL.csproj|solutionrelative:dal\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -55,44 +59,54 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "MVC",
+              "Title": "Create.cshtml.cs",
+              "DocumentMoniker": "D:\\NRP\\EventHub\\RazorPages\\Pages\\Organizers\\Create.cshtml.cs",
+              "RelativeDocumentMoniker": "RazorPages\\Pages\\Organizers\\Create.cshtml.cs",
+              "ToolTip": "D:\\NRP\\EventHub\\RazorPages\\Pages\\Organizers\\Create.cshtml.cs",
+              "RelativeToolTip": "RazorPages\\Pages\\Organizers\\Create.cshtml.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAABIAAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-15T09:37:39.806Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MVC.csproj",
               "DocumentMoniker": "D:\\NRP\\EventHub\\MVC\\MVC.csproj",
               "RelativeDocumentMoniker": "MVC\\MVC.csproj",
               "ToolTip": "D:\\NRP\\EventHub\\MVC\\MVC.csproj",
               "RelativeToolTip": "MVC\\MVC.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:26:23.108Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:26:23.108Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "BLL",
+              "DocumentIndex": 2,
+              "Title": "BLL.csproj",
               "DocumentMoniker": "D:\\NRP\\EventHub\\BLL\\BLL.csproj",
               "RelativeDocumentMoniker": "BLL\\BLL.csproj",
               "ToolTip": "D:\\NRP\\EventHub\\BLL\\BLL.csproj",
               "RelativeToolTip": "BLL\\BLL.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:22:44.067Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:22:44.067Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "BLL",
               "DocumentMoniker": "D:\\NRP\\EventHub\\BLL\\BLL.csproj",
               "RelativeDocumentMoniker": "BLL\\BLL.csproj",
               "ToolTip": "D:\\NRP\\EventHub\\BLL\\BLL.csproj",
               "RelativeToolTip": "BLL\\BLL.csproj",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:22:41.902Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:22:41.902Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Class1.cs",
               "DocumentMoniker": "D:\\NRP\\EventHub\\BLL\\Class1.cs",
               "RelativeDocumentMoniker": "BLL\\Class1.cs",
@@ -100,25 +114,23 @@
               "RelativeToolTip": "BLL\\Class1.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-06T13:14:17.712Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:14:17.712Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "DAL",
+              "DocumentIndex": 5,
+              "Title": "DAL.csproj",
               "DocumentMoniker": "D:\\NRP\\EventHub\\DAL\\DAL.csproj",
               "RelativeDocumentMoniker": "DAL\\DAL.csproj",
               "ToolTip": "D:\\NRP\\EventHub\\DAL\\DAL.csproj",
               "RelativeToolTip": "DAL\\DAL.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-06-06T13:03:55.625Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:03:55.625Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "Class1.cs",
               "DocumentMoniker": "D:\\NRP\\EventHub\\DAL\\Class1.cs",
               "RelativeDocumentMoniker": "DAL\\Class1.cs",
@@ -126,8 +138,7 @@
               "RelativeToolTip": "DAL\\Class1.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-06T13:03:08.667Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-06-06T13:03:08.667Z"
             }
           ]
         },

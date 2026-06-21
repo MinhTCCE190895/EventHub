@@ -1,0 +1,51 @@
+@page "{id:guid}"
+@model RazorPages.Pages.Events.DetailModel
+@{
+    ViewData["Title"] = Model.EventItem.Title;
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://placehold.co/800x400/0d6efd/white" : Model.EventItem.BannerUrl)" class="img-fluid rounded mb-4" alt="@Model.EventItem.Title" />
+            <h1>@Model.EventItem.Title</h1>
+            <p class="text-muted"><i class="bi bi-calendar3"></i> @Model.EventItem.StartTime.ToString("g") - @Model.EventItem.EndTime.ToString("g")</p>
+            <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.EventItem.Venue?.Name - @Model.EventItem.Venue?.Address</p>
+            <p class="text-muted"><i class="bi bi-person"></i> Ban tổ chức: @Model.EventItem.Organizer?.FullName</p>
+            
+            <h4 class="mt-4">Mô tả sự kiện</h4>
+            <p>@Model.EventItem.Description</p>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Thông tin vé</h5>
+                    <hr />
+                    <div class="mb-3">
+                        <strong>Tình trạng:</strong>
+                        @{
+                            var remaining = Model.EventItem.Venue.MaxCapacity - Model.EventItem.RegisteredCount;
+                        }
+                        @if (remaining <= 0)
+                        {
+                            <span class="badge bg-danger">Hết vé</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Còn @remaining / @Model.EventItem.Venue.MaxCapacity chỗ</span>
+                        }
+                    </div>
+                    
+                    <!-- Link sang hệ thống Blazor (FE-04) để đặt vé -->
+                    <a href="https://localhost:7170/events/@Model.EventItem.Id/book" class="btn btn-primary w-100 py-2 fw-bold" target="_blank">
+                        Đặt vé ngay (Blazor App)
+                    </a>
+                    
+                    <p class="text-muted small mt-3 text-center">
+                        <i class="bi bi-info-circle"></i> Đặt vé được xử lý trên hệ thống Real-time (Blazor).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RazorPages.ViewModels;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RazerPages.Pages;
 
@@ -15,18 +17,19 @@ public class IndexModel : PageModel
     private readonly ISearchService _searchService;
     private readonly IRepository<Category> _categoryRepo;
     private readonly IRepository<Tag> _tagRepo;
-    private readonly IBookmarkService _bookmarkService;
     private readonly IRepository<User> _userRepo;
     private readonly AppDbContext _context;
     private readonly ILogger<IndexModel> _logger;
 
-    public static readonly Guid CurrentStudentId = new("77777777-7777-7777-7777-777777777777");
+    // Lấy ID thật thay vì fix cứng
+    public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true 
+        ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) 
+        : null;
 
     public IndexModel(
         ISearchService searchService,
         IRepository<Category> categoryRepo,
         IRepository<Tag> tagRepo,
-        IBookmarkService bookmarkService,
         IRepository<User> userRepo,
         AppDbContext context,
         ILogger<IndexModel> logger)
@@ -34,7 +37,6 @@ public class IndexModel : PageModel
         _searchService = searchService;
         _categoryRepo = categoryRepo;
         _tagRepo = tagRepo;
-        _bookmarkService = bookmarkService;
         _userRepo = userRepo;
         _context = context;
         _logger = logger;
@@ -50,13 +52,14 @@ public class IndexModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        await EnsureStudentExistsAsync(cancellationToken);
-
-        // Fetch all bookmarked event IDs for the current student to display active states on UI cards
-        BookmarkedEventIds = await _context.Bookmarks
-            .Where(b => b.StudentId == CurrentStudentId)
-            .Select(b => b.EventId)
-            .ToListAsync(cancellationToken);
+        // Lấy Bookmark nếu User đã đăng nhập và là Student
+        if (CurrentStudentId.HasValue && User.IsInRole("Student"))
+        {
+            BookmarkedEventIds = await _context.Bookmarks
+                .Where(b => b.StudentId == CurrentStudentId.Value)
+                .Select(b => b.EventId)
+                .ToListAsync(cancellationToken);
+        }
 
         try
         {
@@ -90,34 +93,20 @@ public class IndexModel : PageModel
 
         return Page();
     }
-
-    public async Task<IActionResult> OnPostToggleBookmarkAsync(Guid eventId, CancellationToken cancellationToken)
-    {
-        await EnsureStudentExistsAsync(cancellationToken);
-        try
-        {
-            var isBookmarked = await _bookmarkService.ToggleBookmarkAsync(CurrentStudentId, eventId, cancellationToken);
-            return new JsonResult(new { success = true, isBookmarked });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error toggling bookmark for event {EventId}", eventId);
-            return new JsonResult(new { success = false, error = "Failed to toggle bookmark" });
-        }
-    }
-
     private async Task EnsureStudentExistsAsync(CancellationToken cancellationToken)
     {
-        var exists = await _userRepo.ExistsAsync(u => u.Id == CurrentStudentId, cancellationToken);
+        if (!CurrentStudentId.HasValue) return;
+        var exists = await _userRepo.ExistsAsync(u => u.Id == CurrentStudentId.Value, cancellationToken);
         if (!exists)
         {
             // Create a mock student if not exists to ensure db constraints are satisfied
             var student = new User
             {
-                Id = CurrentStudentId,
+                Id = CurrentStudentId.Value,
                 FullName = "Demo Student (QuiNC)",
                 Role = "Student",
                 Email = "student.demo@unieventhub.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
