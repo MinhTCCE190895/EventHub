@@ -15,4 +15,7 @@ public class EventDTO
     public int VenueId { get; set; }
     public string VenueName { get; set; } = string.Empty;
     public int VenueMaxCapacity { get; set; }
+
+    public List<int> CategoryIds { get; set; } = new();
+    public List<int> TagIds { get; set; } = new();
 }

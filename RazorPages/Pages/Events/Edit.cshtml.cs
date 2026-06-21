@@ -12,11 +12,19 @@ public class EditModel : PageModel
 {
     private readonly IEventService _eventService;
     private readonly IVenueService _venueService;
+    private readonly ICategoryService _categoryService;
+    private readonly ITagService _tagService;
 
-    public EditModel(IEventService eventService, IVenueService venueService)
+    public EditModel(
+        IEventService eventService, 
+        IVenueService venueService,
+        ICategoryService categoryService,
+        ITagService tagService)
     {
         _eventService = eventService;
         _venueService = venueService;
+        _categoryService = categoryService;
+        _tagService = tagService;
     }
 
     [BindProperty]
@@ -24,11 +32,12 @@ public class EditModel : PageModel
 
     public List<SelectListItem> Venues { get; set; } = new();
     public List<SelectListItem> Organizers { get; set; } = new();
+    public List<SelectListItem> Categories { get; set; } = new();
+    public List<SelectListItem> Tags { get; set; } = new();
     public List<SelectListItem> Statuses { get; } = new()
     {
-        new SelectListItem { Value = "Upcoming",  Text = "Sắp diễn ra" },
-        new SelectListItem { Value = "Ongoing",   Text = "Đang diễn ra" },
-        new SelectListItem { Value = "Past",      Text = "Đã kết thúc" },
+        new SelectListItem { Value = "Draft",     Text = "Bản nháp" },
+        new SelectListItem { Value = "Published", Text = "Phát hành" },
         new SelectListItem { Value = "Cancelled", Text = "Đã hủy" }
     };
 
@@ -47,7 +56,9 @@ public class EditModel : PageModel
             EndTime     = ev.EndTime,
             Status      = ev.Status,
             VenueId     = ev.VenueId,
-            OrganizerId = ev.OrganizerId
+            OrganizerId = ev.OrganizerId,
+            CategoryIds = ev.CategoryIds,
+            TagIds      = ev.TagIds
         };
 
         await LoadDropdownsAsync();
@@ -88,6 +99,20 @@ public class EditModel : PageModel
         {
             Value = u.Id.ToString(),
             Text = u.FullName
+        }).ToList();
+
+        var categories = await _categoryService.GetAllCategoriesAsync();
+        Categories = categories.Select(c => new SelectListItem
+        {
+            Value = c.Id.ToString(),
+            Text = c.Name
+        }).ToList();
+
+        var tags = await _tagService.GetAllTagsAsync();
+        Tags = tags.Select(t => new SelectListItem
+        {
+            Value = t.Id.ToString(),
+            Text = t.Name
         }).ToList();
     }
 }

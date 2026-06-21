@@ -27,4 +27,7 @@ public class EventCreateDTO
 
     [Required(ErrorMessage = "Vui lòng chọn nhà tổ chức.")]
     public Guid OrganizerId { get; set; }
+
+    public List<int> CategoryIds { get; set; } = new();
+    public List<int> TagIds { get; set; } = new();
 }

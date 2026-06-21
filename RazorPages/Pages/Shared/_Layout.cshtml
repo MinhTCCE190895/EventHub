@@ -27,16 +27,16 @@
                     <i class="bi bi-compass-fill"></i> Khám phá
                 </a>
                 <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true ? "active" : "")" asp-page="/Events/Index">
-                    <i class="bi bi-calendar-event-fill"></i> Events
+                    <i class="bi bi-calendar-event-fill"></i> Sự kiện
                 </a>
                 <a class="sidebar-link @(currentPage?.StartsWith("/Categories") == true ? "active" : "")" asp-page="/Categories/Index">
-                    <i class="bi bi-tags-fill"></i> Categories
+                    <i class="bi bi-tags-fill"></i> Danh mục
                 </a>
                 <a class="sidebar-link @(currentPage?.StartsWith("/Tags") == true ? "active" : "")" asp-page="/Tags/Index">
-                    <i class="bi bi-hash"></i> Tags
+                    <i class="bi bi-hash"></i> Thẻ
                 </a>
                 <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
-                    <i class="bi bi-building"></i> Venues
+                    <i class="bi bi-building"></i> Địa điểm
                 </a>
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">
                     <i class="bi bi-shield-lock-fill"></i> Riêng tư

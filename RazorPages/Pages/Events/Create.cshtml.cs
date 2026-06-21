@@ -12,11 +12,19 @@ public class CreateModel : PageModel
 {
     private readonly IEventService _eventService;
     private readonly IVenueService _venueService;
+    private readonly ICategoryService _categoryService;
+    private readonly ITagService _tagService;
 
-    public CreateModel(IEventService eventService, IVenueService venueService)
+    public CreateModel(
+        IEventService eventService, 
+        IVenueService venueService,
+        ICategoryService categoryService,
+        ITagService tagService)
     {
         _eventService = eventService;
         _venueService = venueService;
+        _categoryService = categoryService;
+        _tagService = tagService;
     }
 
     [BindProperty]
@@ -24,11 +32,12 @@ public class CreateModel : PageModel
 
     public List<SelectListItem> Venues { get; set; } = new();
     public List<SelectListItem> Organizers { get; set; } = new();
+    public List<SelectListItem> Categories { get; set; } = new();
+    public List<SelectListItem> Tags { get; set; } = new();
     public List<SelectListItem> Statuses { get; } = new()
     {
-        new SelectListItem { Value = "Upcoming",  Text = "Sắp diễn ra" },
-        new SelectListItem { Value = "Ongoing",   Text = "Đang diễn ra" },
-        new SelectListItem { Value = "Past",      Text = "Đã kết thúc" },
+        new SelectListItem { Value = "Draft",     Text = "Bản nháp" },
+        new SelectListItem { Value = "Published", Text = "Phát hành" },
         new SelectListItem { Value = "Cancelled", Text = "Đã hủy" }
     };
 
@@ -65,6 +74,20 @@ public class CreateModel : PageModel
         {
             Value = u.Id.ToString(),
             Text = u.FullName
+        }).ToList();
+
+        var categories = await _categoryService.GetAllCategoriesAsync();
+        Categories = categories.Select(c => new SelectListItem
+        {
+            Value = c.Id.ToString(),
+            Text = c.Name
+        }).ToList();
+
+        var tags = await _tagService.GetAllTagsAsync();
+        Tags = tags.Select(t => new SelectListItem
+        {
+            Value = t.Id.ToString(),
+            Text = t.Name
         }).ToList();
     }
 }

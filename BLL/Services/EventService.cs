@@ -4,6 +4,7 @@ using DAL.Data;
 using DAL.Entities;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace BLL.Services;
 
@@ -50,6 +51,16 @@ public class EventService : IEventService
         newEvent.CreatedAt = DateTime.UtcNow;
         newEvent.RegisteredCount = 0;
 
+        if (dto.CategoryIds != null && dto.CategoryIds.Any())
+        {
+            newEvent.EventCategories = dto.CategoryIds.Select(id => new EventCategory { CategoryId = id, EventId = newEvent.Id }).ToList();
+        }
+
+        if (dto.TagIds != null && dto.TagIds.Any())
+        {
+            newEvent.EventTags = dto.TagIds.Select(id => new EventTag { TagId = id, EventId = newEvent.Id }).ToList();
+        }
+
         await _eventRepository.AddAsync(newEvent, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -63,12 +74,29 @@ public class EventService : IEventService
     public async Task UpdateEventAsync(EventUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         var ev = await _eventRepository.Query()
+            .Include(e => e.EventCategories)
+            .Include(e => e.EventTags)
             .FirstOrDefaultAsync(e => e.Id == dto.Id, cancellationToken);
 
         if (ev == null)
             throw new KeyNotFoundException("Sự kiện không tồn tại.");
 
         _mapper.Map(dto, ev);
+
+        ev.EventCategories.Clear();
+        if (dto.CategoryIds != null)
+        {
+            foreach (var id in dto.CategoryIds)
+                ev.EventCategories.Add(new EventCategory { CategoryId = id, EventId = ev.Id });
+        }
+
+        ev.EventTags.Clear();
+        if (dto.TagIds != null)
+        {
+            foreach (var id in dto.TagIds)
+                ev.EventTags.Add(new EventTag { TagId = id, EventId = ev.Id });
+        }
+
         _eventRepository.Update(ev);
         await _context.SaveChangesAsync(cancellationToken);
     }

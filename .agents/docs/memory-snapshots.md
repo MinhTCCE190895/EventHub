@@ -190,6 +190,8 @@ graph TD
       - Tạo `IEventService` và `EventService` kế thừa `IEventRepository.BuildSearchQuery()`.
       - Tạo 4 Razor Pages: `Index`, `Create`, `Edit`, `Delete` với dropdown động Organizer/Venue.
       - Cập nhật `BLL/DependencyInjection.cs`, `ServiceExtensions.cs` và `_Layout.cshtml`.
+    - Cập nhật Module CRUD Event: Bổ sung tính năng gán Danh mục (Categories) và Thẻ (Tags) qua UI dạng Checkbox (Many-to-Many).
+    - Đồng bộ DTOs, `EventProfile`, `EventService` (.Include, .Clear) và giao diện Razor Pages (`Create.cshtml`, `Edit.cshtml`).
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)

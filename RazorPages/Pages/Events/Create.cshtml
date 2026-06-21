@@ -57,6 +57,40 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label fw-medium">Danh mục</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var item in Model.Categories)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Input.CategoryIds" value="@item.Value" id="category_@item.Value" 
+                                    @(Model.Input?.CategoryIds != null && Model.Input.CategoryIds.Contains(int.Parse(item.Value)) ? "checked" : "")>
+                                <label class="form-check-label" for="category_@item.Value">
+                                    @item.Text
+                                </label>
+                            </div>
+                        }
+                    </div>
+                    <span asp-validation-for="Input.CategoryIds" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Thẻ</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var item in Model.Tags)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Input.TagIds" value="@item.Value" id="tag_@item.Value"
+                                    @(Model.Input?.TagIds != null && Model.Input.TagIds.Contains(int.Parse(item.Value)) ? "checked" : "")>
+                                <label class="form-check-label" for="tag_@item.Value">
+                                    @item.Text
+                                </label>
+                            </div>
+                        }
+                    </div>
+                    <span asp-validation-for="Input.TagIds" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
                     <label asp-for="Input.VenueId" class="form-label fw-medium">Địa điểm <span class="text-danger">*</span></label>
                     <select asp-for="Input.VenueId" asp-items="Model.Venues" class="form-select">
                         <option value="">-- Chọn địa điểm --</option>
