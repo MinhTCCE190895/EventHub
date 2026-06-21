@@ -18,4 +18,14 @@ public interface IFeedbackAnalyticsService
     /// Thống kê điểm số phản hồi đa tiêu chí của tất cả sự kiện bằng PLINQ (tối ưu hóa song song trên CPU).
     /// </summary>
     Task<IEnumerable<EventFeedbackMetricsDto>> GetFeedbackMetricsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy danh sách phản hồi chi tiết của một sự kiện (bao gồm bình luận của sinh viên).
+    /// </summary>
+    Task<IEnumerable<EventFeedbackDetailDto>> GetFeedbacksByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy danh sách phản hồi mà sinh viên đã gửi.
+    /// </summary>
+    Task<IEnumerable<StudentFeedbackDto>> GetFeedbacksByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default);
 }

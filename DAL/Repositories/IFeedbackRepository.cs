@@ -13,4 +13,9 @@ public interface IFeedbackRepository : IRepository<Feedback>
     /// Lấy toàn bộ đánh giá hệ thống cùng chi tiết điểm tiêu chí và thông tin sự kiện liên quan.
     /// </summary>
     Task<IEnumerable<Feedback>> GetAllFeedbacksWithDetailsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lấy danh sách đánh giá của sinh viên cụ thể kèm theo chi tiết điểm tiêu chí và thông tin sự kiện.
+    /// </summary>
+    Task<IEnumerable<Feedback>> GetFeedbacksByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default);
 }

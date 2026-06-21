@@ -154,4 +154,52 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         _logger.LogInformation(">>> [PLINQ Engine] Hoàn tất tính toán thống kê phản hồi cho {Count} sự kiện.", metrics.Count);
         return metrics;
     }
+
+    public async Task<IEnumerable<EventFeedbackDetailDto>> GetFeedbacksByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
+    {
+        var feedbacks = await _feedbackRepository.GetFeedbacksByEventIdAsync(eventId, cancellationToken);
+        var feedbacksList = feedbacks.ToList();
+
+        if (!feedbacksList.Any())
+        {
+            return Enumerable.Empty<EventFeedbackDetailDto>();
+        }
+
+        return feedbacksList.AsParallel()
+            .Select(f => new EventFeedbackDetailDto
+            {
+                FeedbackId = f.Id,
+                StudentName = f.Booking?.Student?.FullName ?? "N/A",
+                StudentEmail = f.Booking?.Student?.Email ?? "N/A",
+                GeneralComment = f.GeneralComment,
+                SubmittedAt = f.SubmittedAt,
+                CriteriaScores = f.FeedbackDetails.ToDictionary(fd => fd.Criteria, fd => fd.Score),
+                AverageScore = f.FeedbackDetails.Any() ? Math.Round(f.FeedbackDetails.Average(fd => fd.Score), 1) : 0.0
+            })
+            .ToList();
+    }
+
+    public async Task<IEnumerable<StudentFeedbackDto>> GetFeedbacksByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
+    {
+        var feedbacks = await _feedbackRepository.GetFeedbacksByStudentIdAsync(studentId, cancellationToken);
+        var feedbacksList = feedbacks.ToList();
+
+        if (!feedbacksList.Any())
+        {
+            return Enumerable.Empty<StudentFeedbackDto>();
+        }
+
+        return feedbacksList.AsParallel()
+            .Select(f => new StudentFeedbackDto
+            {
+                FeedbackId = f.Id,
+                EventId = f.Booking?.EventId ?? Guid.Empty,
+                EventTitle = f.Booking?.Event?.Title ?? "N/A",
+                GeneralComment = f.GeneralComment,
+                SubmittedAt = f.SubmittedAt,
+                CriteriaScores = f.FeedbackDetails.ToDictionary(fd => fd.Criteria, fd => fd.Score),
+                AverageScore = f.FeedbackDetails.Any() ? Math.Round(f.FeedbackDetails.Average(fd => fd.Score), 1) : 0.0
+            })
+            .ToList();
+    }
 }
