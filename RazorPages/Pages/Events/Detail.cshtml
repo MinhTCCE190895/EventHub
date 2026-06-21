@@ -38,7 +38,8 @@
                     <div class="mb-3">
                         <strong>Tình trạng:</strong>
                         @{
-                            var remaining = Model.EventItem.Venue.MaxCapacity - Model.EventItem.RegisteredCount;
+                            var maxCapacity = Model.EventItem.Venue?.MaxCapacity ?? 0;
+                            var remaining = maxCapacity - Model.EventItem.RegisteredCount;
                         }
                         @if (remaining <= 0)
                         {
@@ -46,7 +47,7 @@
                         }
                         else
                         {
-                            <span class="badge bg-success">Còn @remaining / @Model.EventItem.Venue.MaxCapacity chỗ</span>
+                            <span class="badge bg-success">Còn @remaining / @maxCapacity chỗ</span>
                         }
                     </div>
                     

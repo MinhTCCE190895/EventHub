@@ -81,7 +81,7 @@ public class AccountController : Controller
         // Nếu là Admin, tự động chuyển hướng sang trang Quản lý ở RazorPages
         if (user.Role == "Admin")
         {
-            return Redirect("http://localhost:5129/Organizers");
+            return Redirect("http://localhost:5129/Events");
         }
 
         return RedirectToAction("Index", "Home");
