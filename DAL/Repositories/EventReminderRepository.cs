@@ -23,7 +23,7 @@ public class EventReminderRepository : BaseRepository<EventReminder>, IEventRemi
             .Include(er => er.Event)
                 .ThenInclude(e => e.Bookings)
                     .ThenInclude(b => b.Student)
-            .Where(er => !er.IsEmailSent && er.ScheduledTime <= now)
+            .Where(er => !er.IsEmailSent && er.Event.StartTime.AddDays(-1) <= now && now < er.Event.StartTime)
             .ToListAsync(cancellationToken);
     }
 }

@@ -124,6 +124,10 @@ graph TD
 
 ### 3.2. Cập nhật của Agent (Antigravity)
 - **2026-06-21 (Antigravity)**:
+  - **TriLT Persona**: Cập nhật điều kiện gửi Email Reminder:
+    - Thêm thuộc tính `IsCanReminder` vào `EventReminder` entity để check điều kiện gửi email nhắc nhở (hiện tại >= thời gian sự kiện bắt đầu - 1 ngày và hiện tại < thời gian sự kiện bắt đầu, đồng thời email chưa được gửi).
+    - Cập nhật phương thức `GetPendingRemindersWithDetailsAsync` của `EventReminderRepository` để lọc theo điều kiện thời gian của sự kiện thay vì thuộc tính `ScheduledTime`.
+    - Cập nhật `EventReminderService` kiểm tra `IsCanReminder` trước khi xử lý gửi email.
   - **TriLT Persona**: Hoàn thành phân hệ **FE-07 Feedback + Metrics**:
     - Tạo `IFeedbackRepository` & `FeedbackRepository` (DAL) và nạp kèm thông tin chi tiết.
     - Tạo `IFeedbackAnalyticsService` & `FeedbackAnalyticsService` (BLL), áp dụng PLINQ `.AsParallel()` để tính toán điểm trung bình song song trên các lõi CPU.
