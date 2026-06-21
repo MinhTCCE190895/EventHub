@@ -26,8 +26,8 @@
                 <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
                     <i class="bi bi-compass-fill"></i> Khám phá
                 </a>
-                <a class="sidebar-link @(currentPage?.StartsWith("/Organizers") == true ? "active" : "")" asp-page="/Organizers/Index">
-                    <i class="bi bi-person-badge-fill"></i> Organizers
+                <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true ? "active" : "")" asp-page="/Events/Index">
+                    <i class="bi bi-calendar-event-fill"></i> Events
                 </a>
                 <a class="sidebar-link @(currentPage?.StartsWith("/Categories") == true ? "active" : "")" asp-page="/Categories/Index">
                     <i class="bi bi-tags-fill"></i> Categories

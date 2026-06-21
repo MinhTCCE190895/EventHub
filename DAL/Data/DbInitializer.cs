@@ -36,8 +36,11 @@ public static class DbInitializer
             var users = await context.Users.ToListAsync();
             bool hasChanges = false;
 
-            // Reset password cho tất cả user hiện tại thành 123456
-            foreach (var u in users)
+            var seedEmails = new[] { "admin@unieventhub.com", "organizer@unieventhub.com", "khoi.student@fpt.edu.vn" };
+            var seedUsers = users.Where(u => seedEmails.Contains(u.Email)).ToList();
+
+            // Chỉ reset password cho các tài khoản seed mặc định thành 123456
+            foreach (var u in seedUsers)
             {
                 // To avoid rehashing every time, check if it matches
                 if (!BCrypt.Net.BCrypt.Verify("123456", u.PasswordHash))

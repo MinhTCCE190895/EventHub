@@ -12,7 +12,7 @@ public static class DependencyInjection
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookingService, BookingService>();
         services.AddSignalR();
-        services.AddScoped<IOrganizerService, OrganizerService>();
+        services.AddScoped<IEventService, EventService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();

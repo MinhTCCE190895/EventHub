@@ -1,13 +1,13 @@
 @page
 @model RazorPages.Pages.Categories.EditModel
 @{
-    ViewData["Title"] = "Edit Category";
+    ViewData["Title"] = "Chỉnh sửa danh mục";
 }
 
 <div class="container py-4">
     <div class="mb-4">
         <a asp-page="Index" class="text-decoration-none">
-            <i class="bi bi-arrow-left me-1"></i> Back to List
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
         </a>
     </div>
 
@@ -15,7 +15,7 @@
         <div class="col-md-8">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                    <h3 class="fw-bold mb-0">Edit Category</h3>
+                    <h3 class="fw-bold mb-0">Chỉnh sửa danh mục</h3>
                 </div>
                 <div class="card-body p-4">
                     <form method="post">
@@ -24,19 +24,19 @@
                         
                         <div class="mb-3">
                             <label asp-for="CategoryUpdateDTO.Name" class="form-label fw-medium"></label>
-                            <input asp-for="CategoryUpdateDTO.Name" class="form-control" placeholder="Enter category name" />
+                            <input asp-for="CategoryUpdateDTO.Name" class="form-control" placeholder="Nhập tên danh mục" />
                             <span asp-validation-for="CategoryUpdateDTO.Name" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-4">
                             <label asp-for="CategoryUpdateDTO.Description" class="form-label fw-medium"></label>
-                            <textarea asp-for="CategoryUpdateDTO.Description" class="form-control" rows="4" placeholder="Enter category description"></textarea>
+                            <textarea asp-for="CategoryUpdateDTO.Description" class="form-control" rows="4" placeholder="Nhập mô tả danh mục"></textarea>
                             <span asp-validation-for="CategoryUpdateDTO.Description" class="text-danger small"></span>
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a asp-page="Index" class="btn btn-light">Cancel</a>
-                            <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                            <a asp-page="Index" class="btn btn-light">Hủy</a>
+                            <button type="submit" class="btn btn-primary px-4">Lưu thay đổi</button>
                         </div>
                     </form>
                 </div>

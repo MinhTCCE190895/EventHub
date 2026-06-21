@@ -1,14 +1,14 @@
 @page
 @model RazorPages.Pages.Tags.IndexModel
 @{
-    ViewData["Title"] = "Tag Management";
+    ViewData["Title"] = "Quản lý Thẻ tag";
 }
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">Tag Management</h2>
+        <h2 class="fw-bold mb-0">Quản lý Thẻ tag</h2>
         <a asp-page="./Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Add Tag
+            <i class="bi bi-plus-lg me-1"></i> Thêm thẻ tag
         </a>
     </div>
 
@@ -27,9 +27,9 @@
                     <thead class="table-light">
                         <tr>
                             <th>ID</th>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th class="text-end">Actions</th>
+                            <th>Tên</th>
+                            <th>Mô tả</th>
+                            <th class="text-end">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,13 +41,13 @@
                                 <td>@(string.IsNullOrEmpty(item.Description) ? "-" : item.Description)</td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
-                                        <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-outline-secondary" title="Details">
+                                        <a asp-page="./Details" asp-route-id="@item.Id" class="btn btn-outline-secondary" title="Chi tiết">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Edit">
+                                        <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Chỉnh sửa">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Delete">
+                                        <a asp-page="./Delete" asp-route-id="@item.Id" class="btn btn-outline-danger" title="Xóa">
                                             <i class="bi bi-trash"></i>
                                         </a>
                                     </div>
@@ -60,7 +60,7 @@
                             <tr>
                                 <td colspan="4" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                                    No tags found.
+                                    Chưa có thẻ tag nào.
                                 </td>
                             </tr>
                         }

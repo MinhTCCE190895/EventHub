@@ -83,9 +83,13 @@ graph TD
   - Tích hợp API thời tiết thực tế tại địa điểm tổ chức, lưu cache IMemoryCache 30 phút.
   - Thiết kế giao diện sidebar weather card sang trọng, trực quan theo đúng Style Guide.
   - `NormalizeLocation` tự động trích xuất tỉnh thành phố cuối địa chỉ Venue để gọi API thời tiết chính xác.
-- **Quản lý Organizer (`Pages/Organizers/*`):**
-  - Thực hiện các thao tác CRUD cơ bản cho Organizer (User với Role "Organizer").
-  - Áp dụng các quy tắc bảo mật với `[BindProperty]` chống Over-posting và xử lý lỗi DB Exception.
+- **Quản lý Sự kiện (`Pages/Events/*`):**
+  - Thay thế hoàn toàn chức năng CRUD Organizer (đã bị gỡ bỏ).
+  - Thực hiện các thao tác CRUD đầy đủ cho Event: Index (danh sách), Create, Edit, Delete.
+  - `EventService` sử dụng `IEventRepository.BuildSearchQuery()` kèm `.Include()` để tránh N+1 query.
+  - Dropdown Organizer và Venue được nạp động qua `IEventService.GetOrganizersAsync()` và `IVenueService`.
+  - Áp dụng `[BindProperty]` trên DTO riêng biệt (`EventCreateDTO`, `EventUpdateDTO`) chống Over-posting.
+  - AutoMapper profile `EventProfile` flatten navigation properties `Organizer.FullName` và `Venue.Name`.
 
 ### 1.3. Phân hệ Blazor (Live Booking & Dashboard)
 - **FE-04 Live Ticket Booking (`BookingComponent.razor`):** Đặt vé thời gian thực, đồng bộ số lượng vé.
@@ -178,6 +182,14 @@ graph TD
       - Thêm các giao diện Razor Pages tương ứng.
       - Xử lý logic nối trường Campus vào Venue.Address trong `VenueCreateDTO` và `VenueUpdateDTO` theo đúng quy tắc UI/UX "Không trích xuất".
       - Cập nhật thanh Sidebar Layout với điều hướng mới.
+  - **2026-06-21 (Antigravity — MinhTC Persona)**:
+    - Gỡ bỏ toàn bộ chức năng CRUD Organizer: xóa `OrganizerService`, `IOrganizerService`, `OrganizerProfile`, 3 DTO Organizer, và thư mục `Pages/Organizers`.
+    - Xây dựng mới hoàn toàn chức năng CRUD Event (FE-02) trên Razor Pages:
+      - Tạo `EventDTO`, `EventCreateDTO`, `EventUpdateDTO`.
+      - Tạo `EventProfile` (AutoMapper) với flatten `OrganizerName`, `VenueName`, `VenueMaxCapacity`.
+      - Tạo `IEventService` và `EventService` kế thừa `IEventRepository.BuildSearchQuery()`.
+      - Tạo 4 Razor Pages: `Index`, `Create`, `Edit`, `Delete` với dropdown động Organizer/Venue.
+      - Cập nhật `BLL/DependencyInjection.cs`, `ServiceExtensions.cs` và `_Layout.cshtml`.
 
 
 ### 3.3. Các nhánh của thành viên khác (Trí Lê / trilt-*)

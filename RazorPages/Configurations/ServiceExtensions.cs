@@ -46,7 +46,7 @@ public static class ServiceExtensions
             options.Conventions.AllowAnonymousToPage("/Index");
             options.Conventions.AllowAnonymousToPage("/Error");
             options.Conventions.AllowAnonymousToPage("/Privacy");
-            options.Conventions.AuthorizeFolder("/Organizers", "RequireAdminRole");
+            options.Conventions.AuthorizeFolder("/Events", "RequireAdminRole");
         });
     }
 
