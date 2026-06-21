@@ -92,8 +92,8 @@ public class AccountController : Controller
 
         if (user.Role == "Student")
         {
-            // Student chuyển thẳng đến Blazor app (local 5210)
-            return Redirect("http://localhost:5210/");
+            // Student chuyển về Razor Pages Explore để khám phá sự kiện trước
+            return Redirect("http://localhost:5129/");
         }
 
         return RedirectToAction("Index", "Home");

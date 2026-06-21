@@ -28,13 +28,10 @@
                     var isStudent = User.Identity?.IsAuthenticated == true && User.IsInRole("Student");
                 }
 
-                @if (!isStudent)
-                {
-                    <!-- Links visible to Admin/Organizer/Guest -->
-                    <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
-                        <i class="bi bi-compass-fill"></i> Khám phá sự kiện
-                    </a>
-                }
+                <!-- Links visible to Admin/Organizer/Guest/Student -->
+                <a class="sidebar-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
+                    <i class="bi bi-compass-fill"></i> Khám phá sự kiện
+                </a>
                 
                 <a class="sidebar-link" href="http://localhost:5210/" target="_blank">
                     <i class="bi bi-activity"></i> Live Dashboard
