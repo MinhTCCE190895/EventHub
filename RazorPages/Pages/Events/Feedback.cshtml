@@ -1,0 +1,101 @@
+@page "{eventId:guid}"
+@model RazorPages.Pages.Events.FeedbackModel
+@{
+    ViewData["Title"] = "Đánh giá sự kiện - " + Model.EventItem.Title;
+}
+
+<div class="container mt-5" style="max-width: 650px;">
+    <div class="card-minimal p-4 shadow-lg border-0 bg-glass text-dark">
+        <div class="text-center mb-4">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1.5 rounded-pill text-uppercase tracking-wider fw-bold mb-2">Feedback Form</span>
+            <h2 class="fw-bold card-minimal-title" style="-webkit-line-clamp: 2;">@Model.EventItem.Title</h2>
+            <p class="text-muted small">Hãy chia sẻ trải nghiệm của bạn để giúp chúng tôi tổ chức tốt hơn nhé!</p>
+        </div>
+
+        <form method="post" asp-route-eventId="@Model.EventItem.Id" asp-route-bookingId="@Model.BookingId">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <!-- Tiêu chí 1: Diễn giả -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label-minimal fw-bold mb-0">🗣️ Chất lượng Diễn giả (Speakers)</label>
+                    <span id="speakerVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
+                </div>
+                <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.SpeakerScore" id="speakerRange" oninput="updateVal('speakerRange', 'speakerVal')" />
+            </div>
+
+            <!-- Tiêu chí 2: Hậu cần -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label-minimal fw-bold mb-0">🏢 Khâu Hậu cần & Địa điểm (Logistics)</label>
+                    <span id="logisticsVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
+                </div>
+                <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.LogisticsScore" id="logisticsRange" oninput="updateVal('logisticsRange', 'logisticsVal')" />
+            </div>
+
+            <!-- Tiêu chí 3: Nội dung -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label-minimal fw-bold mb-0">📚 Giá trị Nội dung mang lại (Content)</label>
+                    <span id="contentVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
+                </div>
+                <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.ContentScore" id="contentRange" oninput="updateVal('contentRange', 'contentVal')" />
+            </div>
+
+            <!-- Tiêu chí 4: Tổ chức -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label-minimal fw-bold mb-0">⚙️ Khâu Tổ chức & Điều phối (Organization)</label>
+                    <span id="organizationVal" class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">5 / 5</span>
+                </div>
+                <input type="range" class="form-range custom-range" min="1" max="5" asp-for="Input.OrganizationScore" id="organizationRange" oninput="updateVal('organizationRange', 'organizationVal')" />
+            </div>
+
+            <!-- Nhận xét chung -->
+            <div class="mb-4">
+                <label asp-for="Input.GeneralComment" class="form-label-minimal fw-bold">✍️ Ý kiến đóng góp khác (Tùy chọn)</label>
+                <textarea asp-for="Input.GeneralComment" class="form-control form-control-minimal" rows="3" placeholder="Nhập đóng góp ý kiến hoặc phản hồi của bạn..." maxlength="500"></textarea>
+                <span asp-validation-for="Input.GeneralComment" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-3">
+                <a asp-page="/Events/Detail" asp-route-id="@Model.EventItem.Id" class="btn btn-light w-50 py-2.5 fw-semibold rounded-3 text-decoration-none text-center">
+                    Quay lại
+                </a>
+                <button type="submit" class="btn btn-primary w-50 py-2.5 fw-bold rounded-3 shadow-sm">
+                    Gửi Đánh Giá
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateVal(rangeId, valId) {
+            const range = document.getElementById(rangeId);
+            const valSpan = document.getElementById(valId);
+            valSpan.innerText = `${range.value} / 5`;
+        }
+    </script>
+    <style>
+        .bg-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .custom-range::-webkit-slider-thumb {
+            background: var(--primary, #0d6efd);
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.4);
+            border: 2px solid #fff;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .custom-range::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+    </style>
+}

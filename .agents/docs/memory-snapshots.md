@@ -124,6 +124,11 @@ graph TD
 
 ### 3.2. Cập nhật của Agent (Antigravity)
 - **2026-06-21 (Antigravity)**:
+  - **TriLT Persona**: Hoàn thành phân hệ **FE-07 Feedback + Metrics**:
+    - Tạo `IFeedbackRepository` & `FeedbackRepository` (DAL) và nạp kèm thông tin chi tiết.
+    - Tạo `IFeedbackAnalyticsService` & `FeedbackAnalyticsService` (BLL), áp dụng PLINQ `.AsParallel()` để tính toán điểm trung bình song song trên các lõi CPU.
+    - Phát triển trang Gửi đánh giá cho sinh viên tại RazorPages (`/Events/Feedback`).
+    - Phát triển Dashboard Phân tích đánh giá cao cấp cho Admin/Organizer tại Blazor (`/feedback-analytics`).
   - **TriLT Persona**: Hoàn thành chuẩn hoá phân hệ **FE-06 Email Reminders**:
     - Tạo `IEventReminderRepository` & `EventReminderRepository` (DAL) thực hiện Eager Loading dữ liệu `Event`, `Booking`, và `Student` đăng ký.
     - Tạo `IEventReminderService` & `EventReminderService` (BLL) chịu trách nhiệm chính chạy TPL `Parallel.ForEachAsync` gửi email song song.

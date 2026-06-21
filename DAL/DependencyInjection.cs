@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IEventReminderRepository, EventReminderRepository>();
+        services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 
         return services;
     }

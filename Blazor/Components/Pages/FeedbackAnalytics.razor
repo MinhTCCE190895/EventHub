@@ -1,0 +1,154 @@
+@page "/feedback-analytics"
+@rendermode InteractiveServer
+@using BLL.DTOs
+@using BLL.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Organizer")]
+@inject IFeedbackAnalyticsService FeedbackService
+
+<PageTitle>Phân tích phản hồi sự kiện - EventHub</PageTitle>
+
+<div class="dashboard-container" style="background: #0b0f19; min-height: 100vh; color: #f8fafc; padding: 2rem;">
+    <div class="dashboard-content" style="max-width: 1200px; margin: 0 auto;">
+        
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+            <div>
+                <span class="text-primary fw-bold text-uppercase tracking-wider small" style="color: #6366f1 !important;">Feedback & Metrics</span>
+                <h1 class="display-6 fw-bold mb-0 text-white mt-1">📊 Phân Tích Đánh Giá Phản Hồi</h1>
+                <p class="text-muted mb-0">Thống kê điểm số phản hồi đa tiêu chí bằng PLINQ (Parallel Processing)</p>
+            </div>
+            <div class="d-flex align-items-center bg-dark px-4 py-2.5 rounded-pill border border-secondary border-opacity-25" style="background-color: #1e293b !important; border-color: rgba(255,255,255,0.1) !important;">
+                <span class="pulse-green"></span>
+                <span class="text-success small fw-bold ms-2" style="color: #10b981 !important;">PLINQ AGGREGATION ACTIVE</span>
+            </div>
+        </div>
+
+        @if (MetricsList == null)
+        {
+            <!-- Skeleton Loading -->
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                @for (int i = 0; i < 2; i++)
+                {
+                    <div class="col">
+                        <div class="card-glass p-4" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; min-height: 250px;">
+                            <div class="skeleton-box mb-3" style="height: 20px; width: 50%; background: rgba(255,255,255,0.05); border-radius: 4px;"></div>
+                            <div class="skeleton-box mb-2" style="height: 14px; width: 80%; background: rgba(255,255,255,0.05); border-radius: 4px;"></div>
+                            <div class="skeleton-box mb-4" style="height: 14px; width: 60%; background: rgba(255,255,255,0.05); border-radius: 4px;"></div>
+                            <div class="skeleton-box" style="height: 40px; background: rgba(255,255,255,0.05); border-radius: 8px;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (!MetricsList.Any())
+        {
+            <div class="text-center py-5 rounded-4 border border-dashed border-secondary border-opacity-50" style="background: rgba(30, 41, 59, 0.2);">
+                <div class="display-3 text-muted mb-3"><i class="bi bi-chat-left-heart"></i></div>
+                <h5 class="fw-bold text-white">Chưa có phản hồi nào</h5>
+                <p class="text-muted mb-0">Hệ thống chưa ghi nhận lượt đánh giá phản hồi nào từ sinh viên.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var metric in MetricsList)
+                {
+                    <div class="col-md-6 col-12">
+                        <div class="card-glass p-4 position-relative overflow-hidden" 
+                             style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                            
+                            <!-- Overall Score Badge top-right -->
+                            <div class="position-absolute" style="top: 1.5rem; right: 1.5rem; text-align: right;">
+                                <span class="d-block text-muted small text-uppercase">Điểm chung</span>
+                                <h3 class="fw-bold mb-0 mt-0.5" style="color: #f59e0b; font-size: 2rem; text-shadow: 0 0 12px rgba(245,158,11,0.3);">
+                                    @metric.OverallAverageScore <span class="fs-6 text-muted">/5</span>
+                                </h3>
+                            </div>
+
+                            <div style="max-width: 75%;">
+                                <span class="badge mb-2" style="background-color: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.25);">
+                                    <i class="bi bi-chat-square-text-fill me-1"></i> @metric.TotalFeedbacks Đánh giá
+                                </span>
+                                <h4 class="fw-bold text-white mb-3 text-truncate" title="@metric.EventTitle">@metric.EventTitle</h4>
+                            </div>
+
+                            <hr style="border-top: 1px solid rgba(255,255,255,0.08); margin: 1.5rem 0;" />
+
+                            <!-- Averages details -->
+                            <div class="row g-3">
+                                @foreach (var criteria in metric.CriteriaAverages)
+                                {
+                                    var percentage = criteria.Value * 100 / 5;
+                                    var criteriaIcon = criteria.Key switch
+                                    {
+                                        "Diễn giả" => "🗣️",
+                                        "Hậu cần" => "🏢",
+                                        "Nội dung" => "📚",
+                                        "Tổ chức" => "⚙️",
+                                        _ => "🌟"
+                                    };
+
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small text-muted">@criteriaIcon @criteria.Key</span>
+                                            <span class="small fw-bold text-white">@criteria.Value/5</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05); border-radius: 10px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: @(percentage)%; background-color: #6366f1; border-radius: 10px;" 
+                                                 aria-valuenow="@criteria.Value" aria-valuemin="0" aria-valuemax="5"></div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    private IEnumerable<EventFeedbackMetricsDto>? MetricsList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Nhận kết quả từ service sử dụng PLINQ để tính toán đồng thời
+        MetricsList = await FeedbackService.GetFeedbackMetricsAsync();
+    }
+}
+
+<style>
+    /* Styling elements matching Dashboard style */
+    .pulse-green {
+        width: 10px;
+        height: 10px;
+        background-color: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 8px #10b981;
+        animation: pulse 1.8s infinite;
+    }
+    @@keyframes pulse {
+        0% { transform: scale(0.9); opacity: 1; }
+        50% { transform: scale(1.15); opacity: 0.5; }
+        100% { transform: scale(0.9); opacity: 1; }
+    }
+    .card-glass:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        border-color: rgba(255,255,255,0.15) !important;
+    }
+    .skeleton-box {
+        animation: skeleton-shimmer 1.5s infinite linear;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 200% 100%;
+    }
+    @@keyframes skeleton-shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
