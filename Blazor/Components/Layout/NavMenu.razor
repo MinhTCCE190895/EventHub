@@ -6,11 +6,32 @@
         <span>EventHub</span>
     </a>
     <nav class="sidebar-nav">
-        <AuthorizeView>
+        <!-- Links visible to everyone -->
+        <a class="sidebar-link" href="http://localhost:5129/Index">
+            <i class="bi bi-compass-fill"></i> Khám phá sự kiện
+        </a>
+
+        <AuthorizeView Roles="Admin,Organizer">
             <Authorized>
                 <NavLink class="sidebar-link" href="" Match="NavLinkMatch.All">
-                    <i class="bi bi-activity"></i>
-                    <span>Live Dashboard</span>
+                    <i class="bi bi-activity"></i> Live Dashboard
+                </NavLink>
+
+                <!-- Admin & Organizer only links -->
+                <a class="sidebar-link" href="http://localhost:5129/Events">
+                    <i class="bi bi-calendar-event-fill"></i> Quản lý sự kiện
+                </a>
+                <a class="sidebar-link" href="http://localhost:5129/Categories">
+                    <i class="bi bi-tags-fill"></i> Quản lý danh mục
+                </a>
+                <a class="sidebar-link" href="http://localhost:5129/Tags">
+                    <i class="bi bi-hash"></i> Quản lý Thẻ
+                </a>
+                <a class="sidebar-link" href="http://localhost:5129/Venues">
+                    <i class="bi bi-building"></i> Quản lý địa điểm
+                </a>
+                <NavLink class="sidebar-link" href="feedback-analytics">
+                    <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
                 </NavLink>
             </Authorized>
         </AuthorizeView>
@@ -19,37 +40,17 @@
         <AuthorizeView Roles="Student">
             <Authorized>
                 <NavLink class="sidebar-link" href="events">
-                    <i class="bi bi-ticket-perforated-fill"></i>
-                    <span>Đặt vé sự kiện</span>
+                    <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
                 </NavLink>
+                <a class="sidebar-link" href="http://localhost:5129/Events/MyFeedbacks">
+                    <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
+                </a>
             </Authorized>
         </AuthorizeView>
 
-        <!-- Admin & Organizer only links -->
-        <AuthorizeView Roles="Admin,Organizer">
-            <Authorized>
-                <a class="sidebar-link" href="http://localhost:5129/Events">
-                    <i class="bi bi-calendar-event-fill"></i>
-                    <span>Quản lý sự kiện</span>
-                </a>
-                <a class="sidebar-link" href="http://localhost:5129/Categories">
-                    <i class="bi bi-tags-fill"></i>
-                    <span>Quản lý danh mục</span>
-                </a>
-                <a class="sidebar-link" href="http://localhost:5129/Tags">
-                    <i class="bi bi-hash"></i>
-                    <span>Quản lý thẻ (Tags)</span>
-                </a>
-                <a class="sidebar-link" href="http://localhost:5129/Venues">
-                    <i class="bi bi-building"></i>
-                    <span>Quản lý địa điểm</span>
-                </a>
-                <NavLink class="sidebar-link" href="feedback-analytics">
-                    <i class="bi bi-bar-chart-line-fill"></i>
-                    <span>Phân tích đánh giá</span>
-                </NavLink>
-            </Authorized>
-        </AuthorizeView>
+        <a class="sidebar-link" href="http://localhost:5129/Privacy">
+            <i class="bi bi-shield-lock-fill"></i> Riêng tư
+        </a>
     </nav>
     <AuthorizeView>
         <Authorized>
