@@ -123,6 +123,11 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
+- **2026-06-21 (Antigravity)**:
+  - **TriLT Persona**: Hoàn thành chuẩn hoá phân hệ **FE-06 Email Reminders**:
+    - Tạo `IEventReminderRepository` & `EventReminderRepository` (DAL) thực hiện Eager Loading dữ liệu `Event`, `Booking`, và `Student` đăng ký.
+    - Tạo `IEventReminderService` & `EventReminderService` (BLL) chịu trách nhiệm chính chạy TPL `Parallel.ForEachAsync` gửi email song song.
+    - Cập nhật `EmailReminderWorker` gọi service xử lý thay vì truy vấn trực tiếp DbContext.
 - **2026-06-20 (Antigravity)**:
   - Cấu hình lại điều hướng chính (routing) của dự án Blazor: chuyển trang Live Dashboard làm trang mặc định (`/`), chuyển trang danh sách sự kiện sang đường dẫn `/events`.
   - Cập nhật liên kết điều hướng tương ứng tại `NavMenu.razor` với thuộc tính `Match="NavLinkMatch.All"`.

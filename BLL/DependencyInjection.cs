@@ -36,6 +36,7 @@ public static class DependencyInjection
 
         // Đăng ký các Interface/Service của tầng BLL tại đây
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IEventReminderService, EventReminderService>();
 
         return services;
     }
