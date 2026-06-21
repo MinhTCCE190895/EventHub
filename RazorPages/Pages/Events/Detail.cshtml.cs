@@ -1,3 +1,4 @@
+using BLL.Services;
 using DAL.Data;
 using DAL.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +10,16 @@ namespace RazorPages.Pages.Events
     public class DetailModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly IFeedbackAnalyticsService _feedbackService;
 
-        public DetailModel(AppDbContext context)
+        public DetailModel(AppDbContext context, IFeedbackAnalyticsService feedbackService)
         {
             _context = context;
+            _feedbackService = feedbackService;
         }
 
         public Event EventItem { get; set; } = default!;
+        public bool ShowFeedbackButton { get; set; } = false;
 
         public async Task<IActionResult> OnGetAsync(Guid id)
         {
@@ -30,6 +34,14 @@ namespace RazorPages.Pages.Events
             }
 
             EventItem = eventItem;
+
+            // Kiểm tra xem user hiện tại là Student và chưa feedback
+            var studentIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(studentIdString) && Guid.TryParse(studentIdString, out var studentId))
+            {
+                ShowFeedbackButton = await _feedbackService.CanSubmitFeedbackAsync(id, studentId);
+            }
+
             return Page();
         }
     }

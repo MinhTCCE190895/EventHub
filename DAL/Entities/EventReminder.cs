@@ -9,4 +9,8 @@ public class EventReminder
 
     // Navigation properties
     public Event Event { get; set; } = null!;
+
+    // Calculated property to check if reminder can be sent
+    public bool IsCanReminder => !IsEmailSent && Event != null && DateTime.UtcNow >= Event.StartTime.AddDays(-1) && DateTime.UtcNow < Event.StartTime;
 }
+

@@ -250,5 +250,38 @@ public static class DbInitializer
         );
 
         await context.SaveChangesAsync();
+
+        // Seed sự kiện kiểm thử Email Reminder
+        var testEventId = Guid.Parse("99999999-9999-9999-9999-999999999999");
+        if (!await context.Events.AnyAsync(e => e.Id == testEventId))
+        {
+            var testEvent = new Event
+            {
+                Id = testEventId,
+                OrganizerId = orgId,
+                VenueId = venueA.Id,
+                Title = "Sự kiện kiểm thử Email Reminder",
+                Description = "Sự kiện dùng để kiểm tra tính năng gửi email nhắc nhở tự động.",
+                BannerUrl = "https://placehold.co/600x300/0284c7/white?text=Email+Reminder+Test",
+                StartTime = now.AddDays(1),
+                EndTime = now.AddDays(1).AddHours(2),
+                Status = "Published",
+                CreatedAt = now
+            };
+
+            await context.Events.AddAsync(testEvent);
+            await context.EventCategories.AddAsync(new EventCategory { EventId = testEventId, CategoryId = catIT.Id });
+            await context.EventTags.AddAsync(new EventTag { EventId = testEventId, TagId = tagIT.Id });
+
+            // Đăng ký lịch reminder đã quá hạn (để worker quét và gửi ngay lập tức sau khi có người book)
+            await context.EventReminders.AddAsync(new EventReminder
+            {
+                EventId = testEventId,
+                ScheduledTime = now.AddMinutes(-10),
+                IsEmailSent = false
+            });
+
+            await context.SaveChangesAsync();
+        }
     }
 }

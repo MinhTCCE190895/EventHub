@@ -1,10 +1,12 @@
 @page "/events/{EventId:guid}/book"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Authorization
 @using DAL.Data
 @using DAL.Entities
 @using Microsoft.EntityFrameworkCore
 @using BLL.Services
+@attribute [Authorize(Roles = "Student")]
 @inject AppDbContext DbContext
 @inject NavigationManager Navigation
 @inject IBookingService BookingService

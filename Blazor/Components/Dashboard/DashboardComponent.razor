@@ -2,9 +2,11 @@
 @page "/dashboard"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Authorization
 @using DAL.Data
 @using DAL.Entities
 @using Microsoft.EntityFrameworkCore
+@attribute [Authorize]
 @inject AppDbContext DbContext
 @inject NavigationManager Navigation
 @implements IAsyncDisposable

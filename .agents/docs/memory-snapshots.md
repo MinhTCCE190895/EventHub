@@ -127,6 +127,30 @@ graph TD
   - `6230cd6`: Configure EventHub solution, add projects, rename Blazer to Blazor, rename RazerPages.csproj to RazorPages.csproj.
 
 ### 3.2. Cập nhật của Agent (Antigravity)
+- **2026-06-21 (Antigravity)**:
+  - **Điều hướng & Phân quyền (Sidebar Sync)**:
+    - Sửa lỗi redirect của Admin sau khi login thành công trong `AccountController.cs` (MVC) hướng đến `/Events` thay vì `/Organizers` (đã bị xóa).
+    - Đồng bộ hoá Sidebar Layout ở cả 3 phân hệ (MVC, RazorPages, Blazor) thực hiện ẩn/hiện động các chức năng theo vai trò người dùng:
+      - **Student**: Chỉ thấy Khám phá sự kiện, Đặt vé sự kiện (Live), Đánh giá của tôi, và Live Dashboard. Ẩn hoàn toàn các trang quản lý CRUD.
+      - **Admin & Organizer**: Thấy các trang quản lý sự kiện, danh mục, thẻ, địa điểm và phân tích đánh giá.
+    - Tạo trang `Logout` cho RazorPages để hỗ trợ SignOut cục bộ an toàn và đồng bộ Auth Cookie `.EventHub.Auth`.
+  - **TriLT Persona**: Nâng cấp phân hệ **FE-07 Feedback + Metrics**:
+    - Phát triển nút và modal "Xem nhận xét chi tiết" trong Blazor `FeedbackAnalyticsComponent.razor` hiển thị danh sách nhận xét, email, tên sinh viên và điểm số chi tiết cho từng sự kiện.
+    - Phát triển trang "Đánh giá của tôi" (`/Events/MyFeedbacks`) dạng read-only trong RazorPages giúp sinh viên xem lịch sử các đánh giá đã gửi.
+    - Thêm các method `GetFeedbacksByStudentIdAsync` và `GetFeedbacksByEventIdAsync` ở Repository (DAL) và Service (BLL) để hỗ trợ truy vấn dữ liệu song song qua PLINQ.
+  - **TriLT Persona**: Cập nhật điều kiện gửi Email Reminder:
+    - Thêm thuộc tính `IsCanReminder` vào `EventReminder` entity để check điều kiện gửi email nhắc nhở.
+    - Cập nhật phương thức `GetPendingRemindersWithDetailsAsync` của `EventReminderRepository` sử dụng biểu đồ lọc có thể dịch sang SQL (`Event.StartTime.AddDays(-1) <= now && now < Event.StartTime`) để tránh lỗi dịch LINQ (do thuộc tính C# `IsCanReminder` không nằm trong cơ sở dữ liệu).
+    - Cập nhật `EventReminderService` kiểm tra `IsCanReminder` trước khi xử lý gửi email.
+  - **TriLT Persona**: Hoàn thành phân hệ **FE-07 Feedback + Metrics**:
+    - Tạo `IFeedbackRepository` & `FeedbackRepository` (DAL) và nạp kèm thông tin chi tiết.
+    - Tạo `IFeedbackAnalyticsService` & `FeedbackAnalyticsService` (BLL), áp dụng PLINQ `.AsParallel()` để tính toán điểm trung bình song song trên các lõi CPU.
+    - Phát triển trang Gửi đánh giá cho sinh viên tại RazorPages (`/Events/Feedback`).
+    - Phát triển Dashboard Phân tích đánh giá cao cấp cho Admin/Organizer tại Blazor (`/feedback-analytics`).
+  - **TriLT Persona**: Hoàn thành chuẩn hoá phân hệ **FE-06 Email Reminders**:
+    - Tạo `IEventReminderRepository` & `EventReminderRepository` (DAL) thực hiện Eager Loading dữ liệu `Event`, `Booking`, và `Student` đăng ký.
+    - Tạo `IEventReminderService` & `EventReminderService` (BLL) chịu trách nhiệm chính chạy TPL `Parallel.ForEachAsync` gửi email song song.
+    - Cập nhật `EmailReminderWorker` gọi service xử lý thay vì truy vấn trực tiếp DbContext.
 - **2026-06-20 (Antigravity)**:
   - Cấu hình lại điều hướng chính (routing) của dự án Blazor: chuyển trang Live Dashboard làm trang mặc định (`/`), chuyển trang danh sách sự kiện sang đường dẫn `/events`.
   - Cập nhật liên kết điều hướng tương ứng tại `NavMenu.razor` với thuộc tính `Match="NavLinkMatch.All"`.
