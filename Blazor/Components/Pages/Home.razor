@@ -1,49 +1,62 @@
 @page "/events"
 @using DAL.Data
-@using DAL.Entities
 @using Microsoft.EntityFrameworkCore
+@using DAL.Entities
 @inject AppDbContext DbContext
+@inject NavigationManager Navigation
 
-<PageTitle>Danh sách sự kiện (Test FE-04)</PageTitle>
+<div class="app-container">
+    <main class="app-content w-100 p-4">
+        <div class="content-header mb-4 text-center">
+            <h1 class="display-6 fw-bold">🎟 Khám Phá & Đặt Vé</h1>
+            <p class="text-muted">Chọn sự kiện bạn muốn tham gia</p>
+        </div>
 
-<div class="container mt-4">
-    <h2>Danh sách sự kiện (Chỉ dùng để test Booking FE-04)</h2>
-    <p>Bấm vào nút "Đặt vé ngay" để chuyển hướng sang FE-04.</p>
-
-    @if (Events == null)
-    {
-        <p>Đang tải...</p>
-    }
-    else if (!Events.Any())
-    {
-        <p>Chưa có sự kiện nào trong Database. Vui lòng chạy project RazorPages trước để nó Seed Data, sau đó chạy lại Blazor.</p>
-    }
-    else
-    {
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Tên sự kiện</th>
-                    <th>Thời gian</th>
-                    <th>Đã đăng ký / Tổng số vé</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
+        @if (Events == null)
+        {
+            <div class="text-center mt-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="mt-2">Đang tải danh sách sự kiện...</div>
+            </div>
+        }
+        else if (!Events.Any())
+        {
+            <div class="alert alert-info text-center">Hiện tại chưa có sự kiện nào mở đăng ký.</div>
+        }
+        else
+        {
+            <div class="row g-4">
                 @foreach (var ev in Events)
                 {
-                    <tr>
-                        <td>@ev.Title</td>
-                        <td>@ev.StartTime.ToString("g")</td>
-                        <td>@ev.RegisteredCount / @ev.Venue?.MaxCapacity</td>
-                        <td>
-                            <a href="/events/@ev.Id/book" class="btn btn-primary btn-sm">Đặt vé ngay</a>
-                        </td>
-                    </tr>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+                            <div class="bg-primary bg-gradient p-4 text-white text-center">
+                                <h4 class="fw-bold mb-0">@ev.Title</h4>
+                            </div>
+                            <div class="card-body p-4">
+                                <p class="text-muted small mb-2"><i class="bi bi-building"></i> @ev.Venue?.Name</p>
+                                <p class="text-muted small mb-3"><i class="bi bi-clock"></i> @ev.StartTime.ToString("dd/MM/yyyy HH:mm")</p>
+                                
+                                @{
+                                    var remaining = ev.Venue!.MaxCapacity - ev.RegisteredCount;
+                                    var isSoldOut = remaining <= 0;
+                                }
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-bold">Tình trạng:</span>
+                                    <span class="badge @(isSoldOut ? "bg-danger" : "bg-success")">
+                                        @(isSoldOut ? "Hết vé" : $"Còn {remaining} chỗ")
+                                    </span>
+                                </div>
+                                <a href="/events/@ev.Id/book" class="btn @(isSoldOut ? "btn-secondary disabled" : "btn-primary") w-100 rounded-pill fw-bold">
+                                    <i class="bi bi-ticket-perforated me-1"></i> Đặt Vé Ngay
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </tbody>
-        </table>
-    }
+            </div>
+        }
+    </main>
 </div>
 
 @code {
@@ -51,6 +64,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Events = await DbContext.Events.Include(e => e.Venue).ToListAsync();
+        var now = DateTime.UtcNow;
+        Events = await DbContext.Events
+            .Include(e => e.Venue)
+            .Where(e => e.Status == "Published" && e.EndTime > now)
+            .OrderBy(e => e.StartTime)
+            .ToListAsync();
     }
 }

@@ -37,16 +37,33 @@ public static class ServiceExtensions
     {
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("RequireAdminRole",        policy => policy.RequireRole("Admin"));
+            options.AddPolicy("RequireOrganizerRole",    policy => policy.RequireRole("Organizer"));
+            options.AddPolicy("AdminOrOrganizer",        policy => policy.RequireRole("Admin", "Organizer"));
+            options.AddPolicy("RequireStudentRole",      policy => policy.RequireRole("Student"));
         });
-        
+
         services.AddRazorPages(options =>
         {
+            // Tất cả page đều cần đăng nhập (trừ các exception bên dưới)
             options.Conventions.AuthorizeFolder("/");
+
+            // Public pages — không cần đăng nhập
             options.Conventions.AllowAnonymousToPage("/Index");
             options.Conventions.AllowAnonymousToPage("/Error");
             options.Conventions.AllowAnonymousToPage("/Privacy");
-            options.Conventions.AuthorizeFolder("/Events", "RequireAdminRole");
+
+            // CRUD management — Admin và Organizer
+            // Lưu ý: /Events KHÔNG dùng folder-level policy vì Feedback & MyFeedbacks
+            // là Student-only pages nằm trong cùng folder. Phân quyền Events được
+            // xử lý trực tiếp bằng [Authorize(Roles=...)] ở từng PageModel.
+            options.Conventions.AuthorizeFolder("/Categories", "AdminOrOrganizer");
+            options.Conventions.AuthorizeFolder("/Tags",       "AdminOrOrganizer");
+            options.Conventions.AuthorizeFolder("/Venues",     "AdminOrOrganizer");
+
+            // Student-only pages
+            options.Conventions.AuthorizePage("/Events/Feedback",    "RequireStudentRole");
+            options.Conventions.AuthorizePage("/Events/MyFeedbacks", "RequireStudentRole");
         });
     }
 

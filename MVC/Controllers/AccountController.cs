@@ -78,10 +78,24 @@ public class AccountController : Controller
             return Redirect(model.ReturnUrl);
         }
 
-        // Nếu là Admin, tự động chuyển hướng sang trang Quản lý ở RazorPages
+        // Redirect theo role
         if (user.Role == "Admin")
         {
-            return Redirect("http://localhost:5129/Organizers");
+            // Tạm thời Admin redirect về trang quản lý Organizers (sẽ làm trong tương lai) 
+            // hoặc chuyển về trang chủ RazorPages
+            return Redirect("http://localhost:5129/");
+        }
+
+        if (user.Role == "Organizer")
+        {
+            // Organizer quản lý sự kiện nên redirect thẳng vào trang Events
+            return Redirect("http://localhost:5129/Events");
+        }
+
+        if (user.Role == "Student")
+        {
+            // Student chuyển thẳng đến Blazor app (local 5210)
+            return Redirect("http://localhost:5210/");
         }
 
         return RedirectToAction("Index", "Home");
@@ -137,14 +151,15 @@ public class AccountController : Controller
         return RedirectToAction(nameof(Login));
     }
 
-    // POST /Account/Logout
+    // GET & POST /Account/Logout
+    [HttpGet]
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
         _logger.LogInformation("User {Name} logged out", User.Identity?.Name);
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction(nameof(Login));
+        return RedirectToAction(nameof(Register));
     }
 
     // GET /Account/AccessDenied
