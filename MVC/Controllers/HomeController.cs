@@ -18,6 +18,10 @@ namespace MVC.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return Redirect("http://localhost:5129/");
+            }
             return View();
         }
 

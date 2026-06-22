@@ -26,6 +26,8 @@ namespace RazorPages.Pages.Events
             var eventItem = await _context.Events
                 .Include(e => e.Venue)
                 .Include(e => e.Organizer)
+                .Include(e => e.EventTags).ThenInclude(et => et.Tag)
+                .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (eventItem == null)

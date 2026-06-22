@@ -255,6 +255,110 @@ public static class DbInitializer
                 Status = "Published",
                 CreatedAt = now
             },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueA.Id,
+                Title = "Học máy và Ứng dụng AI",
+                Description = "Giới thiệu các mô hình học máy cơ bản và ứng dụng thực tiễn trong công nghiệp.",
+                BannerUrl = "https://placehold.co/600x300/0284c7/white?text=Machine+Learning",
+                StartTime = now.AddDays(5),
+                EndTime = now.AddDays(5).AddHours(3),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueB.Id,
+                Title = "Kỹ năng làm việc nhóm hiệu quả",
+                Description = "Chia sẻ kỹ năng phối hợp, giao tiếp và giải quyết xung đột trong nhóm làm việc.",
+                BannerUrl = "https://placehold.co/600x300/f59e0b/white?text=Teamwork+Skills",
+                StartTime = now.AddDays(8),
+                EndTime = now.AddDays(8).AddHours(2),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueA.Id,
+                Title = "Giải bóng rổ sinh viên tranh cúp 2025",
+                Description = "Giải đấu bóng rổ kịch tính quy tụ các đội tuyển xuất sắc từ các khoa.",
+                BannerUrl = "https://placehold.co/600x300/e11d48/white?text=Basketball+Cup",
+                StartTime = now.AddDays(12),
+                EndTime = now.AddDays(12).AddHours(4),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueB.Id,
+                Title = "Lập trình Web với React và Next.js",
+                Description = "Tìm hiểu kỹ thuật xây dựng ứng dụng Web hiện đại và tối ưu hóa SEO.",
+                BannerUrl = "https://placehold.co/600x300/0891b2/white?text=React+NextJS",
+                StartTime = now.AddDays(15),
+                EndTime = now.AddDays(15).AddHours(3),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueA.Id,
+                Title = "Triển lãm tranh sinh viên sắc màu hội họa",
+                Description = "Nơi trưng bày các tác phẩm nghệ thuật sáng tạo của các bạn sinh viên tài năng.",
+                BannerUrl = "https://placehold.co/600x300/8b5cf6/white?text=Art+Exhibition",
+                StartTime = now.AddDays(18),
+                EndTime = now.AddDays(18).AddHours(5),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueB.Id,
+                Title = "Workshop thiết kế UI/UX cơ bản",
+                Description = "Học cách nghiên cứu người dùng, vẽ wireframe và thiết kế giao diện chuẩn chỉ.",
+                BannerUrl = "https://placehold.co/600x300/ec4899/white?text=UIUX+Design",
+                StartTime = now.AddDays(20),
+                EndTime = now.AddDays(20).AddHours(3),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueA.Id,
+                Title = "Ngày hội tuyển dụng Job Fair 2025",
+                Description = "Cơ hội ứng tuyển trực tiếp vào hơn 50 doanh nghiệp công nghệ lớn nhỏ.",
+                BannerUrl = "https://placehold.co/600x300/10b981/white?text=Job+Fair",
+                StartTime = now.AddDays(25),
+                EndTime = now.AddDays(25).AddHours(8),
+                Status = "Published",
+                CreatedAt = now
+            },
+            new Event
+            {
+                Id = Guid.NewGuid(),
+                OrganizerId = orgId,
+                VenueId = venueB.Id,
+                Title = "Chuyên đề An toàn thông tin và Cyber Security",
+                Description = "Cập nhật các mối đe dọa bảo mật mới nhất và cách phòng vệ hệ thống.",
+                BannerUrl = "https://placehold.co/600x300/ef4444/white?text=Cyber+Security",
+                StartTime = now.AddDays(30),
+                EndTime = now.AddDays(30).AddHours(4),
+                Status = "Published",
+                CreatedAt = now
+            },
             // Event ở trạng thái Draft — không được hiển thị trên Explore
             new Event
             {
@@ -280,7 +384,15 @@ public static class DbInitializer
             new EventCategory { EventId = events[1].Id, CategoryId = catArt.Id },
             new EventCategory { EventId = events[2].Id, CategoryId = catSport.Id },
             new EventCategory { EventId = events[3].Id, CategoryId = catIT.Id },
-            new EventCategory { EventId = events[4].Id, CategoryId = catIT.Id }
+            new EventCategory { EventId = events[4].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[5].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[6].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[7].Id, CategoryId = catSport.Id },
+            new EventCategory { EventId = events[8].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[9].Id, CategoryId = catArt.Id },
+            new EventCategory { EventId = events[10].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[11].Id, CategoryId = catIT.Id },
+            new EventCategory { EventId = events[12].Id, CategoryId = catIT.Id }
         );
 
         // --- EventTags ---
@@ -291,7 +403,15 @@ public static class DbInitializer
             new EventTag { EventId = events[2].Id, TagId = tagSport.Id },
             new EventTag { EventId = events[3].Id, TagId = tagStartup.Id },
             new EventTag { EventId = events[3].Id, TagId = tagIT.Id },
-            new EventTag { EventId = events[4].Id, TagId = tagSkill.Id }
+            new EventTag { EventId = events[4].Id, TagId = tagSkill.Id },
+            new EventTag { EventId = events[5].Id, TagId = tagIT.Id },
+            new EventTag { EventId = events[6].Id, TagId = tagSkill.Id },
+            new EventTag { EventId = events[7].Id, TagId = tagSport.Id },
+            new EventTag { EventId = events[8].Id, TagId = tagIT.Id },
+            new EventTag { EventId = events[9].Id, TagId = tagMusic.Id },
+            new EventTag { EventId = events[10].Id, TagId = tagSkill.Id },
+            new EventTag { EventId = events[11].Id, TagId = tagStartup.Id },
+            new EventTag { EventId = events[12].Id, TagId = tagIT.Id }
         );
 
         await context.SaveChangesAsync();

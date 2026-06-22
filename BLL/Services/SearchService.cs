@@ -1,3 +1,4 @@
+using AutoMapper;
 using BusinessObjects.DTOs;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +8,12 @@ namespace BLL.Services;
 public class SearchService : ISearchService
 {
     private readonly IEventRepository _eventRepo;
+    private readonly IMapper _mapper;
 
-    public SearchService(IEventRepository eventRepo)
+    public SearchService(IEventRepository eventRepo, IMapper mapper)
     {
         _eventRepo = eventRepo;
+        _mapper = mapper;
     }
 
     public async Task<(List<EventCardDTO> Items, int TotalCount)> SearchEventsAsync(
@@ -82,19 +85,7 @@ public class SearchService : ISearchService
             .Take(EventSearchDTO.PageSize)
             .ToListAsync(cancellationToken);
 
-        var items = events.Select(e => new EventCardDTO
-        {
-            Id = e.Id,
-            Title = e.Title,
-            BannerUrl = e.BannerUrl,
-            StartTime = e.StartTime,
-            EndTime = e.EndTime,
-            VenueName = e.Venue.Name,
-            TagNames = e.EventTags.Select(et => et.Tag.Name).ToList(),
-            OrganizerName = e.Organizer.FullName,
-            MaxCapacity = e.Venue.MaxCapacity,
-            BookedCount = e.Bookings.Count(b => b.Status != "Cancelled")
-        }).ToList();
+        var items = _mapper.Map<List<EventCardDTO>>(events);
 
         return (items, totalCount);
     }

@@ -2,72 +2,292 @@
 @model RazorPages.Pages.Events.DetailModel
 @{
     ViewData["Title"] = Model.EventItem.Title;
+    var maxCapacity = Model.EventItem.Venue?.MaxCapacity ?? 0;
+    var bookedCount = Model.EventItem.RegisteredCount;
+    var remaining = maxCapacity - bookedCount;
+    var now = DateTime.UtcNow.AddHours(7); // Đã đồng bộ giờ VN để so sánh
+    
+    // Tính toán trạng thái sự kiện
+    string statusText = "Đang diễn ra";
+    string statusClass = "status-ongoing";
+    if (Model.EventItem.StartTime.AddHours(7) > now)
+    {
+        statusText = "Sắp diễn ra";
+        statusClass = "status-upcoming";
+    }
+    else if (Model.EventItem.EndTime.AddHours(7) < now)
+    {
+        statusText = "Đã kết thúc";
+        statusClass = "status-past";
+    }
 }
 
-<div class="container mt-5">
+<div class="container py-4">
+    <!-- Nút quay lại trang khám phá -->
+    <div class="mb-4">
+        <a asp-page="/Index" class="btn btn-link text-decoration-none p-0 text-slate-500 hover-translate-left">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại trang khám phá
+        </a>
+    </div>
+
+    <!-- Alert thông báo trạng thái đặt vé -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+                <div>@TempData["SuccessMessage"]</div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                <div>@TempData["ErrorMessage"]</div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    <div class="row">
-        <div class="col-md-8">
-            <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://placehold.co/800x400/0d6efd/white" : Model.EventItem.BannerUrl)" class="img-fluid rounded mb-4" alt="@Model.EventItem.Title" />
-            <h1>@Model.EventItem.Title</h1>
-            <p class="text-muted"><i class="bi bi-calendar3"></i> @Model.EventItem.StartTime.ToString("g") - @Model.EventItem.EndTime.ToString("g")</p>
-            <p class="text-muted"><i class="bi bi-geo-alt"></i> @Model.EventItem.Venue?.Name - @Model.EventItem.Venue?.Address</p>
-            <p class="text-muted"><i class="bi bi-person"></i> Ban tổ chức: @Model.EventItem.Organizer?.FullName</p>
-            
-            <h4 class="mt-4">Mô tả sự kiện</h4>
-            <p>@Model.EventItem.Description</p>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title text-center">Thông tin vé</h5>
-                    <hr />
-                    <div class="mb-3">
-                        <strong>Tình trạng:</strong>
-                        @{
-                            var maxCapacity = Model.EventItem.Venue?.MaxCapacity ?? 0;
-                            var remaining = maxCapacity - Model.EventItem.RegisteredCount;
-                        }
-                        @if (remaining <= 0)
+
+    <!-- BỐ CỤC CHÍNH -->
+    <div class="row g-4">
+        <!-- Cột trái: Thông tin sự kiện và hình ảnh -->
+        <div class="col-lg-8">
+            <!-- Banner & Header -->
+            <div class="card border-0 shadow-sm overflow-hidden rounded-4 mb-4">
+                <div class="position-relative" style="height: 380px; overflow: hidden;">
+                    <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop" : Model.EventItem.BannerUrl)" 
+                         class="w-100 h-100" style="object-fit: cover;" alt="@Model.EventItem.Title" />
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="card-badge-overlay @statusClass" style="position: static; font-size: 0.72rem; padding: 0.35rem 0.75rem;">@statusText</span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Danh mục và Tags -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @if (Model.EventItem.EventCategories != null)
                         {
-                            <span class="badge bg-danger">Hết vé</span>
+                            @foreach (var ec in Model.EventItem.EventCategories)
+                            {
+                                <span class="badge bg-slate-100 text-slate-700 px-3 py-1.5 rounded-pill fs-7 fw-semibold border border-slate-200">
+                                    <i class="bi bi-grid me-1"></i> @ec.Category.Name
+                                </span>
+                            }
                         }
-                        else
+                        @if (Model.EventItem.EventTags != null)
                         {
-                            <span class="badge bg-success">Còn vé</span>
+                            @foreach (var et in Model.EventItem.EventTags)
+                            {
+                                <span class="badge bg-primary-subtle text-primary-emphasis px-3 py-1.5 rounded-pill fs-7 fw-semibold">
+                                    #@et.Tag.Name
+                                </span>
+                            }
                         }
                     </div>
-                    
-                    <!-- Link sang hệ thống Blazor (FE-04) để đặt vé -->
-                    <a href="http://localhost:5210/events/@Model.EventItem.Id/book" class="btn btn-primary w-100 py-2 fw-bold">
-                        Đặt vé ngay (Blazor App)
-                    </a>
 
-                    @if (Model.ShowFeedbackButton)
-                    {
-                        <a asp-page="/Events/Feedback" asp-route-eventId="@Model.EventItem.Id" class="btn btn-warning w-100 py-2 fw-bold mt-2">
-                            <i class="bi bi-star-fill me-1"></i> Gửi đánh giá phản hồi
-                        </a>
-                    }
+                    <h1 class="h2 fw-bold text-slate-800 mb-3">@Model.EventItem.Title</h1>
                     
-                    <p class="text-muted small mt-3 text-center">
-                        <i class="bi bi-info-circle"></i> Đặt vé được xử lý trên hệ thống Real-time (Blazor).
-                    </p>
+                    <hr class="border-slate-100 my-4" />
+
+                    <!-- Thông tin tóm tắt -->
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box-minimal me-3">
+                                    <i class="bi bi-calendar3 fs-5 text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Thời gian diễn ra</small>
+                                    <span class="fw-semibold text-slate-700">@Model.EventItem.StartTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box-minimal me-3">
+                                    <i class="bi bi-clock-history fs-5 text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Thời gian kết thúc</small>
+                                    <span class="fw-semibold text-slate-700">@Model.EventItem.EndTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center mt-3">
+                                <div class="icon-box-minimal me-3">
+                                    <i class="bi bi-geo-alt fs-5 text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Địa điểm tổ chức</small>
+                                    <span class="fw-semibold text-slate-700">@Model.EventItem.Venue?.Name</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-center mt-3">
+                                <div class="icon-box-minimal me-3">
+                                    <i class="bi bi-person fs-5 text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Ban tổ chức</small>
+                                    <span class="fw-semibold text-slate-700">@Model.EventItem.Organizer?.FullName</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mô tả chi tiết -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h4 class="fw-bold text-slate-800 mb-3"><i class="bi bi-text-left me-2 text-primary"></i>Mô tả sự kiện</h4>
+                <div class="text-slate-600 lh-lg" style="white-space: pre-line;">
+                    @Model.EventItem.Description
+                </div>
+            </div>
+
+            <!-- Địa chỉ cụ thể -->
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h4 class="fw-bold text-slate-800 mb-3"><i class="bi bi-map me-2 text-primary"></i>Địa điểm cụ thể</h4>
+                <div class="p-3 bg-light rounded-3 d-flex align-items-start">
+                    <i class="bi bi-info-circle text-primary me-2 mt-1"></i>
+                    <div>
+                        <strong class="text-slate-800">@Model.EventItem.Venue?.Name</strong>
+                        <p class="text-muted small mb-0 mt-1">@Model.EventItem.Venue?.Address</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Panel Đặt vé & Trạng thái chỗ ngồi -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 2rem; z-index: 100;">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="bg-primary text-white p-4 text-center gradient-primary-box">
+                        <i class="bi bi-ticket-perforated display-5"></i>
+                        <h4 class="fw-bold mt-2 mb-0">HỘP ĐẶT VÉ</h4>
+                        <p class="text-white-50 small mb-0">Hệ thống xử lý vé trực tuyến thời gian thực</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Thống kê vé -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Tổng số chỗ ngồi:</span>
+                                <strong class="text-slate-800">@maxCapacity</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Vé đã đăng ký:</span>
+                                <strong class="text-slate-800">@bookedCount</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <span class="text-slate-700 fw-semibold">Tình trạng còn lại:</span>
+                                @if (remaining <= 0)
+                                {
+                                    <span class="badge bg-danger px-2.5 py-1.5 rounded">Hết vé</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success px-2.5 py-1.5 rounded">Còn @remaining vé</span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Trực Quan -->
+                        <div class="mb-4">
+                            <small class="text-muted d-block mb-1">Tỷ lệ chỗ ngồi đã lấp đầy</small>
+                            @{
+                                double fillRate = maxCapacity > 0 ? ((double)bookedCount / maxCapacity) * 100 : 0;
+                                string progressColor = fillRate >= 100 ? "bg-danger" : (fillRate >= 90 ? "bg-warning" : "bg-primary");
+                            }
+                            <div class="progress rounded-pill" style="height: 10px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated @progressColor" 
+                                     role="progressbar" style="width: @fillRate%" aria-valuenow="@fillRate" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1 fs-7 text-muted">
+                                <span>0%</span>
+                                <span>@fillRate.ToString("0.0")%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Các nút CTA -->
+                        <div class="d-grid gap-2">
+                            <!-- Nút đặt vé -->
+                            @if (Model.EventItem.EndTime.AddHours(7) < now)
+                            {
+                                <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
+                                    <i class="bi bi-calendar-x-fill me-1"></i> Sự kiện đã kết thúc
+                                </button>
+                            }
+                            else if (remaining <= 0)
+                            {
+                                <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
+                                    <i class="bi bi-x-circle-fill me-1"></i> Đã hết chỗ ngồi
+                                </button>
+                            }
+                            else
+                            {
+                                <a href="http://localhost:5210/events/@Model.EventItem.Id/book" class="btn btn-primary py-3 fw-bold rounded-3 shadow-sm hover-scale btn-gradient-primary">
+                                    <i class="bi bi-cursor-fill me-1"></i> Đăng Ký Đặt Vé Ngay
+                                </a>
+                            }
+
+                            <!-- Nút đánh giá phản hồi (chỉ hiện khi đủ điều kiện) -->
+                            @if (Model.ShowFeedbackButton)
+                            {
+                                <a asp-page="/Events/Feedback" asp-route-eventId="@Model.EventItem.Id" class="btn btn-warning py-2.5 fw-bold rounded-3 mt-2 text-dark">
+                                    <i class="bi bi-star-fill me-1"></i> Gửi đánh giá phản hồi
+                                </a>
+                            }
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Premium visual tokens & animations */
+    .gradient-primary-box {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+    .btn-gradient-primary {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-gradient-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+    }
+    .hover-translate-left {
+        transition: transform 0.2s ease;
+    }
+    .hover-translate-left:hover {
+        transform: translateX(-4px);
+    }
+    .hover-scale {
+        transition: transform 0.2s ease;
+    }
+    .hover-scale:hover {
+        transform: scale(1.02);
+    }
+    .icon-box-minimal {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .fs-7 {
+        font-size: 0.85rem !important;
+    }
+</style>

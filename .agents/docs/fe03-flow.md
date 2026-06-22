@@ -1,245 +1,184 @@
-# FE-03 Search & Filter Events — Luồng hoạt động
+# FE-03 Search & Filter Events — Luồng hoạt động thực tế
 
-> Đọc cái này trước khi bị hỏi. Giải thích được từng bước là okay.
-
----
-
-## Tổng quan
-
-Sinh viên vào trang `/Explore`, nhập keyword / chọn filter, bấm Tìm.  
-Trang hiện danh sách event dạng card, có phân trang, giữ filter khi chuyển trang.
+> Đọc cái này trước khi lên bảng vấn đáp để nắm chắc luồng xử lý của phân hệ Tìm kiếm & Lọc sự kiện trên trang chủ.
 
 ---
 
-## Sơ đồ luồng
+## 🛠️ Luồng hoạt động (Sơ đồ tổng quan)
 
 ```
-User bấm Tìm
+Sinh viên bấm bộ lọc / gõ từ khóa trên Giao diện
     │
     ▼
-[URL] /Explore?SearchVm.Keyword=NET&SearchVm.CategoryId=1&...
+Index.cshtml ── JS submitInstant() chạy ngầm
+    │ (Gửi HTTP GET request ngầm bằng fetch lên server)
+    ▼
+Index.cshtml.cs (PageModel) ── OnGetAsync()
+    ├─ Tự động bind tham số URL -> SearchVm (ViewModel)
+    ├─ Lấy danh sách Bookmarks nếu là Student đã đăng nhập
+    ├─ Load danh sách Categories + Tags song song (hiển thị lại lên bộ lọc)
+    ├─ Đóng gói SearchVm -> EventSearchDTO gửi đi
     │
     ▼
-[PL] Index.cshtml.cs — OnGetAsync()
-    ├─ Bind URL params → SearchVm (ViewModel)
-    ├─ Load Categories + Tags song song (Task.WhenAll)
-    ├─ Map SearchVm → EventSearchDTO
+SearchService.cs (BLL) ── SearchEventsAsync(dto)
+    ├─ Gọi EventRepository.BuildSearchQuery() (SQL JOIN nạp sẵn chống N+1)
+    ├─ Nối thêm điều kiện lọc Where (Keywords, Category, Tags, TimeFilter, StartDate/EndDate)
+    ├─ Chạy query CountAsync() (SQL đếm tổng số kết quả)
+    ├─ Chạy query Skip().Take().ToListAsync() (SQL phân trang lấy 9 item)
+    ├─ Map List<Event> -> List<EventCardDTO>
     │
     ▼
-[BLL] SearchService — SearchEventsAsync(dto)
-    ├─ Gọi EventRepository.BuildSearchQuery()  →  IQueryable (chưa chạy SQL)
-    ├─ Chain thêm Where() theo từng filter
-    ├─ CountAsync()   →  SQL #1: đếm tổng kết quả
-    ├─ ToListAsync()  →  SQL #2: lấy 9 item trang hiện tại
-    ├─ Map List<Event> → List<EventCardDTO>
-    │
-    ▼
-[PL] PageModel nhận (items, totalCount)
+Index.cshtml.cs nhận kết quả trả về
     ├─ Gán vào SearchVm.Results
     │
     ▼
-[View] Index.cshtml render
-    ├─ Card grid (banner, tên, ngày, địa điểm, tags)
-    ├─ Pagination (giữ nguyên filter params)
-    └─ Empty state nếu không có kết quả
+Index.cshtml render HTML mới
+    └─ JS bóc tách cục kết quả mới đè vào giao diện hiện tại (Không reload trang)
 ```
 
 ---
 
-## 5 layer và nhiệm vụ của từng cái
+## 📂 Các File Tham Gia Trực Tiếp Trong Luồng
 
-| Layer | Project | File chính | Làm gì |
-|---|---|---|---|
-| **PL — View** | RazorPages | `Pages/Explore/Index.cshtml` | Render form filter, card grid, pagination |
-| **PL — PageModel** | RazorPages | `Pages/Explore/Index.cshtml.cs` | Nhận request, gọi service, trả data về view |
-| **DTO** | BusinessObjects | `DTOs/EventSearchDTO.cs`, `EventCardDTO.cs` | Trung gian truyền dữ liệu giữa PL và BLL |
-| **BLL** | BLL | `Services/SearchService.cs` | Logic filter, phân trang, map Entity → DTO |
-| **DAL** | DAL | `Repositories/EventRepository.cs` | Truy vấn DB, Include quan hệ |
-
----
-
-## Giải thích chi tiết từng bước
-
-### Bước 1 — Form submit (GET request)
-
-Form dùng `method="get"` nên filter params đi vào URL thay vì body.  
-Lý do: URL có thể bookmark, share, và khi chuyển trang vẫn giữ được filter.
-
-```
-/Explore?SearchVm.Keyword=NET&SearchVm.CategoryId=1&SearchVm.TagIds=2&SearchVm.PageNumber=2
-```
-
-Razor Pages tự bind URL → `SearchVm` nhờ `[BindProperty(SupportsGet = true)]`.
-
----
-
-### Bước 2 — PageModel OnGetAsync
-
-```csharp
-// 1. Validate — keyword không được quá 200 ký tự
-if (!ModelState.IsValid) return Page();
-
-// 2. Load dropdown/checkbox data song song — không chờ nhau
-var categoriesTask = _categoryRepo.GetAllAsync();
-var tagsTask = _tagRepo.GetAllAsync();
-await Task.WhenAll(categoriesTask, tagsTask);
-
-// 3. Map ViewModel → DTO để gửi xuống BLL
-var searchDto = new EventSearchDTO {
-    Keyword = SearchVm.Keyword,
-    CategoryId = SearchVm.CategoryId,
-    TagIds = SearchVm.TagIds,
-    TimeFilter = SearchVm.TimeFilter,
-    PageNumber = SearchVm.PageNumber
-};
-
-// 4. Gọi service
-var (items, totalCount) = await _searchService.SearchEventsAsync(searchDto);
-
-// 5. Nhét kết quả vào ViewModel để View đọc
-SearchVm.Results = items;
-SearchVm.TotalCount = totalCount;
-```
-
-**Tại sao phải map sang DTO thay vì truyền thẳng ViewModel?**  
-BLL không được biết ViewModel của web — nếu biết thì BLL phải reference RazorPages → circular dependency. DTO đặt ở `BusinessObjects` để cả hai tầng đều dùng được.
-
----
-
-### Bước 3 — EventRepository.BuildSearchQuery()
-
-```csharp
-return _dbSet
-    .AsNoTracking()                    // chỉ đọc, không cần EF theo dõi thay đổi
-    .Include(e => e.Venue)             // join bảng Venues
-    .Include(e => e.EventTags)
-        .ThenInclude(et => et.Tag)     // join EventTags → Tags
-    .Include(e => e.EventCategories);  // join EventCategories
-```
-
-**Trả về `IQueryable` — chưa gọi DB.** Đây chỉ là bản thiết kế của câu query.  
-BLL sẽ tiếp tục thêm `Where()` vào, sau đó mới execute.
-
-**Tại sao Include ngay từ đây?**  
-Nếu không Include, sau này đọc `e.Venue.Name` thì EF sẽ phát thêm 1 query/event.  
-Có 9 event = 9 query thừa. Gọi là **N+1 problem**. Include 1 lần = 1 SQL JOIN duy nhất.
-
----
-
-### Bước 4 — SearchService: chain Where()
-
-Đây là phần core nhất. Mỗi filter chỉ được append vào query **khi có giá trị hợp lệ**:
-
-```csharp
-var query = _eventRepo.BuildSearchQuery();
-
-// Luôn filter — chỉ hiện Published
-query = query.Where(e => e.Status == "Published");
-
-// Keyword — chỉ filter nếu không rỗng
-if (!string.IsNullOrEmpty(keyword))
-    query = query.Where(e => e.Title.Contains(keyword) || e.Description.Contains(keyword));
-
-// Category — chỉ filter nếu có chọn
-if (categoryId.HasValue && categoryId > 0)
-    query = query.Where(e => e.EventCategories.Any(ec => ec.CategoryId == categoryId));
-
-// Tags — OR logic: event có ít nhất 1 tag trong danh sách là đủ
-if (tagIds.Count > 0)
-    query = query.Where(e => e.EventTags.Any(et => tagIds.Contains(et.TagId)));
-
-// TimeFilter
-query = timeFilter switch {
-    "Upcoming" => query.Where(e => e.StartTime > now),   // chưa bắt đầu
-    "Ongoing"  => query.Where(e => e.StartTime <= now && e.EndTime >= now),  // đang diễn ra
-    "Past"     => query.Where(e => e.EndTime < now),      // đã xong
-    _          => query   // không filter thêm
-};
-```
-
-**Tại sao dùng `IQueryable` chứ không load hết rồi filter?**  
-`IQueryable` = câu query chưa chạy. EF Core gom tất cả `Where()` thành **1 câu SQL** rồi mới gửi xuống DB. Nếu load hết (`ToList()`) rồi mới filter thì kéo toàn bộ dữ liệu về RAM — cực kỳ chậm.
-
-Sau đó execute 2 lần:
-
-```csharp
-// SQL #1: SELECT COUNT(*) — đếm tổng để tính số trang
-var totalCount = await query.CountAsync();
-
-// SQL #2: SELECT TOP 9 ... ORDER BY StartTime OFFSET skip — lấy đúng trang hiện tại
-var events = await query
-    .OrderBy(e => e.StartTime)
-    .Skip((pageNumber - 1) * 9)
-    .Take(9)
-    .ToListAsync();
-```
-
----
-
-### Bước 5 — Map Entity → DTO
-
-```csharp
-var items = events.Select(e => new EventCardDTO {
-    Id        = e.Id,
-    Title     = e.Title,
-    BannerUrl = e.BannerUrl,
-    StartTime = e.StartTime,
-    VenueName = e.Venue.Name,   // đọc được vì đã Include ở bước 3
-    TagNames  = e.EventTags.Select(et => et.Tag.Name).ToList()
-}).ToList();
-```
-
-BLL trả về `(List<EventCardDTO>, int TotalCount)` — **không bao giờ trả Entity ra ngoài**.  
-Lý do: Entity gắn với DbContext, nếu trả ra ngoài có thể gây lazy loading ngoài ý muốn.
-
----
-
-### Bước 6 — View render
-
-```html
-<!-- Card grid -->
-@foreach (var card in Model.SearchVm.Results) {
-    <!-- banner, title, starttime, venue, tag badges -->
-}
-
-<!-- Pagination — giữ filter params trong URL -->
-<a asp-route-SearchVm.Keyword="@Model.SearchVm.Keyword"
-   asp-route-SearchVm.PageNumber="@(Model.SearchVm.PageNumber + 1)">
-    Sau »
-</a>
-```
-
-Pagination dùng `asp-route-*` tag helper để tự build URL đúng với filter hiện tại.
-
----
-
-## Câu hỏi hay bị hỏi
-
-**"Tại sao 2 query CountAsync + ToListAsync mà không gộp 1?"**  
-Không thể gộp — `COUNT(*)` và `SELECT data` là 2 mục đích khác nhau. SQL không cho phép trả cả hai trong 1 câu đơn giản.
-
-**"Tại sao `AsNoTracking`?"**  
-Trang Explore chỉ đọc, không update. Bỏ tracking = EF không cần giữ snapshot của từng entity trong bộ nhớ = nhanh hơn, ít RAM hơn.
-
-**"Tag filter dùng OR hay AND?"**  
-OR. Chọn tag IT và Music = event có IT **hoặc** Music đều hiện. Dùng `Any()` thay vì `All()`.
-
-**"Nếu DB lỗi khi load Category/Tag thì sao?"**  
-`try/catch` trong PageModel — log lỗi, giữ `Categories` và `Tags` rỗng, form vẫn render bình thường, chỉ dropdown trống thôi. Không crash trang.
-
-**"Tại sao form dùng GET không dùng POST?"**  
-GET params nằm trên URL nên có thể bookmark, copy link, và khi nhấn nút chuyển trang vẫn giữ được filter. POST không có URL nên mỗi lần reload là mất filter.
-
----
-
-## DTO vs ViewModel — khác nhau chỗ nào
-
-| | DTO (BusinessObjects) | ViewModel (RazorPages) |
+| Tầng | Tên File | Chức năng cụ thể trong code |
 |---|---|---|
-| Đặt ở đâu | `BusinessObjects/DTOs/` | `RazorPages/ViewModels/` |
-| Ai dùng | Cả BLL và PL | Chỉ PL (web) |
-| Mục đích | Truyền data giữa các tầng | Chứa data cho 1 trang cụ thể |
-| `EventSearchDTO` | Keyword, CategoryId, TagIds, TimeFilter, PageNumber | — |
-| `EventSearchViewModel` | — | Gồm input params + Results + Categories + Tags |
+| **View (PL)** | `Pages/Index.cshtml` | Render form tìm kiếm, danh sách tag, card grid/list và xử lý AJAX ngầm. |
+| **PageModel (PL)** | `Pages/Index.cshtml.cs` | Nhận request GET, nạp dropdown categories/tags, gọi service và trả HTML về. |
+| **ViewModel** | `ViewModels/EventSearchViewModel.cs` | Lưu trữ bộ lọc người dùng chọn và danh sách kết quả sự kiện hiển thị. |
+| **DTOs** | `EventSearchDTO.cs`, `EventCardDTO.cs` | Trung gian truyền dữ liệu sạch giữa PL và BLL, không cho tầng ngoài chọc thẳng vào Entity. |
+| **Service (BLL)** | `Services/SearchService.cs` | Logic filter động, phân trang DB, sắp xếp theo tên/ngày/độ phổ biến. |
+| **Repository (DAL)** | `Repositories/EventRepository.cs` | Thực hiện câu query EF Core có nạp sẵn liên kết để tránh N+1 Query. |
 
-`EventSearchViewModel` nhiều hơn vì nó còn chứa `Categories` và `Tags` để render dropdown/checkbox — thứ mà BLL không cần biết.
+---
+
+## 🚀 Giải Thích Từng Bước Code Chạy Thực Tế (Kèm Comment Giải Thích)
+
+### Bước 1: Trình duyệt gửi request (fetch AJAX ngầm)
+Khi người dùng tương tác với bộ lọc trên `Index.cshtml`, hàm JS `submitInstant()` thu thập dữ liệu form và gửi ngầm lên URL trang chủ `/` hoặc `/Index`:
+```javascript
+function submitInstant() {
+    // Đọc tất cả giá trị nhập/chọn từ thẻ form có ID searchForm
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+    
+    // Chỉ lấy những tham số có giá trị thực tế, bỏ qua những cái rỗng để URL trông gọn gàng
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    
+    // Tạo đường dẫn mới chứa bộ lọc mới (ví dụ: /Index?SearchVm.Keyword=NET)
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    
+    // Đổi link trên thanh URL của trình duyệt để sinh viên copy/bookmark được, nhưng không làm tải lại trang
+    window.history.pushState({ path: newUrl }, '', newUrl);
+
+    // Bắt đầu gọi fetch AJAX ngầm gửi yêu cầu lên server
+    fetch(newUrl)
+        .then(response => response.text()) // Nhận chuỗi HTML trả về
+        .then(html => {
+            // Dùng DOMParser để dịch chuỗi HTML thành một cây DOM ảo trong bộ nhớ
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Tìm và ghi đè danh sách sự kiện mới thay thế cho danh sách sự kiện cũ trên UI
+            document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
+            
+            // Vì danh sách sự kiện mới có các nút chuyển trang mới, ta phải gọi hàm này để gán lại sự kiện click
+            bindPaginationLinks();
+        });
+}
+```
+
+### Bước 2: Nhận request và nạp dữ liệu tại PageModel
+Trong `Pages/Index.cshtml.cs`, nhờ thuộc tính `SupportsGet = true`, toàn bộ param trên URL được bind tự động vào biến `SearchVm`. Hàm `OnGetAsync` xử lý:
+```csharp
+// Đánh dấu để ASP.NET Core tự động trích xuất các tham số từ query string URL bỏ vô ViewModel này
+[BindProperty(SupportsGet = true)]
+public EventSearchViewModel SearchVm { get; set; } = new();
+
+public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
+{
+    if (!ModelState.IsValid) return Page();
+
+    // 1. Kiểm tra bookmark nếu sinh viên đã đăng nhập và là Student để đánh dấu ngôi sao yêu thích trên Card
+    if (CurrentStudentId.HasValue && User.IsInRole("Student"))
+    {
+        BookmarkedEventIds = await _context.Bookmarks
+            .Where(b => b.StudentId == CurrentStudentId.Value)
+            .Select(b => b.EventId)
+            .ToListAsync(cancellationToken);
+    }
+
+    // 2. Load danh mục và tag để hiển thị ra dropdown và danh sách checkbox lọc
+    SearchVm.Categories = (await _categoryRepo.GetAllAsync(cancellationToken)).ToList();
+    SearchVm.Tags = (await _tagRepo.GetAllAsync(cancellationToken)).ToList();
+
+    // 3. Ánh xạ sang đối tượng DTO để truyền dữ liệu sạch xuống tầng BLL, tránh circular dependency
+    var searchDto = new EventSearchDTO {
+        Keyword = SearchVm.Keyword,
+        CategoryId = SearchVm.CategoryId,
+        TagIds = SearchVm.TagIds,
+        TimeFilter = SearchVm.TimeFilter,
+        StartDate = SearchVm.StartDate,
+        EndDate = SearchVm.EndDate,
+        PageNumber = SearchVm.PageNumber,
+        SortBy = SearchVm.SortBy
+    };
+
+    // 4. Gọi Service xử lý logic nghiệp vụ lọc và phân trang ở BLL
+    var (items, totalCount) = await _searchService.SearchEventsAsync(searchDto, cancellationToken);
+
+    // 5. Gán kết quả nhận được vào ViewModel để đẩy ra View hiển thị lên màn hình
+    SearchVm.Results = items;
+    SearchVm.TotalCount = totalCount;
+
+    return Page();
+}
+```
+
+### Bước 3: Build query nạp sẵn chống N+1 ở DAL
+Trong `EventRepository.cs`, phương thức `BuildSearchQuery` trả về một `IQueryable` đã nạp sẵn (Eager Loading) toàn bộ dữ liệu liên quan:
+```csharp
+public IQueryable<Event> BuildSearchQuery()
+{
+    // BuildSearchQuery chỉ trả về IQueryable (câu lệnh SQL dự kiến) chứ chưa chạy SQL xuống Database
+    return _dbSet
+        .AsNoTracking() // Dùng AsNoTracking vì trang Explore chỉ đọc, không sửa đổi gì, tắt tracking giúp EF chạy rất nhanh
+        .Include(e => e.Venue) // JOIN bảng Venues để lấy sẵn VenueName
+        .Include(e => e.Organizer) // JOIN bảng Users lấy tên người tổ chức sự kiện
+        .Include(e => e.Bookings) // JOIN bảng Bookings để đếm lượng vé đã đặt
+        .Include(e => e.EventTags).ThenInclude(et => et.Tag); // JOIN bảng trung gian nạp kèm Tag để hiển thị badge tag trên card
+}
+```
+
+### Bước 4: Chain lọc động & phân trang ở BLL
+Trong `SearchService.cs`, logic nối câu truy vấn `Where` và thực thi lấy dữ liệu trang hiện tại:
+```csharp
+public async Task<(List<EventCardDTO> Items, int TotalCount)> SearchEventsAsync(EventSearchDTO searchDto, CancellationToken cancellationToken)
+{
+    var query = _eventRepo.BuildSearchQuery(); // Lấy bộ khung query JOIN tối ưu
+
+    // Luôn luôn chỉ hiện các sự kiện đã được duyệt công bố (Status là Published)
+    query = query.Where(e => e.Status == "Published");
+
+    // Chỉ lọc từ khóa (Keywords) nếu người dùng có gõ từ khóa thực tế vào ô tìm kiếm
+    if (!string.IsNullOrEmpty(searchDto.Keyword))
+        query = query.Where(e => e.Title.Contains(searchDto.Keyword) || e.Description.Contains(searchDto.Keyword));
+
+    // Lọc Multi-tag bằng logic OR: Chỉ cần sự kiện dính ít nhất 1 tag trong list TagIds là hiển thị
+    if (searchDto.TagIds.Count > 0)
+        query = query.Where(e => e.EventTags.Any(et => searchDto.TagIds.Contains(et.TagId)));
+
+    // Chạy câu SQL COUNT(*) xuống DB để lấy tổng số bản ghi khớp lọc trước khi phân trang
+    var totalCount = await query.CountAsync(cancellationToken);
+
+    // Tính toán phân trang và chạy câu SQL SELECT OFFSET/FETCH lấy đúng 9 sự kiện của trang đó lên RAM
+    var skip = (searchDto.PageNumber - 1) * EventSearchDTO.PageSize;
+    var events = await query.Skip(skip).Take(EventSearchDTO.PageSize).ToListAsync(cancellationToken);
+
+    // Dùng AutoMapper để map danh sách Entities sang DTO gọn nhẹ để chuyển trả về PageModel
+    var items = _mapper.Map<List<EventCardDTO>>(events);
+
+    return (items, totalCount);
+}
+```

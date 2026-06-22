@@ -26,7 +26,7 @@ public class AccountController : Controller
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
-            return RedirectToAction("Index", "Home");
+            return Redirect("http://localhost:5129/");
 
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
@@ -157,7 +157,7 @@ public class AccountController : Controller
     {
         _logger.LogInformation("User {Name} logged out", User.Identity?.Name);
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction(nameof(Register));
+        return RedirectToAction(nameof(Login));
     }
 
     // GET /Account/AccessDenied

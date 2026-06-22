@@ -49,20 +49,11 @@ graph TD
 ### 3.1. Detailed Changes Log
 
 - **2026-06-22 (Antigravity)**:
+  - **QuiNC - Explore AutoMapper Conversion (`FE-03`)**: Chuyển đổi thành công phần map dữ liệu thủ công (`.Select` tay) trong BLL `SearchService.cs` sang sử dụng **AutoMapper** tự động. Cập nhật cấu hình map tương ứng trong `EventProfile.cs` (gồm lấy VenueName, OrganizerName, danh sách TagNames từ bảng liên kết, số lượng vé đã đặt `BookedCount` và sức chứa tối đa `MaxCapacity`).
+  - **Đồng bộ múi giờ Việt Nam (UTC+7)**: Cấu hình AutoMapper trong `EventProfile.cs` tự động cộng thêm 7 tiếng khi chuyển đổi từ Entity lên DTO (`EventDTO`, `EventCardDTO`, `EventUpdateDTO`), và tự động trừ đi 7 tiếng khi map từ DTO tạo mới/cập nhật xuống Database để dữ liệu lưu trữ vẫn chuẩn UTC nhưng giao diện hiển thị đúng giờ Việt Nam.
+  - **Cấu hình Connection String**: Chuyển đổi chuỗi kết nối `"EventHub"` trong cả 3 dự án (`MVC`, `RazorPages`, `Blazor`) từ LocalDB/Server cũ sang Server SQL Developer local mặc định (`Server=.`) theo yêu cầu của anh QuiNC để chạy mượt mà trên máy của anh.
+  - **Tối ưu hóa launchBrowser**: Cập nhật file `launchSettings.json` của 3 dự án, tắt tự động mở trình duyệt ở RazorPages và Blazor (đặt thành `false`), chỉ để `true` ở dự án MVC để khi khởi động chỉ mở duy nhất tab đăng nhập của MVC, hạn chế rác tab trình duyệt.
   - **Đồng nhất Giao diện & Layout**: Loại bỏ các thẻ bao bọc `.app-container` và `.app-content` dư thừa trong `Home.razor` và `BookingComponent.razor` để giao diện Blazor tích hợp đồng nhất với thanh điều hướng (sidebar) toàn hệ thống giống như bên RazorPages/MVC.
-  - **Việt hóa & Emoji Clean-up**: Dịch toàn bộ các chuỗi giao diện, tiêu đề, và log trạng thái (ví dụ: `SUCCESS` -> `THÀNH CÔNG`) trong các trang `DashboardComponent.razor` và `FeedbackAnalyticsComponent.razor` sang tiếng Việt. Loại bỏ tất cả emoji trang trí ở tiêu đề và cảnh báo.
-  - **Logic Đặt vé hết hạn**: Đồng bộ kiểm tra logic thời gian kết thúc sự kiện (`EndTime < DateTime.UtcNow`) từ BLL `BookingService.cs` lên giao diện hiển thị cảnh báo trực quan của `BookingComponent.razor` và khóa hoàn toàn quyền đăng ký vé.
-  - **Khắc phục lỗi SignalR 302**: Cho phép truy cập ẩn danh đối với route `/eventhub` để tránh lỗi chuyển hướng xác thực cookie, giúp biểu đồ hoạt động trực tuyến tự động vẽ đường cong tiến trình.
-  - **Khắc phục lỗi hiển thị biểu đồ SVG**: Định dạng tọa độ điểm vẽ SVG bằng `CultureInfo.InvariantCulture` thay vì sử dụng định dạng mặc định của hệ thống để tránh lỗi dấu phẩy thập phân `,` trong môi trường sử dụng ngôn ngữ tiếng Việt (`vi-VN`) khiến biểu đồ không vẽ được.
-  - **Tối ưu hóa Khởi động & Migration**: Khắc phục tranh chấp Migration và tối ưu hóa tốc độ khởi chạy bằng cách (1) bỏ qua kiểm tra BCrypt.Verify đối với các tài khoản seed nếu mật khẩu đã được hash sẵn; (2) kiểm tra GetPendingMigrationsAsync trước khi dùng Mutex để tránh khóa luồng khởi chạy của các project chạy đồng thời.
-  - **Biểu đồ Live Trend**: Cập nhật logic đồ thị tự động sinh tiến trình đi lùi tăng dần từ (Tổng số vé - 9) đến Tổng số vé hiện tại lúc load trang. Khi có sự kiện đặt vé thời gian thực, điểm vẽ mới được thêm lũy tiến, giải quyết triệt để lỗi đường biểu đồ nằm phẳng ở đáy khi tải trang.
-  - **Tooltip thông tin đặt vé**: Tích hợp hiển thị thông tin chi tiết trên từng điểm (dot) của biểu đồ khi chỉ chuột vào: Tên học sinh đặt vé, Tên sự kiện tương ứng và Thời gian đặt vé (lấy từ dữ liệu lịch sử lúc tải trang và tự động truy vấn real-time khi có sự kiện từ SignalR).
-  - **Cấu hình Connection String**: Chuyển đổi chuỗi kết nối `"EventHub"` trong cả 3 dự án (`MVC`, `RazorPages`, `Blazor`) từ LocalDB sang instance SQL Server vật lý của anh Khôi `MAYTINHCUATRANK\MSSQLSERVER01` để dữ liệu đăng ký/đặt vé được ghi nhận trực tiếp vào đúng máy chủ anh đang theo dõi trên SSMS.
-
-
-
-
-
 - **2026-06-21 (Antigravity)**:
   - **TriLT - Feedback (`FE-07`) & Email Worker (`FE-06`)**:
     - Created detailed feedback modal in Blazor `FeedbackAnalyticsComponent.razor`.
