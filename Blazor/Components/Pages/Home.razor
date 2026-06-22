@@ -7,9 +7,10 @@
 
 <div class="app-container">
     <main class="app-content w-100 p-4">
-        <div class="content-header mb-4 text-center">
-            <h1 class="display-6 fw-bold">Khám Phá & Đặt Vé</h1>
-            <p class="text-muted">Chọn sự kiện bạn muốn tham gia</p>
+        <div class="content-header mb-5 text-center">
+            <span class="page-badge-minimal">Sự kiện UniEvent Hub</span>
+            <h1 class="display-5 fw-bold mt-1">Khám Phá & Đặt Vé</h1>
+            <p class="text-muted">Chọn sự kiện bạn muốn tham gia đặt vé trực tiếp</p>
         </div>
 
         @if (Events == null)
@@ -21,35 +22,100 @@
         }
         else if (!Events.Any())
         {
-            <div class="alert alert-info text-center">Hiện tại chưa có sự kiện nào mở đăng ký.</div>
+            <div class="alert alert-info text-center rounded-4 shadow-sm py-4">
+                <i class="bi bi-info-circle fs-3 text-info d-block mb-2"></i>
+                Hiện tại chưa có sự kiện nào mở đăng ký đặt vé.
+            </div>
         }
         else
         {
             <div class="row g-4">
                 @foreach (var ev in Events)
                 {
+                    var remaining = ev.Venue!.MaxCapacity - ev.RegisteredCount;
+                    var isSoldOut = remaining <= 0;
+                    var now = DateTime.UtcNow;
+                    var hasEnded = ev.EndTime < now;
+
+                    // Xác định trạng thái diễn ra
+                    string statusClass = "status-upcoming";
+                    string statusText = "Sắp diễn ra";
+                    if (ev.StartTime <= now && now <= ev.EndTime)
+                    {
+                        statusClass = "status-ongoing";
+                        statusText = "Đang diễn ra";
+                    }
+                    else if (ev.EndTime < now)
+                    {
+                        statusClass = "status-past";
+                        statusText = "Đã kết thúc";
+                    }
+
+                    // Xác định mức độ khẩn cấp số lượng vé
+                    string seatsClass = "";
+                    string seatsText = $"Còn {remaining} chỗ";
+                    if (isSoldOut)
+                    {
+                        seatsClass = "seats-urgency-soldout";
+                        seatsText = "Hết vé";
+                    }
+                    else if (remaining <= 5)
+                    {
+                        seatsClass = "seats-urgency-low";
+                        seatsText = $"Còn {remaining} chỗ";
+                    }
+
                     <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
-                            <div class="bg-primary bg-gradient p-4 text-white text-center">
-                                <h4 class="fw-bold mb-0">@ev.Title</h4>
+                        <div class="card-minimal @(hasEnded ? "is-past" : "")">
+                            <div class="card-minimal-img-wrapper">
+                                <img src="@(string.IsNullOrEmpty(ev.BannerUrl) ? "images/default-event.jpg" : ev.BannerUrl)" class="card-minimal-img" alt="@ev.Title" />
+                                <span class="card-badge-overlay @statusClass">@statusText</span>
                             </div>
-                            <div class="card-body p-4">
-                                <p class="text-muted small mb-2"><i class="bi bi-building"></i> @ev.Venue?.Name</p>
-                                <p class="text-muted small mb-3"><i class="bi bi-clock"></i> @ev.StartTime.ToString("dd/MM/yyyy HH:mm")</p>
-                                
-                                @{
-                                    var remaining = ev.Venue!.MaxCapacity - ev.RegisteredCount;
-                                    var isSoldOut = remaining <= 0;
-                                }
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="fw-bold">Tình trạng:</span>
-                                    <span class="badge @(isSoldOut ? "bg-danger" : "bg-success")">
-                                        @(isSoldOut ? "Hết vé" : $"Còn {remaining} chỗ")
-                                    </span>
+                            <div class="card-minimal-body">
+                                <div class="mb-2">
+                                    @if (ev.EventCategories != null && ev.EventCategories.Any())
+                                    {
+                                        @foreach (var ec in ev.EventCategories)
+                                        {
+                                            <span class="badge bg-primary bg-opacity-10 text-primary me-1 text-xs px-2 py-1 fw-semibold">@ec.Category.Name</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary text-xs px-2 py-1 fw-semibold">Sự kiện</span>
+                                    }
                                 </div>
-                                <a href="/events/@ev.Id/book" class="btn @(isSoldOut ? "btn-secondary disabled" : "btn-primary") w-100 rounded-pill fw-bold">
-                                    <i class="bi bi-ticket-perforated me-1"></i> Đặt Vé Ngay
-                                </a>
+                                <h3 class="card-minimal-title" title="@ev.Title">@ev.Title</h3>
+                                <div class="card-group-minimal">
+                                    <div class="card-minimal-meta">
+                                        <i class="bi bi-clock"></i>
+                                        <span>@ev.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                    <div class="card-minimal-meta @seatsClass">
+                                        <i class="bi bi-people"></i>
+                                        <span>@seatsText</span>
+                                    </div>
+                                </div>
+                                <div class="card-action-row-minimal">
+                                    @if (hasEnded)
+                                    {
+                                        <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold" disabled>
+                                            <i class="bi bi-calendar-x me-1"></i> Đã kết thúc
+                                        </button>
+                                    }
+                                    else if (isSoldOut)
+                                    {
+                                        <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold" disabled>
+                                            <i class="bi bi-x-circle me-1"></i> Hết vé
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a href="/events/@ev.Id/book" class="btn btn-primary w-100 py-2.5 rounded-pill fw-bold text-white text-decoration-none">
+                                            <i class="bi bi-ticket-perforated me-1"></i> Đặt vé ngay
+                                        </a>
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -67,6 +133,7 @@
         var now = DateTime.UtcNow;
         Events = await DbContext.Events
             .Include(e => e.Venue)
+            .Include(e => e.EventCategories).ThenInclude(ec => ec.Category)
             .Where(e => e.Status == "Published" && e.EndTime > now)
             .OrderBy(e => e.StartTime)
             .ToListAsync();

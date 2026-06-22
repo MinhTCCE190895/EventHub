@@ -31,16 +31,21 @@ public class BookingService : IBookingService
         // 1. Kiểm tra đã đặt vé chưa
         if (await _bookingRepo.HasUserBookedEventAsync(eventId, studentId))
         {
-            throw new InvalidOperationException("User has already booked this event.");
+            throw new InvalidOperationException("Bạn đã đặt vé cho sự kiện này rồi.");
         }
 
-        // 2. Lấy event để kiểm tra capacity
+        // 2. Lấy event để kiểm tra capacity và thời gian kết thúc
         var evWithVenue = await _context.Events
             .Include(e => e.Venue)
             .FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (evWithVenue == null)
-            throw new KeyNotFoundException("Event not found.");
+            throw new KeyNotFoundException("Không tìm thấy sự kiện.");
+
+        if (evWithVenue.EndTime < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Sự kiện đã kết thúc, không thể đặt vé.");
+        }
 
         if (evWithVenue.RegisteredCount >= evWithVenue.Venue.MaxCapacity)
         {

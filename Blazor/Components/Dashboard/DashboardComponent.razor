@@ -16,13 +16,13 @@
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
-                <span class="text-primary fw-bold text-uppercase tracking-wider small">Real-time Analytics</span>
-                <h1 class="display-5 fw-bold mb-0">Live Activity Dashboard</h1>
+                <span class="text-primary fw-bold text-uppercase tracking-wider small">Phân tích thời gian thực</span>
+                <h1 class="display-5 fw-bold mb-0">🚀 Bảng giám sát hoạt động trực tuyến</h1>
                 <p class="text-muted mb-0">Theo dõi tiến độ đặt vé và hoạt động hệ thống theo thời gian thực</p>
             </div>
             <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
                 <span class="pulse-green"></span>
-                <span class="text-success small fw-bold ms-2">LIVE MONITORING ACTIVE</span>
+                <span class="text-success small fw-bold ms-2">ĐANG GIÁM SÁT TRỰC TIẾP</span>
             </div>
         </div>
 
@@ -60,12 +60,12 @@
                 <!-- Total Bookings KPI -->
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
-                        <span class="text-muted small fw-bold text-uppercase">Vé đã đặt (Live)</span>
+                        <span class="text-muted small fw-bold text-uppercase">Vé đã đặt (Trực tiếp)</span>
                         <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-blue">
                             @TotalRegisteredCount
                         </h2>
                         <span class="text-success small mt-1">
-                            <i class="bi bi-graph-up-arrow"></i> +@RecentBookingsCount tick vừa qua
+                            <i class="bi bi-graph-up-arrow"></i> +@RecentBookingsCount giao dịch mới
                         </span>
                     </div>
                     <div class="kpi-icon-wrapper kpi-blue">
@@ -113,8 +113,8 @@
                     <!-- Dynamic Live Trend Chart (SVG) -->
                     <div class="card-glass">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">Biểu Đồ Xu Hướng Đặt Vé (Live)</h5>
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 text-xs fw-semibold">10 ticks gần nhất</span>
+                            <h5 class="fw-bold mb-0">Biểu Đồ Xu Hướng Đặt Vé (Trực tiếp)</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 text-xs fw-semibold">10 cập nhật gần nhất</span>
                         </div>
                         
                         <div class="chart-wrapper">
@@ -150,7 +150,7 @@
 
                     <!-- Live Event Seats Progress -->
                     <div class="card-glass">
-                        <h5 class="fw-bold mb-4">Trạng Thế Vé Sự Kiện Đang Diễn Ra</h5>
+                        <h5 class="fw-bold mb-4">Trạng Thái Vé Các Sự Kiện</h5>
                         <div class="event-progress-list">
                             @foreach (var ev in Events ?? new())
                             {
@@ -252,8 +252,8 @@
         try
         {
             // Seed log hệ thống ban đầu
-            LiveLogs.Add(new() { Message = "Hệ thống giám sát Live Dashboard khởi chạy thành công.", EventTitle = "Hệ Thống", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "SYSTEM" });
-            LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "LISTENING" });
+            LiveLogs.Add(new() { Message = "Hệ thống giám sát Live Dashboard khởi chạy thành công.", EventTitle = "Hệ Thống", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "HỆ THỐNG" });
+            LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "ĐANG NGHE" });
 
             // 2. Tải danh sách các sự kiện đang hoạt động từ cơ sở dữ liệu
             var now = DateTime.UtcNow;
@@ -317,7 +317,7 @@
 
                     await InvokeAsync(() =>
                     {
-                        LiveLogs.Insert(0, new() { Message = "Đã thiết lập kết nối SignalR thành công.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "CONNECTED" });
+                        LiveLogs.Insert(0, new() { Message = "Đã thiết lập kết nối SignalR thành công.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "ĐÃ KẾT NỐI" });
                         StateHasChanged();
                     });
                 }
@@ -326,7 +326,7 @@
                     Console.WriteLine("Lỗi khởi tạo SignalR (Dashboard): " + ex.Message);
                     await InvokeAsync(() =>
                     {
-                        LiveLogs.Insert(0, new() { Message = $"Lỗi kết nối SignalR: {ex.Message}. Vui lòng kiểm tra lại dịch vụ.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-danger", StatusText = "DISCONNECTED" });
+                        LiveLogs.Insert(0, new() { Message = $"Lỗi kết nối SignalR: {ex.Message}. Vui lòng kiểm tra lại dịch vụ.", EventTitle = "SignalR", Timestamp = DateTime.Now, StatusClass = "badge-danger", StatusText = "MẤT KẾT NỐI" });
                         StateHasChanged();
                     });
                 }
@@ -377,7 +377,7 @@
                     EventTitle = ev.Title,
                     Timestamp = DateTime.Now,
                     StatusClass = diff > 0 ? "badge-success" : "badge-warning",
-                    StatusText = diff > 0 ? "BOOKED" : "CANCELLED"
+                    StatusText = diff > 0 ? "ĐÃ ĐẶT" : "ĐÃ HỦY"
                 });
 
                 if (LiveLogs.Count > 25) LiveLogs.RemoveAt(25);
@@ -416,10 +416,11 @@
         int min = ChartData.Min();
         int max = ChartData.Max();
         int range = max - min;
-        if (range == 0) range = 1;
+        // Đặt khoảng chia tối thiểu là 10 để tránh đường vẽ nhảy vọt hết khung khi thay đổi nhỏ (ví dụ từ 150 lên 151)
+        if (range < 10) range = 10;
 
         double normalized = (double)(ChartData[index] - min) / range;
-        // SVG tọa độ Y = 0 nằm ở trên cùng, do đó đảo ngược: y = 180 - (normalized * 140)
+        // SVG tọa độ Y = 0 nằm ở trên cùng, do đó đảo ngược
         double y = 175.0 - (normalized * 130.0); // Chừa 25px lề trên dưới
 
         return (x, y);

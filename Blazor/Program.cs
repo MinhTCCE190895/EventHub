@@ -50,7 +50,7 @@ namespace Blazor
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 
-            app.MapHub<BLL.SignalR.EventHub>("/eventhub");
+            app.MapHub<BLL.SignalR.EventHub>("/eventhub").AllowAnonymous();
 
             // Seed Data
             using (var scope = app.Services.CreateScope())

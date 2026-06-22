@@ -15,7 +15,7 @@
 <div class="app-container">
     <main class="app-content w-100 p-4">
         <div class="content-header mb-4 text-center">
-            <h1 class="display-6 fw-bold">Đặt Vé Sự Kiện</h1>
+            <h1 class="display-6 fw-bold">🎫 Đặt Vé Sự Kiện</h1>
             <p class="text-muted">Cập nhật chỗ trống theo thời gian thực (Live SignalR)</p>
         </div>
 
@@ -29,11 +29,16 @@
                 var remaining = EventItem.MaxCapacity - EventItem.RegisteredCount;
                 var progressPercentage = EventItem.MaxCapacity > 0 ? (EventItem.RegisteredCount * 100 / EventItem.MaxCapacity) : 0;
                 var isSoldOut = remaining <= 0;
+                var hasEnded = EventItem.EndTime < DateTime.UtcNow;
 
                 <div class="card-minimal" style="max-width: 500px; width: 100%;">
                     @if (isSoldOut)
                     {
-                        <span class="card-badge-overlay bg-danger text-white">Sold Out</span>
+                        <span class="card-badge-overlay bg-danger text-white">Hết Vé</span>
+                    }
+                    else if (hasEnded)
+                    {
+                        <span class="card-badge-overlay bg-secondary text-white">Đã Kết Thúc</span>
                     }
 
                     <div class="card-minimal-body">
@@ -46,13 +51,13 @@
                         
                         <div class="d-flex justify-content-between mt-3 mb-1">
                             <strong>Trạng thái vé:</strong>
-                            <span class="@(isSoldOut ? "text-danger" : "text-success") fw-bold">
-                                @(isSoldOut ? "Đã Hết Vé" : $"Còn {remaining} chỗ")
+                            <span class="@(hasEnded ? "text-secondary" : (isSoldOut ? "text-danger" : "text-success")) fw-bold">
+                                @(hasEnded ? "Đã kết thúc" : (isSoldOut ? "Đã Hết Vé" : $"Còn {remaining} chỗ"))
                             </span>
                         </div>
 
                         <div class="progress mb-4" style="height: 10px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated @(isSoldOut ? "bg-danger" : "bg-success")" 
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @(hasEnded ? "bg-secondary" : (isSoldOut ? "bg-danger" : "bg-success"))" 
                                  role="progressbar" 
                                  style="width: @progressPercentage%" 
                                  aria-valuenow="@EventItem.RegisteredCount" 
@@ -61,13 +66,18 @@
                             </div>
                         </div>
 
-                        <button class="btn @(isSoldOut ? "btn-secondary" : "btn-primary") w-100 py-3 fw-bold shadow-sm" 
-                                disabled="@(isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student")"
+                        <button class="btn @(hasEnded ? "btn-secondary" : (isSoldOut ? "btn-secondary" : "btn-primary")) w-100 py-3 fw-bold shadow-sm text-white" 
+                                disabled="@(hasEnded || isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student")"
                                 @onclick="BookTicketAsync">
                             @if (IsProcessing)
                             {
                                 <span class="spinner-border spinner-border-sm me-2"></span>
                                 <span>Đang xử lý...</span>
+                            }
+                            else if (hasEnded)
+                            {
+                                <i class="bi bi-calendar-x-fill me-2"></i>
+                                <span>Sự Kiện Đã Kết Thúc</span>
                             }
                             else if (isSoldOut)
                             {
@@ -81,7 +91,13 @@
                             }
                         </button>
 
-                        @if (CurrentUserId == null)
+                        @if (hasEnded)
+                        {
+                            <div class="alert alert-danger mt-3 text-center small fw-bold">
+                                ⌛ Sự kiện này đã kết thúc vào lúc @EventItem.EndTime.ToString("dd/MM/yyyy HH:mm"). Bạn không thể đặt vé.
+                            </div>
+                        }
+                        else if (CurrentUserId == null)
                         {
                             <div class="alert alert-warning mt-3 text-center small">
                                 Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> làm sinh viên để đặt vé.
@@ -101,7 +117,7 @@
                             </div>
                         }
 
-                        <a href="http://localhost:5129/Events/Detail/@EventId" class="btn btn-outline-secondary w-100 py-2 fw-semibold mt-3 d-flex align-items-center justify-content-center">
+                        <a href="http://localhost:5129/Events/Detail/@EventId" class="btn btn-outline-secondary w-100 py-2 fw-semibold mt-3 d-flex align-items-center justify-content-center text-decoration-none">
                             <i class="bi bi-arrow-left me-2"></i> Quay lại chi tiết sự kiện
                         </a>
                     </div>
@@ -133,6 +149,7 @@
         public string VenueName { get; set; } = string.Empty;
         public int MaxCapacity { get; set; }
         public int RegisteredCount { get; set; }
+        public DateTime EndTime { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -154,7 +171,6 @@
 
         try
         {
-            // Lấy data bằng Entity Framework (viết theo style của QuiNC)
             var ev = await DbContext.Events
                 .Include(e => e.Venue)
                 .AsNoTracking()
@@ -168,7 +184,8 @@
                     Title = ev.Title,
                     VenueName = ev.Venue.Name,
                     MaxCapacity = ev.Venue.MaxCapacity,
-                    RegisteredCount = ev.RegisteredCount
+                    RegisteredCount = ev.RegisteredCount,
+                    EndTime = ev.EndTime
                 };
             }
         }
@@ -186,7 +203,6 @@
             {
                 try
                 {
-                    // Khởi tạo connection y hệt DashboardComponent
                     hubConnection = new HubConnectionBuilder()
                         .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
                         {
@@ -244,7 +260,6 @@
 
         try
         {
-            // Book vé dùng User ID thật từ Auth
             var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, CurrentUserId.Value);
             
             IsSuccess = true;
