@@ -56,7 +56,9 @@ graph TD
   - **Khắc phục lỗi hiển thị biểu đồ SVG**: Định dạng tọa độ điểm vẽ SVG bằng `CultureInfo.InvariantCulture` thay vì sử dụng định dạng mặc định của hệ thống để tránh lỗi dấu phẩy thập phân `,` trong môi trường sử dụng ngôn ngữ tiếng Việt (`vi-VN`) khiến biểu đồ không vẽ được.
   - **Tối ưu hóa Khởi động & Migration**: Khắc phục tranh chấp Migration và tối ưu hóa tốc độ khởi chạy bằng cách (1) bỏ qua kiểm tra BCrypt.Verify đối với các tài khoản seed nếu mật khẩu đã được hash sẵn; (2) kiểm tra GetPendingMigrationsAsync trước khi dùng Mutex để tránh khóa luồng khởi chạy của các project chạy đồng thời.
   - **Biểu đồ Live Trend**: Cập nhật logic đồ thị tự động sinh tiến trình đi lùi tăng dần từ (Tổng số vé - 9) đến Tổng số vé hiện tại lúc load trang. Khi có sự kiện đặt vé thời gian thực, điểm vẽ mới được thêm lũy tiến, giải quyết triệt để lỗi đường biểu đồ nằm phẳng ở đáy khi tải trang.
+  - **Tooltip thông tin đặt vé**: Tích hợp hiển thị thông tin chi tiết trên từng điểm (dot) của biểu đồ khi chỉ chuột vào: Tên học sinh đặt vé, Tên sự kiện tương ứng và Thời gian đặt vé (lấy từ dữ liệu lịch sử lúc tải trang và tự động truy vấn real-time khi có sự kiện từ SignalR).
   - **Cấu hình Connection String**: Chuyển đổi chuỗi kết nối `"EventHub"` trong cả 3 dự án (`MVC`, `RazorPages`, `Blazor`) từ LocalDB sang instance SQL Server vật lý của anh Khôi `MAYTINHCUATRANK\MSSQLSERVER01` để dữ liệu đăng ký/đặt vé được ghi nhận trực tiếp vào đúng máy chủ anh đang theo dõi trên SSMS.
+
 
 
 

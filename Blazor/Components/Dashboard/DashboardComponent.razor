@@ -139,8 +139,10 @@
                                 @for (int i = 0; i < ChartData.Count; i++)
                                 {
                                     var (cx, cy) = GetPointCoords(i);
-                                    var val = ChartData[i];
-                                    <circle cx="@cx.ToString(System.Globalization.CultureInfo.InvariantCulture)" cy="@cy.ToString(System.Globalization.CultureInfo.InvariantCulture)" r="4.5" class="chart-dot" title="Vé: @val" />
+                                    var pt = ChartData[i];
+                                    <circle cx="@cx.ToString(System.Globalization.CultureInfo.InvariantCulture)" cy="@cy.ToString(System.Globalization.CultureInfo.InvariantCulture)" r="4.5" class="chart-dot">
+                                        <title>@pt.TooltipText</title>
+                                    </circle>
                                 }
                             </svg>
                         </div>
@@ -219,8 +221,14 @@
     private double Velocity = 0;
     private int RecentBookingsCount = 0;
 
+    public class ChartPointDto
+    {
+        public int Value { get; set; }
+        public string TooltipText { get; set; } = string.Empty;
+    }
+
     // SVG Chart Data Points (Last 10 intervals)
-    private List<int> ChartData = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    private List<ChartPointDto> ChartData = new();
 
     // Activity Log Entries
     private List<ActivityLog> LiveLogs = new();
@@ -269,13 +277,36 @@
 
             CalculateKpis();
 
-            // Khởi tạo đồ thị đi lùi từ tổng số vé hiện tại để tạo đường xu hướng tăng dần
-            ChartData = new List<int>();
+            // 3. Tải 10 confirmed bookings gần đây nhất kèm thông tin người dùng và sự kiện để hiện tooltip
+            var recentBookings = await DbContext.Bookings
+                .Where(b => b.Status == "Confirmed")
+                .Include(b => b.Student)
+                .Include(b => b.Event)
+                .OrderByDescending(b => b.BookingTime)
+                .Take(10)
+                .ToListAsync();
+            recentBookings.Reverse(); // Đảo lại theo thứ tự thời gian tăng dần
+
+            // Khởi tạo đồ thị đi lùi từ tổng số vé hiện tại để tạo đường xu hướng tăng dần kèm tooltip tương ứng
+            ChartData = new List<ChartPointDto>();
             for (int i = 9; i >= 0; i--)
             {
                 int val = TotalRegisteredCount - i;
                 if (val < 0) val = 0;
-                ChartData.Add(val);
+
+                string tooltip = "Không có hoạt động";
+                int bookingIndex = recentBookings.Count - 1 - i;
+                if (bookingIndex >= 0 && bookingIndex < recentBookings.Count)
+                {
+                    var b = recentBookings[bookingIndex];
+                    tooltip = $"Mới đặt - Học sinh: {b.Student?.FullName ?? "N/A"} | Sự kiện: {b.Event?.Title ?? "N/A"} ({b.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
+                }
+
+                ChartData.Add(new ChartPointDto
+                {
+                    Value = val,
+                    TooltipText = tooltip
+                });
             }
         }
         catch (Exception ex)
@@ -312,9 +343,9 @@
                         })
                         .Build();
 
-                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remainingSeats) =>
+                    hubConnection.On<Guid, int>("ReceiveTicketUpdate", async (eventId, remainingSeats) =>
                     {
-                        HandleTicketUpdate(eventId, remainingSeats);
+                        await HandleTicketUpdateAsync(eventId, remainingSeats);
                     });
 
                     await hubConnection.StartAsync();
@@ -348,7 +379,7 @@
         }
     }
 
-    private void HandleTicketUpdate(Guid eventId, int remainingSeats)
+    private async Task HandleTicketUpdateAsync(Guid eventId, int remainingSeats)
     {
         if (Events == null) return;
 
@@ -366,8 +397,40 @@
                 RecentBookingsCount += Math.Abs(diff);
                 Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; // Cập nhật tốc độ giao dịch thực tế
 
+                // Lấy thông tin chi tiết của booking mới nhất từ database để hiển thị lên tooltip
+                string tooltip = "Không có hoạt động";
+                if (diff > 0)
+                {
+                    try
+                    {
+                        var newBooking = await DbContext.Bookings
+                            .Where(b => b.EventId == eventId && b.Status == "Confirmed")
+                            .Include(b => b.Student)
+                            .Include(b => b.Event)
+                            .OrderByDescending(b => b.BookingTime)
+                            .FirstOrDefaultAsync();
+
+                        if (newBooking != null)
+                        {
+                            tooltip = $"Mới đặt - Học sinh: {newBooking.Student?.FullName ?? "N/A"} | Sự kiện: {newBooking.Event?.Title ?? "N/A"} ({newBooking.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Lỗi lấy thông tin booking mới: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    tooltip = $"Hủy đặt vé - Sự kiện: {ev.Title}";
+                }
+
                 // Trượt dữ liệu đồ thị theo tổng số vé thực tế
-                ChartData.Add(TotalRegisteredCount);
+                ChartData.Add(new ChartPointDto
+                {
+                    Value = TotalRegisteredCount,
+                    TooltipText = tooltip
+                });
                 if (ChartData.Count > 10) ChartData.RemoveAt(0);
 
                 // Thêm vào Nhật Ký
@@ -386,7 +449,7 @@
 
                 if (LiveLogs.Count > 25) LiveLogs.RemoveAt(25);
 
-                InvokeAsync(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
             }
         }
     }
@@ -417,13 +480,13 @@
 
         double x = index * (500.0 / (ChartData.Count - 1));
 
-        int min = ChartData.Min();
-        int max = ChartData.Max();
+        int min = ChartData.Min(p => p.Value);
+        int max = ChartData.Max(p => p.Value);
         int range = max - min;
         // Đặt khoảng chia tối thiểu là 10 để tránh đường vẽ nhảy vọt hết khung khi thay đổi nhỏ (ví dụ từ 150 lên 151)
         if (range < 10) range = 10;
 
-        double normalized = (double)(ChartData[index] - min) / range;
+        double normalized = (double)(ChartData[index].Value - min) / range;
         // SVG tọa độ Y = 0 nằm ở trên cùng, do đó đảo ngược
         double y = 175.0 - (normalized * 130.0); // Chừa 25px lề trên dưới
 
