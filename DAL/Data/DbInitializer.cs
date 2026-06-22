@@ -2,6 +2,7 @@ using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using BCrypt.Net;
+using System.Threading;
 
 namespace DAL.Data;
 
@@ -12,7 +13,51 @@ public static class DbInitializer
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        await context.Database.MigrateAsync();
+        // Kiểm tra nhanh xem có cần chạy Migration không trước khi dùng Mutex để tránh block luồng khởi chạy
+        bool needsMigration = false;
+        try
+        {
+            var pending = await context.Database.GetPendingMigrationsAsync();
+            if (pending.Any())
+            {
+                needsMigration = true;
+            }
+        }
+        catch (Exception)
+        {
+            // Database hoặc bảng __EFMigrationsHistory chưa tồn tại
+            needsMigration = true;
+        }
+
+        if (needsMigration)
+        {
+            using var mutex = new Mutex(false, "UniEventHubDbMigrationMutex");
+            try
+            {
+                var hasHandle = mutex.WaitOne(TimeSpan.FromSeconds(30));
+                if (hasHandle)
+                {
+                    await context.Database.MigrateAsync();
+                }
+                else
+                {
+                    await Task.Delay(2000);
+                }
+            }
+            catch (AbandonedMutexException)
+            {
+                await context.Database.MigrateAsync();
+            }
+            finally
+            {
+                try
+                {
+                    mutex.ReleaseMutex();
+                }
+                catch (Exception) { }
+            }
+        }
+
 
         // Cập nhật địa chỉ đầy đủ có tỉnh thành cho các Venue đã tồn tại từ trước để đồng bộ tính năng thời tiết
         var existingA = await context.Venues.FirstOrDefaultAsync(v => v.Name == "Hội trường A");
@@ -39,11 +84,11 @@ public static class DbInitializer
             var seedEmails = new[] { "admin@unieventhub.com", "organizer@unieventhub.com", "khoi.student@fpt.edu.vn" };
             var seedUsers = users.Where(u => seedEmails.Contains(u.Email)).ToList();
 
-            // Chỉ reset password cho các tài khoản seed mặc định thành 123456
+            // Chỉ reset password cho các tài khoản seed mặc định thành 123456 nếu chưa được hash
             foreach (var u in seedUsers)
             {
-                // To avoid rehashing every time, check if it matches
-                if (!BCrypt.Net.BCrypt.Verify("123456", u.PasswordHash))
+                // Nếu password hash chưa được hash bằng BCrypt (không bắt đầu bằng $2) thì mới hash lại
+                if (string.IsNullOrEmpty(u.PasswordHash) || !u.PasswordHash.StartsWith("$2"))
                 {
                     u.PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456");
                     hasChanges = true;
