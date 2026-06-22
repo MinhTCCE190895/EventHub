@@ -140,7 +140,7 @@
                                 {
                                     var (cx, cy) = GetPointCoords(i);
                                     var val = ChartData[i];
-                                    <circle cx="@cx" cy="@cy" r="4.5" class="chart-dot" title="Vé: @val" />
+                                    <circle cx="@cx.ToString(System.Globalization.CultureInfo.InvariantCulture)" cy="@cy.ToString(System.Globalization.CultureInfo.InvariantCulture)" r="4.5" class="chart-dot" title="Vé: @val" />
                                 }
                             </svg>
                         </div>
@@ -393,7 +393,7 @@
         for (int i = 0; i < ChartData.Count; i++)
         {
             var (x, y) = GetPointCoords(i);
-            points.Add($"{x.ToString("F1")},{y.ToString("F1")}");
+            points.Add($"{x.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)},{y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}");
         }
         return "M " + string.Join(" L ", points);
     }
