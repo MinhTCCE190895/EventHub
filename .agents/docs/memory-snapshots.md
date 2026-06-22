@@ -54,6 +54,7 @@ graph TD
   - **Logic Đặt vé hết hạn**: Đồng bộ kiểm tra logic thời gian kết thúc sự kiện (`EndTime < DateTime.UtcNow`) từ BLL `BookingService.cs` lên giao diện hiển thị cảnh báo trực quan của `BookingComponent.razor` và khóa hoàn toàn quyền đăng ký vé.
   - **Khắc phục lỗi SignalR 302**: Cho phép truy cập ẩn danh đối với route `/eventhub` để tránh lỗi chuyển hướng xác thực cookie, giúp biểu đồ hoạt động trực tuyến tự động vẽ đường cong tiến trình.
   - **Khắc phục lỗi hiển thị biểu đồ SVG**: Định dạng tọa độ điểm vẽ SVG bằng `CultureInfo.InvariantCulture` thay vì sử dụng định dạng mặc định của hệ thống để tránh lỗi dấu phẩy thập phân `,` trong môi trường sử dụng ngôn ngữ tiếng Việt (`vi-VN`) khiến biểu đồ không vẽ được.
+  - **Cấu hình Connection String**: Chuyển đổi chuỗi kết nối `"EventHub"` trong cả 3 dự án (`MVC`, `RazorPages`, `Blazor`) từ LocalDB sang instance SQL Server vật lý của anh Khôi `MAYTINHCUATRANK\MSSQLSERVER01` để dữ liệu đăng ký/đặt vé được ghi nhận trực tiếp vào đúng máy chủ anh đang theo dõi trên SSMS.
 
 - **2026-06-21 (Antigravity)**:
   - **TriLT - Feedback (`FE-07`) & Email Worker (`FE-06`)**:
