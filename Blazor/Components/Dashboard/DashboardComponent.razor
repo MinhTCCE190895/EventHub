@@ -13,12 +13,10 @@
 
 <div class="dashboard-container">
     <div class="dashboard-content">
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="page-header-minimal d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
             <div>
-                <span class="text-primary fw-bold text-uppercase tracking-wider small">Phân tích thời gian thực</span>
-                <h1 class="display-5 fw-bold mb-0">🚀 Bảng giám sát hoạt động trực tuyến</h1>
-                <p class="text-muted mb-0">Theo dõi tiến độ đặt vé và hoạt động hệ thống theo thời gian thực</p>
+                <span class="page-badge-minimal">Phân tích thời gian thực</span>
+                <h1 class="display-5 fw-bold mt-1">Bảng Giám Sát Hoạt Động Trực Tuyến</h1>
             </div>
             <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
                 <span class="pulse-green"></span>
@@ -241,7 +239,7 @@
         public string EventTitle { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
         public string StatusClass { get; set; } = "badge-success";
-        public string StatusText { get; set; } = "SUCCESS";
+        public string StatusText { get; set; } = "THÀNH CÔNG";
     }
 
     protected override async Task OnInitializedAsync()

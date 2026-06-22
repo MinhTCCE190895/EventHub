@@ -49,9 +49,10 @@ graph TD
 ### 3.1. Detailed Changes Log
 
 - **2026-06-22 (Antigravity)**:
-  - **Emoji Clean-up**: Removed all decorative emojis from UI files (`MyFeedbacks.cshtml`, `Feedback.cshtml`, `Home.razor`, `FeedbackAnalyticsComponent.razor`, `DashboardComponent.razor`, `BookingComponent.razor`).
-  - **Rules Update**: Added rule prohibiting emoji icons to `07-system-design-styleguide.md`.
-  - **Navigation & SSO Sync**: Resolved git merge conflicts. Redirected all users (including Student) to Razor Pages home port 5129 post-login. Converted Blazor links to single tab flow (removed `target="_blank"`). Dynamic sidebar matching for Student role. Hidden detailed remaining seats count in Razor Pages to avoid state sync drift.
+  - **Đồng nhất Giao diện & Layout**: Loại bỏ các thẻ bao bọc `.app-container` và `.app-content` dư thừa trong `Home.razor` và `BookingComponent.razor` để giao diện Blazor tích hợp đồng nhất với thanh điều hướng (sidebar) toàn hệ thống giống như bên RazorPages/MVC.
+  - **Việt hóa & Emoji Clean-up**: Dịch toàn bộ các chuỗi giao diện, tiêu đề, và log trạng thái (ví dụ: `SUCCESS` -> `THÀNH CÔNG`) trong các trang `DashboardComponent.razor` và `FeedbackAnalyticsComponent.razor` sang tiếng Việt. Loại bỏ tất cả emoji trang trí ở tiêu đề và cảnh báo.
+  - **Logic Đặt vé hết hạn**: Đồng bộ kiểm tra logic thời gian kết thúc sự kiện (`EndTime < DateTime.UtcNow`) từ BLL `BookingService.cs` lên giao diện hiển thị cảnh báo trực quan của `BookingComponent.razor` và khóa hoàn toàn quyền đăng ký vé.
+  - **Khắc phục lỗi SignalR 302**: Cho phép truy cập ẩn danh đối với route `/eventhub` để tránh lỗi chuyển hướng xác thực cookie, giúp biểu đồ hoạt động trực tuyến tự động vẽ đường cong tiến trình.
 
 - **2026-06-21 (Antigravity)**:
   - **TriLT - Feedback (`FE-07`) & Email Worker (`FE-06`)**:

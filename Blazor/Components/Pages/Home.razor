@@ -5,13 +5,11 @@
 @inject AppDbContext DbContext
 @inject NavigationManager Navigation
 
-<div class="app-container">
-    <main class="app-content w-100 p-4">
-        <div class="content-header mb-5 text-center">
-            <span class="page-badge-minimal">Sự kiện UniEvent Hub</span>
-            <h1 class="display-5 fw-bold mt-1">Khám Phá & Đặt Vé</h1>
-            <p class="text-muted">Chọn sự kiện bạn muốn tham gia đặt vé trực tiếp</p>
-        </div>
+<div class="page-header-minimal text-center mb-5">
+    <span class="page-badge-minimal">Sự kiện UniEvent Hub</span>
+    <h1 class="display-5 fw-bold mt-1">Khám Phá & Đặt Vé</h1>
+    <p class="text-muted">Chọn sự kiện bạn muốn tham gia đặt vé trực tiếp</p>
+</div>
 
         @if (Events == null)
         {
@@ -122,8 +120,6 @@
                 }
             </div>
         }
-    </main>
-</div>
 
 @code {
     private List<Event>? Events;
