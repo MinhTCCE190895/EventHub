@@ -355,6 +355,7 @@
 @section Scripts {
     <script>
         let debounceTimer;
+        let fetchController = null; // Biến lưu AbortController để hủy request cũ khi người dùng spam click nhanh
         const form = document.getElementById('searchForm');
         const keywordInput = document.getElementById('keywordInput');
 
@@ -374,6 +375,13 @@
 
         // Standard instant submission trigger
         function submitInstant() {
+            // Hủy kết nối của yêu cầu cũ nếu nó đang chạy ngầm trên mạng để tránh bị chậm
+            if (fetchController) {
+                fetchController.abort();
+            }
+            fetchController = new AbortController();
+            const { signal } = fetchController;
+
             const formData = new FormData(form);
             const params = new URLSearchParams();
 
@@ -430,7 +438,7 @@
             resultsWrapper.innerHTML = skeletonHtml;
 
             // Fetch dynamic partial content
-            fetch(newUrl)
+            fetch(newUrl, { signal }) // Gửi kèm signal để hủy được nếu cần
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
@@ -450,7 +458,13 @@
                     // Re-attach AJAX pagination click event listeners
                     bindPaginationLinks();
                 })
-                .catch(err => console.error('Error fetching search results:', err));
+                .catch(err => {
+                    // Nếu là lỗi hủy request chủ động thì bỏ qua, không log lỗi đỏ ở console
+                    if (err.name === 'AbortError') {
+                        return;
+                    }
+                    console.error('Error fetching search results:', err);
+                });
         }
 
         // Bind AJAX request to pagination links to prevent full page reloads

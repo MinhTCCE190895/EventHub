@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading; // Thêm để dùng SemaphoreSlim chặn Cache Stampede
 using BusinessObjects.DTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,9 @@ public class WeatherService : IWeatherService
     private readonly HttpClient _httpClient;
     private readonly IMemoryCache _cache;
     private readonly ILogger<WeatherService> _logger;
+    
+    // Semaphore dùng để khóa luồng, chỉ cho 1 request gọi API ngoài tại 1 thời điểm (FE-08 Cache Stampede)
+    private static readonly SemaphoreSlim _weatherSemaphore = new SemaphoreSlim(1, 1);
 
     public WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<WeatherService> logger)
     {
@@ -23,14 +27,22 @@ public class WeatherService : IWeatherService
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_{normalized.ToLower().Replace(" ", "_")}";
 
-        // Sử dụng IMemoryCache để cache kết quả trong 30 phút nhằm tối ưu hiệu năng và tránh bị rate limit theo đặc tả FE-08
+        // Bước 1: Kiểm tra nhanh cache trước khi lock để tối ưu tốc độ đọc
         if (_cache.TryGetValue(cacheKey, out WeatherDTO? cachedWeather))
         {
             return cachedWeather;
         }
 
+        // Bước 2: Chờ lock Semaphore nếu có nhiều luồng cùng gọi tới wttr.in
+        await _weatherSemaphore.WaitAsync();
         try
         {
+            // Kiểm tra lại cache lần 2 sau khi có lock (Double-checked locking) phòng hờ luồng khác đã nạp cache xong
+            if (_cache.TryGetValue(cacheKey, out cachedWeather))
+            {
+                return cachedWeather;
+            }
+
             // Thiết lập timeout ngắn để không làm chậm trải nghiệm của người dùng nếu API bên thứ ba bị nghẽn
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
             string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
@@ -69,6 +81,11 @@ public class WeatherService : IWeatherService
             // Chỉ ghi log lỗi hệ thống, không throw ra ngoài để tránh làm sập trang khi API thời tiết gặp sự cố
             _logger.LogError(ex, "Lỗi khi gọi API thời tiết cho {Location}. Sẽ dùng fallback data.", location);
         }
+        finally
+        {
+            // Giải phóng Semaphore
+            _weatherSemaphore.Release();
+        }
 
         // Tạo dữ liệu giả lập chất lượng cao nếu API lỗi hoặc mất mạng
         var fallbackWeather = GetFallbackWeather(normalized);
@@ -78,11 +95,18 @@ public class WeatherService : IWeatherService
 
     private string NormalizeLocation(string location)
     {
+        // Kiểm tra an toàn null hoặc trống để không bị lỗi cắt chuỗi
         if (string.IsNullOrWhiteSpace(location)) return "Can Tho";
 
         // Tách địa chỉ theo dấu phẩy để lấy tỉnh/thành phố ở cuối
         var parts = location.Split(',');
         string cityCandidate = parts.Length > 0 ? parts[^1].Trim() : location.Trim();
+        
+        // Nếu địa chỉ toàn dấu phẩy dẫn tới candidate bị rỗng thì gán mặc định
+        if (string.IsNullOrWhiteSpace(cityCandidate))
+        {
+            cityCandidate = "Can Tho";
+        }
 
         // Làm sạch các tiền tố hành chính phổ biến ở Việt Nam
         cityCandidate = cityCandidate
