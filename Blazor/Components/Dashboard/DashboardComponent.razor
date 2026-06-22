@@ -218,7 +218,6 @@
     private double FillRate = 0;
     private double Velocity = 0;
     private int RecentBookingsCount = 0;
-    private int SessionBookingsCount = 0;
 
     // SVG Chart Data Points (Last 10 intervals)
     private List<int> ChartData = new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -270,9 +269,14 @@
 
             CalculateKpis();
 
-            // Khởi tạo đồ thị với 0 vé ban đầu cho phiên làm việc này
-            ChartData = Enumerable.Repeat(0, 10).ToList();
-            SessionBookingsCount = 0;
+            // Khởi tạo đồ thị đi lùi từ tổng số vé hiện tại để tạo đường xu hướng tăng dần
+            ChartData = new List<int>();
+            for (int i = 9; i >= 0; i--)
+            {
+                int val = TotalRegisteredCount - i;
+                if (val < 0) val = 0;
+                ChartData.Add(val);
+            }
         }
         catch (Exception ex)
         {
@@ -362,11 +366,8 @@
                 RecentBookingsCount += Math.Abs(diff);
                 Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; // Cập nhật tốc độ giao dịch thực tế
 
-                // Cập nhật số lượng vé đặt tích lũy trong phiên hiện tại
-                SessionBookingsCount = Math.Max(0, SessionBookingsCount + diff);
-
-                // Trượt dữ liệu đồ thị theo phiên làm việc
-                ChartData.Add(SessionBookingsCount);
+                // Trượt dữ liệu đồ thị theo tổng số vé thực tế
+                ChartData.Add(TotalRegisteredCount);
                 if (ChartData.Count > 10) ChartData.RemoveAt(0);
 
                 // Thêm vào Nhật Ký
