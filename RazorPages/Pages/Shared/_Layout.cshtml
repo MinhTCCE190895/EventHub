@@ -1,8 +1,5 @@
-@inject BLL.Services.IWeatherService WeatherService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
-    // Gọi dịch vụ lấy thông tin thời tiết Campus mặc định cho sidebar (Cần Thơ)
-    var campusWeather = await WeatherService.GetWeatherAsync("Can Tho");
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -74,27 +71,12 @@
                 </a>
             </nav>
 
-            @if (campusWeather != null)
-            {
-                <div class="sidebar-weather-card my-3">
-                    <div class="weather-header">
-                        <span class="weather-location">
-                            <i class="bi bi-geo-alt-fill text-danger"></i> @campusWeather.Location
-                        </span>
-                        <span class="text-muted text-uppercase" style="font-size: 0.6rem;">Thời tiết</span>
-                    </div>
-                    <div class="weather-body">
-                        <span class="weather-temp">@campusWeather.Temperature.ToString("0")°C</span>
-                        <i class="bi @campusWeather.WeatherIconClass weather-icon-lg"></i>
-                    </div>
-                    <div class="weather-desc">@campusWeather.Condition</div>
-                    <!-- Đồng hồ thời gian thực toàn hệ thống -->
-                    <div class="mt-2.5 pt-2 border-top border-light d-flex align-items-center justify-content-between text-muted" style="font-size: 0.68rem;">
-                        <span><i class="bi bi-clock me-1 text-primary"></i> Giờ hệ thống (UTC+7):</span>
-                        <strong id="liveSidebarClock" class="text-dark">--:--:--</strong>
-                    </div>
-                </div>
-            }
+            <!-- Đồng hồ thời gian thực toàn hệ thống (UTC+7 Việt Nam) -->
+            <div class="my-3 p-2.5 rounded-3 bg-light d-flex align-items-center justify-content-between text-muted" style="font-size: 0.72rem; border: 1px solid rgba(0,0,0,0.05);">
+                <span><i class="bi bi-clock me-1 text-primary"></i> Hệ thống (UTC+7):</span>
+                <strong id="liveSidebarClock" class="text-dark fw-bold">--:--:--</strong>
+            </div>
+
 
             <!-- User Auth status block inside Sidebar -->
             <div class="mt-auto pt-3 border-top border-light">

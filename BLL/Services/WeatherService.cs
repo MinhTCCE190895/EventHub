@@ -101,19 +101,21 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         }
 
         string normalized = NormalizeLocation(location);
-        string cacheKey = $"weather_fc_{normalized.ToLower().Replace(" ", "_")}_{targetDateLocal:yyyyMMdd}";
+        string cacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{targetDateLocal:yyyyMMdd}";
 
-        if (_cache.TryGetValue(cacheKey, out WeatherDTO? cachedWeather))
+        if (_cache.TryGetValue(cacheKey, out List<WeatherDTO>? cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
         {
-            return cachedWeather;
+            int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
+            return cachedForecast[index];
         }
 
         await _weatherSemaphore.WaitAsync();
         try
         {
-            if (_cache.TryGetValue(cacheKey, out cachedWeather))
+            if (_cache.TryGetValue(cacheKey, out cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
             {
-                return cachedWeather;
+                int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
+                return cachedForecast[index];
             }
 
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
@@ -128,33 +130,53 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                 
                 if (root.TryGetProperty("weather", out var weatherList) && weatherList.ValueKind == JsonValueKind.Array)
                 {
-                    string targetDateStr = targetDateLocal.ToString("yyyy-MM-dd");
+                    List<WeatherDTO>? targetResultList = null;
+                    
+                    // Duyệt qua tất cả các ngày dự báo trả về từ API để lưu cache hàng loạt
                     foreach (var day in weatherList.EnumerateArray())
                     {
-                        if (day.TryGetProperty("date", out var dateProp) && dateProp.GetString() == targetDateStr)
+                        if (day.TryGetProperty("date", out var dateProp) && 
+                            DateTime.TryParse(dateProp.GetString(), out var parsedDate))
                         {
+                            var dateKey = parsedDate.Date;
                             var hourlyArray = day.GetProperty("hourly");
-                            var midDay = hourlyArray[4];
-                            
-                            double temp = double.Parse(midDay.GetProperty("tempC").GetString() ?? day.GetProperty("avgtempC").GetString() ?? "28");
-                            string desc = midDay.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
-                            double wind = double.Parse(midDay.GetProperty("windspeedKmph").GetString() ?? "10");
-                            int humidity = int.Parse(midDay.GetProperty("humidity").GetString() ?? "75");
+                            var dayForecastList = new List<WeatherDTO>();
 
-                            var weather = new WeatherDTO
+                            // Duyệt qua cả 8 khung giờ trong ngày (mỗi khung 3 tiếng) để lấy dự báo chi tiết
+                            foreach (var hourly in hourlyArray.EnumerateArray())
                             {
-                                Location = normalized,
-                                Temperature = temp,
-                                Condition = TranslateCondition(desc),
-                                WindSpeed = wind,
-                                Humidity = humidity,
-                                WeatherIconClass = MapConditionToIcon(desc),
-                                FetchedAt = DateTime.UtcNow
-                            };
+                                double temp = double.Parse(hourly.GetProperty("tempC").GetString() ?? day.GetProperty("avgtempC").GetString() ?? "28");
+                                string desc = hourly.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
+                                double wind = double.Parse(hourly.GetProperty("windspeedKmph").GetString() ?? "10");
+                                int humidity = int.Parse(hourly.GetProperty("humidity").GetString() ?? "75");
 
-                            _cache.Set(cacheKey, weather, TimeSpan.FromMinutes(30));
-                            return weather;
+                                dayForecastList.Add(new WeatherDTO
+                                {
+                                    Location = normalized,
+                                    Temperature = temp,
+                                    Condition = TranslateCondition(desc),
+                                    WindSpeed = wind,
+                                    Humidity = humidity,
+                                    WeatherIconClass = MapConditionToIcon(desc),
+                                    FetchedAt = DateTime.UtcNow
+                                });
+                            }
+
+                            // Cache mảng 8 khung giờ tương ứng cho ngày đó trong 30 phút
+                            string loopCacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{dateKey:yyyyMMdd}";
+                            _cache.Set(loopCacheKey, dayForecastList, TimeSpan.FromMinutes(30));
+
+                            if (dateKey == targetDateLocal)
+                            {
+                                targetResultList = dayForecastList;
+                            }
                         }
+                    }
+
+                    if (targetResultList != null && targetResultList.Count > 0)
+                    {
+                        int index = GetClosestHourlyIndex(targetDate, targetResultList.Count - 1);
+                        return targetResultList[index];
                     }
                 }
             }
@@ -168,9 +190,21 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
             _weatherSemaphore.Release();
         }
 
+        // Tạo dữ liệu fallback gồm 8 khung giờ giống nhau để tránh lỗi Index
         var fallbackWeather = GetFallbackWeather(normalized);
-        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5));
-        return fallbackWeather;
+        var fallbackList = Enumerable.Repeat(fallbackWeather, 8).ToList();
+        _cache.Set(cacheKey, fallbackList, TimeSpan.FromMinutes(5));
+        
+        int fallbackIndex = GetClosestHourlyIndex(targetDate, 7);
+        return fallbackList[fallbackIndex];
+    }
+
+    // Khớp giờ bắt đầu của sự kiện với khung giờ gần nhất trong 8 mốc của API wttr.in (cách mỗi 3 tiếng: 0h, 3h, 6h, 9h...)
+    private static int GetClosestHourlyIndex(DateTime targetDate, int maxIndex)
+    {
+        int hour = targetDate.Hour;
+        // Công thức (hour + 1) / 3 giúp làm tròn số học để tìm mốc giờ gần nhất (vd: 5h sáng làm tròn lên 2 tức là mốc 6h)
+        return Math.Clamp((hour + 1) / 3, 0, maxIndex);
     }
 
 
