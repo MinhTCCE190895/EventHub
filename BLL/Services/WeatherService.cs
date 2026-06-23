@@ -199,12 +199,24 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return fallbackList[fallbackIndex];
     }
 
-    // Khớp giờ bắt đầu của sự kiện với khung giờ gần nhất trong 8 mốc của API wttr.in (cách mỗi 3 tiếng: 0h, 3h, 6h, 9h...)
+    // Khớp giờ sự kiện với khung dự báo 3 tiếng gần nhất của wttr.in
     private static int GetClosestHourlyIndex(DateTime targetDate, int maxIndex)
     {
         int hour = targetDate.Hour;
-        // Công thức (hour + 1) / 3 giúp làm tròn số học để tìm mốc giờ gần nhất (vd: 5h sáng làm tròn lên 2 tức là mốc 6h)
-        return Math.Clamp((hour + 1) / 3, 0, maxIndex);
+        
+        int index = hour switch
+        {
+            >= 23 or < 2 => 0,   // Mốc 00:00
+            >= 2 and < 5 => 1,   // Mốc 03:00
+            >= 5 and < 8 => 2,   // Mốc 06:00
+            >= 8 and < 11 => 3,  // Mốc 09:00
+            >= 11 and < 14 => 4, // Mốc 12:00
+            >= 14 and < 17 => 5, // Mốc 15:00
+            >= 17 and < 20 => 6, // Mốc 18:00
+            _ => 7               // Mốc 21:00
+        };
+
+        return Math.Clamp(index, 0, maxIndex);
     }
 
 
