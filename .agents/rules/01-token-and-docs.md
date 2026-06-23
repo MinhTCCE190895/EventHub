@@ -58,6 +58,14 @@ trigger: always_on
     - Phân hệ hỗ trợ: Email Reminders (`FE-06`), Feedback + Metrics (`FE-07`), Follows System (`FE-12`).
     - Focus: BackgroundService, `Parallel.ForEachAsync`, PLINQ (`.AsParallel()`), tối ưu truy vấn đếm.
 
+## 6. Luật Quản lý File Cấu hình (appsettings.json & ConnectionString)
+- **Cấm tự ý chỉnh sửa:** Agent tuyệt đối **không được tự ý thay đổi** chuỗi kết nối (`ConnectionStrings`) hoặc các cấu hình SMTP/Email trong file `appsettings.json` của bất kỳ dự án nào (`Blazor`, `MVC`, `RazorPages`) trừ khi được người dùng yêu cầu trực tiếp.
+- **Xử lý cấu hình local:** Trường hợp cần thay đổi chuỗi kết nối để chạy thử dưới local (ví dụ: chuyển từ LocalDB sang SQL Server cục bộ), Agent phải hướng dẫn người dùng chạy lệnh khóa file hoặc tự chạy lệnh sau để tránh việc commit đè cấu hình cá nhân lên repository:
+  ```bash
+  git update-index --assume-unchanged Blazor/appsettings.json MVC/appsettings.json RazorPages/appsettings.json
+  ```
+
+
 
 
 
