@@ -42,16 +42,18 @@ namespace RazorPages.Pages.Events
 
             EventItem = eventItem;
 
-            // Kiểm tra và lấy dự báo thời tiết dựa trên thời gian sự kiện (UTC+7)
+            // Cộng thêm 7 tiếng vì DB lưu chuẩn giờ quốc tế UTC, cần chuyển về giờ Việt Nam để so sánh ngày chuẩn xác nhất
             var today = DateTime.UtcNow.AddHours(7).Date;
             var targetDate = EventItem.StartTime.AddHours(7).Date;
             var daysDifference = (targetDate - today).Days;
 
+            // API wttr.in chỉ hỗ trợ trả dữ liệu dự báo chuẩn trong vòng 3 ngày tới (hôm nay, ngày mai, ngày mốt)
             if (daysDifference >= 0 && daysDifference <= 2)
             {
                 IsForecastAvailable = true;
                 if (EventItem.Venue != null && !string.IsNullOrWhiteSpace(EventItem.Venue.Address))
                 {
+                    // Lấy dự báo cho địa chỉ của Venue để hiển thị khuyến cáo chuẩn bị thời trang phù hợp cho sinh viên
                     EventWeather = await _weatherService.GetWeatherForecastAsync(EventItem.Venue.Address, EventItem.StartTime.AddHours(7));
                 }
             }
