@@ -64,6 +64,12 @@
                     <a class="sidebar-link @(currentPage == "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/MyFeedbacks">
                         <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
                     </a>
+                    <a class="sidebar-link @(currentPage == "/Events/Organizers" || currentPage == "/Events/OrganizerDetails" ? "active" : "")" asp-page="/Events/Organizers">
+                        <i class="bi bi-people-fill"></i> Ban tổ chức
+                    </a>
+                    <a class="sidebar-link @(currentPage == "/Events/Followed" ? "active" : "")" asp-page="/Events/Followed">
+                        <i class="bi bi-heart-fill"></i> Đang theo dõi
+                    </a>
                 }
 
                 <a class="sidebar-link @(currentPage == "/Privacy" ? "active" : "")" asp-page="/Privacy">

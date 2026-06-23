@@ -1,0 +1,150 @@
+@page
+@model RazorPages.Pages.Events.FollowedModel
+@{
+    ViewData["Title"] = "Ban tổ chức đang theo dõi - UniEvent Hub";
+}
+
+<div class="page-header-minimal">
+    <span class="page-badge-minimal">Đang theo dõi</span>
+    <h1 class="display-6 fw-bold mb-2">Ban tổ chức đã theo dõi</h1>
+    <p class="text-muted">Theo dõi và nhận cập nhật sự kiện mới từ các ban tổ chức yêu thích của bạn.</p>
+</div>
+
+@Html.AntiForgeryToken()
+
+<div class="row g-4">
+    <!-- Left column: Followed Organizers list -->
+    <div class="col-lg-4">
+        <div class="card p-3 rounded-4 border border-light shadow-sm h-100 bg-white">
+            <h5 class="fw-bold mb-3 pb-2 border-bottom text-slate-800">
+                <i class="bi bi-people-fill text-primary me-1"></i> Đang theo dõi (@Model.FollowedOrganizers.Count())
+            </h5>
+            
+            @if (!Model.FollowedOrganizers.Any())
+            {
+                <div class="text-center py-4 text-muted small">
+                    <i class="bi bi-heartbreak display-6 d-block mb-2 text-muted"></i>
+                    Chưa theo dõi ban tổ chức nào.
+                    <a asp-page="./Organizers" class="d-block mt-2 fw-semibold text-primary text-decoration-none">
+                        Tìm ban tổ chức <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var org in Model.FollowedOrganizers)
+                    {
+                        <div class="followed-org-item p-2.5 rounded-3 d-flex align-items-center justify-content-between border">
+                            <div class="d-flex align-items-center gap-2.5 overflow-hidden">
+                                <div class="org-small-avatar flex-shrink-0 d-flex align-items-center justify-content-center text-white fw-bold">
+                                    @org.FullName.Substring(0, 1).ToUpper()
+                                </div>
+                                <div class="overflow-hidden">
+                                    <h6 class="fw-bold mb-0 text-truncate text-slate-800" style="font-size: 0.9rem;" title="@org.FullName">
+                                        <a asp-page="./OrganizerDetails" asp-route-id="@org.Id" class="text-dark text-decoration-none hover-primary">
+                                            @org.FullName
+                                        </a>
+                                    </h6>
+                                    <span class="text-muted small">@org.FollowCount followers</span>
+                                </div>
+                            </div>
+                            
+                            <form method="post" asp-page-handler="Unfollow" asp-route-organizerId="@org.Id" class="ms-2">
+                                <button type="submit" class="btn btn-outline-danger btn-xs py-1 px-2.5 rounded-3 fw-semibold" style="font-size: 0.75rem;" title="Hủy theo dõi">
+                                    <i class="bi bi-heartbreak"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right column: Events Feed -->
+    <div class="col-lg-8">
+        <div class="card p-3 rounded-4 border border-light shadow-sm h-100 bg-white">
+            <h5 class="fw-bold mb-3 pb-2 border-bottom text-slate-800">
+                <i class="bi bi-bell-fill text-warning me-1"></i> Sự kiện mới
+            </h5>
+
+            @if (!Model.Events.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-calendar-x display-4 d-block mb-3 text-muted"></i>
+                    <p class="mb-0">Không có sự kiện mới nào từ các ban tổ chức bạn theo dõi.</p>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var card in Model.Events)
+                    {
+                        var now = DateTime.UtcNow.AddHours(7);
+                        string statusText = "Đang diễn ra";
+                        string statusClass = "status-ongoing";
+                        if (card.StartTime > now)
+                        {
+                            statusText = "Sắp diễn ra";
+                            statusClass = "status-upcoming";
+                        }
+                        else if (card.EndTime < now)
+                        {
+                            statusText = "Đã kết thúc";
+                            statusClass = "status-past";
+                        }
+
+                        var remaining = card.MaxCapacity - card.BookedCount;
+                        string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
+
+                        <div class="card-minimal card-minimal-list p-3 @(card.EndTime < now ? "is-past" : "")">
+                            <div class="d-flex flex-column flex-md-row align-items-center gap-3">
+                                <div class="flex-shrink-0 position-relative" style="width: 140px; aspect-ratio: 16/10; overflow: hidden; border-radius: var(--radius-md);">
+                                    <span class="card-badge-overlay @statusClass" style="top: 6px; left: 6px; font-size: 0.6rem; padding: 0.2rem 0.5rem;">@statusText</span>
+                                    <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
+                                         class="w-100 h-100" style="object-fit: cover;" alt="@card.Title" />
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <h6 class="fw-bold mb-1 text-truncate card-minimal-title" style="display: block; font-size: 1rem; margin-bottom: 0.25rem;">
+                                        @card.Title
+                                    </h6>
+                                    <div class="d-flex flex-wrap gap-2.5 align-items-center mb-2" style="font-size: 0.78rem;">
+                                        <span class="card-minimal-meta">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </span>
+                                        <span class="card-minimal-meta">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span class="text-truncate" style="max-width: 120px;">@card.VenueName</span>
+                                        </span>
+                                        <span class="card-minimal-meta">
+                                            <i class="bi bi-person"></i>
+                                            <span class="text-truncate" style="max-width: 120px;">@card.OrganizerName</span>
+                                        </span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @if (card.TagNames != null)
+                                        {
+                                            @foreach (var tag in card.TagNames)
+                                            {
+                                                <span class="badge-tag-premium" style="font-size: 0.65rem; padding: 1px 6px;">
+                                                    #@tag
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 text-end">
+                                    <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                                        Chi tiết <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

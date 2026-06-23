@@ -1,0 +1,27 @@
+.followed-org-item {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.followed-org-item:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.org-small-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+    border-radius: 50%;
+    font-size: 0.95rem;
+}
+
+.hover-primary:hover {
+    color: var(--primary) !important;
+}
+
+.btn-xs {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+}

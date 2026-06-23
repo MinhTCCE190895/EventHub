@@ -1,0 +1,74 @@
+@page
+@model RazorPages.Pages.Events.OrganizersModel
+@{
+    ViewData["Title"] = "Ban tổ chức - UniEvent Hub";
+}
+
+<div class="page-header-minimal">
+    <span class="page-badge-minimal">Ban tổ chức</span>
+    <h1 class="display-6 fw-bold mb-2">Danh sách Ban tổ chức</h1>
+    <p class="text-muted">Theo dõi ban tổ chức để nhận thông báo và xem các sự kiện mới nhất của họ.</p>
+</div>
+
+@Html.AntiForgeryToken()
+
+@if (!Model.Organizers.Any())
+{
+    <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
+        <div class="display-1 text-muted mb-3"><i class="bi bi-people"></i></div>
+        <h5 class="fw-bold text-slate-700">Chưa có ban tổ chức nào</h5>
+        <p class="text-muted mb-0">Hệ thống hiện chưa có tài khoản ban tổ chức hoạt động.</p>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        @foreach (var org in Model.Organizers)
+        {
+            <div class="col">
+                <div class="organizer-card p-4 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="org-avatar d-flex align-items-center justify-content-center fw-bold text-white">
+                                @org.FullName.Substring(0, 1).ToUpper()
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1 text-truncate" style="max-width: 180px;" title="@org.FullName">@org.FullName</h5>
+                                <p class="text-muted small mb-0 text-truncate" style="max-width: 180px;" title="@org.Email">@org.Email</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mb-4 bg-light p-2.5 rounded-3" style="font-size: 0.85rem;">
+                            <i class="bi bi-heart-fill text-danger"></i>
+                            <span class="fw-semibold">@org.FollowCount</span>
+                            <span class="text-muted">người theo dõi</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-auto">
+                        <a asp-page="./OrganizerDetails" asp-route-id="@org.Id" class="btn btn-light btn-sm flex-grow-1 py-2 fw-semibold rounded-3 border">
+                            <i class="bi bi-calendar-event me-1"></i> Sự kiện (@org.FullName.Split(' ').Last())
+                        </a>
+                        
+                        @if (org.IsFollowed)
+                        {
+                            <form method="post" asp-page-handler="Unfollow" asp-route-organizerId="@org.Id" class="flex-grow-1">
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2 fw-semibold rounded-3">
+                                    <i class="bi bi-heartbreak me-1"></i> Hủy theo dõi
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="Follow" asp-route-organizerId="@org.Id" class="flex-grow-1">
+                                <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-semibold rounded-3 text-white">
+                                    <i class="bi bi-heart me-1"></i> Theo dõi
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
