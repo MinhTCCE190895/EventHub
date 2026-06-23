@@ -65,6 +65,8 @@ trigger: always_on
   git update-index --assume-unchanged Blazor/appsettings.json MVC/appsettings.json RazorPages/appsettings.json
   ```
 - **Bắt buộc pull trước khi push:** Agent bắt buộc phải thực hiện lệnh `git pull --rebase` (hoặc `git pull`) để đồng bộ các thay đổi mới nhất từ remote repository trước khi thực hiện hoặc đề xuất lệnh `git push`.
+- **Cấm sử dụng Force Push:** Tuyệt đối **CẤM** sử dụng lệnh force push (`git push -f`, `--force` hoặc `--force-with-lease`) trong mọi trường hợp để tránh đè hoặc làm mất lịch sử commit của các thành viên khác trong team.
+
 
 
 
