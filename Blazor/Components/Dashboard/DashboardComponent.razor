@@ -210,29 +210,45 @@
 </div>
 
 @code {
+    // Danh sách các sự kiện đang diễn ra để theo dõi tiến trình chỗ trống
     private List<DashboardEventDto>? Events;
+
+    // Đối tượng kết nối SignalR Client
     private HubConnection? hubConnection;
+
+    // Trạng thái hiển thị Skeleton Loader khi đang tải dữ liệu ban đầu
     private bool IsLoading = true;
 
-    // KPI and Stats
+    // --- CÁC CHỈ SỐ KPI ĐO LƯỜNG ---
+    // Tổng số vé đã được đăng ký thành công của tất cả các sự kiện
     private int TotalRegisteredCount = 0;
+
+    // Tổng sức chứa tối đa của tất cả các sự kiện cộng lại
     private int TotalCapacity = 0;
+
+    // Tỷ lệ lấp đầy ghế trống (%) = (Tổng số vé / Tổng sức chứa) * 100
     private double FillRate = 0;
+
+    // Tốc độ đặt vé thực tế (vé/phút) calculated via exponential moving average
     private double Velocity = 0;
+
+    // Số lượng giao dịch đặt vé phát sinh gần đây trong phiên giám sát
     private int RecentBookingsCount = 0;
 
+    // Lớp chứa dữ liệu điểm đồ thị SVG để vẽ biểu đồ xu hướng
     public class ChartPointDto
     {
         public int Value { get; set; }
         public string TooltipText { get; set; } = string.Empty;
     }
 
-    // SVG Chart Data Points (Last 10 intervals)
+    // Danh sách 10 điểm dữ liệu gần nhất hiển thị trên biểu đồ SVG Area Chart
     private List<ChartPointDto> ChartData = new();
 
-    // Activity Log Entries
+    // Nhật ký hoạt động thời gian thực (Live Log) hiển thị ở thanh bên phải
     private List<ActivityLog> LiveLogs = new();
 
+    // DTO tối giản đại diện cho sự kiện hiển thị trên Dashboard
     public class DashboardEventDto
     {
         public Guid Id { get; set; }
@@ -241,6 +257,7 @@
         public int RegisteredCount { get; set; }
     }
 
+    // Cấu trúc một dòng log hoạt động thời gian thực
     public class ActivityLog
     {
         public string Message { get; set; } = string.Empty;
@@ -250,18 +267,19 @@
         public string StatusText { get; set; } = "THÀNH CÔNG";
     }
 
+    // Vòng đời khởi tạo Dashboard: Nạp dữ liệu sự kiện, KPI ban đầu và lịch sử đặt vé gần đây
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
-        await Task.Delay(800); // Giả lập thời gian load ban đầu cực nhanh
+        await Task.Delay(800); // Giả lập thời gian load ban đầu cực nhanh tạo trải nghiệm mượt
 
         try
         {
-            // Seed log hệ thống ban đầu
+            // Seed log hệ thống ban đầu báo hiệu trạng thái hoạt động
             LiveLogs.Add(new() { Message = "Hệ thống giám sát Live Dashboard khởi chạy thành công.", EventTitle = "Hệ Thống", Timestamp = DateTime.Now, StatusClass = "badge-success", StatusText = "HỆ THỐNG" });
             LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "ĐANG NGHE" });
 
-            // 2. Tải danh sách các sự kiện đang hoạt động từ cơ sở dữ liệu
+            // 1. Tải danh sách các sự kiện đang Published và chưa kết thúc từ database
             var now = DateTime.UtcNow;
             Events = await DbContext.Events
                 .Where(e => e.Status == "Published" && e.EndTime > now)
@@ -275,9 +293,10 @@
                 .OrderBy(e => e.Title)
                 .ToListAsync();
 
+            // Tính toán chỉ số KPI ban đầu từ dữ liệu vừa tải
             CalculateKpis();
 
-            // 3. Tải 10 confirmed bookings gần đây nhất kèm thông tin người dùng và sự kiện để hiện tooltip
+            // 2. Tải 10 confirmed bookings gần đây nhất kèm thông tin SV và Tên sự kiện làm điểm đồ thị ban đầu
             var recentBookings = await DbContext.Bookings
                 .Where(b => b.Status == "Confirmed")
                 .Include(b => b.Student)
@@ -285,9 +304,9 @@
                 .OrderByDescending(b => b.BookingTime)
                 .Take(10)
                 .ToListAsync();
-            recentBookings.Reverse(); // Đảo lại theo thứ tự thời gian tăng dần
+            recentBookings.Reverse(); // Đảo lại theo thứ tự thời gian tăng dần để vẽ đồ thị từ trái qua phải
 
-            // Khởi tạo đồ thị đi lùi từ tổng số vé hiện tại để tạo đường xu hướng tăng dần kèm tooltip tương ứng
+            // Tạo các mốc điểm ban đầu trên biểu đồ SVG (lùi dần từ tổng số vé hiện tại)
             ChartData = new List<ChartPointDto>();
             for (int i = 9; i >= 0; i--)
             {
@@ -320,15 +339,17 @@
         }
     }
 
+    // Vòng đời sau khi render giao diện: Thiết lập kết nối SignalR thời gian thực để lắng nghe thay đổi
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // 3. Khởi tạo SignalR Client
+            // Chạy ngầm tiến trình kết nối SignalR tránh nghẽn luồng render chính của trình duyệt
             _ = Task.Run(async () =>
             {
                 try
                 {
+                    // Thiết lập SignalR Client kết nối đến Hub "/eventhub"
                     hubConnection = new HubConnectionBuilder()
                         .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
                         {
@@ -341,13 +362,17 @@
                                 return message;
                             };
                         })
+                        .WithAutomaticReconnect() // Tự động kết nối lại khi mất mạng
                         .Build();
 
+                    // Đăng ký sự kiện lắng nghe cập nhật chỗ trống "ReceiveTicketUpdate" từ Server
                     hubConnection.On<Guid, int>("ReceiveTicketUpdate", async (eventId, remainingSeats) =>
                     {
+                        // Xử lý cập nhật số liệu và trượt biểu đồ khi nhận được dữ liệu thời gian thực
                         await HandleTicketUpdateAsync(eventId, remainingSeats);
                     });
 
+                    // Khởi động kết nối
                     await hubConnection.StartAsync();
 
                     await InvokeAsync(() =>
@@ -369,6 +394,7 @@
         }
     }
 
+    // Tính toán lại các KPI chỉ số tổng quan trên Dashboard
     private void CalculateKpis()
     {
         if (Events != null)
@@ -379,25 +405,30 @@
         }
     }
 
+    // Xử lý cập nhật số liệu thời gian thực khi nhận được thông báo qua WebSocket (SignalR)
     private async Task HandleTicketUpdateAsync(Guid eventId, int remainingSeats)
     {
         if (Events == null) return;
 
+        // Tìm sự kiện tương ứng trong danh sách Dashboard
         var ev = Events.FirstOrDefault(e => e.Id == eventId);
         if (ev != null)
         {
             int oldRegistered = ev.RegisteredCount;
+            // Tính toán lại số lượng đăng ký hiện tại dựa trên số ghế trống Server trả về
             ev.RegisteredCount = ev.MaxCapacity - remainingSeats;
             int diff = ev.RegisteredCount - oldRegistered;
 
+            // Chỉ cập nhật nếu thực sự có biến động số lượng vé (đặt mới hoặc hủy vé)
             if (diff != 0)
             {
-                // Cập nhật thống kê thực tế
+                // Cập nhật lại chỉ số KPI tổng thể
                 CalculateKpis();
                 RecentBookingsCount += Math.Abs(diff);
-                Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; // Cập nhật tốc độ giao dịch thực tế
+                // Công thức tính toán tốc độ đặt vé (Velocity) làm mượt dữ liệu
+                Velocity = Velocity * 0.5 + Math.Abs(diff) * 0.5 * 10; 
 
-                // Lấy thông tin chi tiết của booking mới nhất từ database để hiển thị lên tooltip
+                // Truy vấn thông tin chi tiết của giao dịch đặt vé vừa thành công để làm tooltip cho điểm đồ thị mới
                 string tooltip = "Không có hoạt động";
                 if (diff > 0)
                 {
@@ -425,15 +456,16 @@
                     tooltip = $"Hủy đặt vé - Sự kiện: {ev.Title}";
                 }
 
-                // Trượt dữ liệu đồ thị theo tổng số vé thực tế
+                // Thêm điểm dữ liệu mới vào đồ thị SVG
                 ChartData.Add(new ChartPointDto
                 {
                     Value = TotalRegisteredCount,
                     TooltipText = tooltip
                 });
+                // Chỉ giữ lại tối đa 10 điểm trên biểu đồ để tránh làm rối mắt
                 if (ChartData.Count > 10) ChartData.RemoveAt(0);
 
-                // Thêm vào Nhật Ký
+                // Tạo dòng ghi nhận log sự kiện ở danh sách bên phải
                 var logMessage = diff > 0 
                     ? $"Cập nhật thời gian thực: Đăng ký vé thành công (+{diff} vé)" 
                     : $"Cập nhật thời gian thực: Hủy đăng ký vé thành công ({diff} vé)";
@@ -447,14 +479,18 @@
                     StatusText = diff > 0 ? "ĐÃ ĐẶT" : "ĐÃ HỦY"
                 });
 
+                // Giới hạn nhật ký tối đa 25 dòng
                 if (LiveLogs.Count > 25) LiveLogs.RemoveAt(25);
 
+                // Yêu cầu UI render lại giao diện với số liệu mới
                 await InvokeAsync(StateHasChanged);
             }
         }
     }
 
-    // --- SVG Chart Helpers ---
+    // --- CÁC HÀM PHỤ TRỢ VẼ ĐỒ THỊ SVG ---
+    
+    // Tạo đường bao viền (Line Path) kết nối các điểm dữ liệu lại với nhau trong SVG
     private string GetLinePath()
     {
         if (ChartData == null || ChartData.Count < 2) return "";
@@ -467,6 +503,7 @@
         return "M " + string.Join(" L ", points);
     }
 
+    // Tạo đa giác tô màu nền gradient bên dưới đường Line Path để tạo hiệu ứng Area Chart
     private string GetAreaPath()
     {
         var linePath = GetLinePath();
@@ -474,10 +511,12 @@
         return $"{linePath} L 500.0,200.0 L 0.0,200.0 Z";
     }
 
+    // Tính toán tọa độ (X, Y) thực tế của một điểm dữ liệu dựa trên tỉ lệ kích thước khung đồ thị (500x200)
     private (double x, double y) GetPointCoords(int index)
     {
         if (ChartData == null || ChartData.Count == 0) return (0, 0);
 
+        // Chia đều trục X thành 10 phần từ 0 đến 500
         double x = index * (500.0 / (ChartData.Count - 1));
 
         int min = ChartData.Min(p => p.Value);
@@ -486,13 +525,14 @@
         // Đặt khoảng chia tối thiểu là 10 để tránh đường vẽ nhảy vọt hết khung khi thay đổi nhỏ (ví dụ từ 150 lên 151)
         if (range < 10) range = 10;
 
+        // Chuẩn hóa Y về tỉ lệ từ 0 đến 1. Tọa độ Y trong SVG bằng 0 nằm ở trên cùng nên ta làm đảo ngược
         double normalized = (double)(ChartData[index].Value - min) / range;
-        // SVG tọa độ Y = 0 nằm ở trên cùng, do đó đảo ngược
         double y = 175.0 - (normalized * 130.0); // Chừa 25px lề trên dưới
 
         return (x, y);
     }
 
+    // Giải phóng kết nối SignalR khi rời khỏi trang Dashboard để tránh rò rỉ tài nguyên mạng
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)

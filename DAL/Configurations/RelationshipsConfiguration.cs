@@ -38,6 +38,8 @@ public class RelationshipsConfiguration :
 
     public void Configure(EntityTypeBuilder<Booking> builder)
     {
+        builder.HasIndex(b => new { b.StudentId, b.EventId }).IsUnique();
+
         builder.HasOne(b => b.Student)
             .WithMany(u => u.Bookings)
             .HasForeignKey(b => b.StudentId)
