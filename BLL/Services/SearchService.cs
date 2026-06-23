@@ -75,8 +75,10 @@ public class SearchService : ISearchService
             "NameAsc" => query.OrderBy(e => e.Title),
             "NameDesc" => query.OrderByDescending(e => e.Title),
             "Popularity" => query.OrderByDescending(e => e.Bookings.Count),
-            // Default: Prioritize ongoing events first, then upcoming events ordered by start time
-            _ => query.OrderBy(e => e.StartTime > now).ThenBy(e => e.StartTime)
+            // Mặc định: Đẩy các sự kiện đã kết thúc xuống cuối cùng, ưu tiên sự kiện đang diễn ra rồi đến sắp diễn ra
+            _ => query.OrderBy(e => e.EndTime < now)
+                      .ThenBy(e => e.StartTime > now)
+                      .ThenBy(e => e.StartTime)
         };
 
         var skip = (searchDto.PageNumber - 1) * EventSearchDTO.PageSize;
