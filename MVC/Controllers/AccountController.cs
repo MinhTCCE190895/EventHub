@@ -69,7 +69,7 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
-        // Prevent Open Redirect. Validate against local routes or trusted SSO subdomains.
+        // Chống Open Redirect. Chỉ cho phép định tuyến nội bộ hoặc các subdomain SSO hợp lệ.
         if (!string.IsNullOrEmpty(model.ReturnUrl) && 
            (Url.IsLocalUrl(model.ReturnUrl) || 
             model.ReturnUrl.StartsWith("http://localhost:5129") || 
@@ -79,7 +79,7 @@ public class AccountController : Controller
             return Redirect(model.ReturnUrl);
         }
 
-        // Route users to their respective sub-systems based on RBAC
+        // Điều hướng người dùng về các phân hệ tương ứng theo phân quyền (RBAC).
         return user.Role switch
         {
             "Organizer" => Redirect("http://localhost:5129/Events"),
@@ -108,7 +108,7 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        // Prevent Admin role injection via public registration
+        // Chặn tiêm quyền Admin qua form đăng ký công khai.
         if (model.Role == "Admin")
         {
             ModelState.AddModelError("Role", "Không thể đăng ký tài khoản Admin.");

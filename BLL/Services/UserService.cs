@@ -40,7 +40,7 @@ public class UserService : IUserService
             Email = dto.Email,
             StudentCode = dto.StudentCode,
             Role = dto.Role,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password), // bcrypt work factor defaults to 11
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password), // Tham số work factor của bcrypt mặc định là 11
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -72,7 +72,7 @@ public class UserService : IUserService
 
         try
         {
-            // Prevent BCrypt.Verify from throwing SaltParseException on legacy or malformed hashes
+            // Ngăn BCrypt.Verify throw SaltParseException khi gặp hash cũ hoặc sai định dạng.
             if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
             {
                 _logger.LogWarning("Login failed — invalid password hash format for {Email}", email);

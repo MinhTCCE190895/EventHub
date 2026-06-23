@@ -1,5 +1,8 @@
 @page "/events"
-@inject NavigationManager Navigation
+
+<HeadContent>
+    <meta http-equiv="refresh" content="0;url=http://localhost:5129/" />
+</HeadContent>
 
 <div class="text-center mt-5">
     <div class="spinner-border text-primary" role="status"></div>
@@ -7,9 +10,7 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
-    {
-        // Chuyển hướng người dùng về trang khám phá Razor Pages chính để thống nhất luồng
-        Navigation.NavigateTo("http://localhost:5129/", forceLoad: true);
-    }
+    // Không dùng NavigationManager.NavigateTo trong OnInitialized vì nó sẽ throw NavigationException trong Blazor SSR (khiến Visual Studio ngắt debug).
+    // Cũng không dùng OnAfterRenderAsync vì ở chế độ SSR tĩnh (không có @rendermode), hàm đó không bao giờ chạy.
+    // Sử dụng thẻ <meta refresh> là cách tối ưu và an toàn nhất cho UX.
 }

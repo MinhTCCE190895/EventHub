@@ -41,13 +41,6 @@
                     <i class="bi bi-activity"></i> Live Dashboard (Blazor)
                 </a>
 
-                <!-- Links visible only to Student -->
-                @if (isAuthenticated && userRole == "Student")
-                {
-                    <a class="sidebar-link" href="http://localhost:5210/events">
-                        <i class="bi bi-ticket-perforated-fill"></i> Đặt vé sự kiện (Live)
-                    </a>
-                }
 
                 <!-- Links visible to Admin or Organizer -->
                 @if (isAuthenticated && (userRole == "Admin" || userRole == "Organizer"))

@@ -15,7 +15,7 @@ public static class ServiceExtensions
             .AddCookie(options =>
             {
                 options.Cookie.Name = ".EventHub.Auth";
-                options.Cookie.Domain = ".unievent.edu.vn";
+                // options.Cookie.Domain = ".unievent.edu.vn"; // Chỉ bật khi deploy thực tế lên subdomain, KHÔNG dùng ở localhost
                 options.LoginPath = "/Account/Login";
                 options.AccessDeniedPath = "/Account/AccessDenied";
                 
