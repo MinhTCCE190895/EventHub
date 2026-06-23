@@ -120,4 +120,18 @@ public class EventService : IEventService
             .OrderBy(u => u.FullName)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task ChangeEventStatusAsync(Guid id, string newStatus, CancellationToken cancellationToken = default)
+    {
+        var ev = await _eventRepository.Query()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+        if (ev == null)
+            throw new KeyNotFoundException("Sự kiện không tồn tại.");
+
+        ev.Status = newStatus;
+        
+        _eventRepository.Update(ev);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

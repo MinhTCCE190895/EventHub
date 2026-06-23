@@ -76,6 +76,24 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <form method="post" asp-page-handler="ChangeStatus" class="d-inline">
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                @if (item.Status == "Draft" || item.Status == "Cancelled")
+                                                {
+                                                    <button type="submit" name="status" value="Published" class="btn btn-outline-success" title="Duyệt sự kiện">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                }
+                                                @if (item.Status == "Draft" || item.Status == "Published")
+                                                {
+                                                    <button type="submit" name="status" value="Cancelled" class="btn btn-outline-warning" title="Hủy sự kiện">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                }
+                                            </form>
+                                        }
                                         <a asp-page="./Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Chỉnh sửa">
                                             <i class="bi bi-pencil"></i>
                                         </a>

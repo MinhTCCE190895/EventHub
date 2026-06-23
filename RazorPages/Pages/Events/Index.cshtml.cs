@@ -1,6 +1,7 @@
 using BLL.Services;
 using BusinessObjects.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace RazorPages.Pages.Events;
@@ -20,5 +21,25 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Events = await _eventService.GetAllEventsAsync();
+    }
+
+    public async Task<IActionResult> OnPostChangeStatusAsync(Guid id, string status)
+    {
+        if (!User.IsInRole("Admin"))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _eventService.ChangeEventStatusAsync(id, status);
+            TempData["SuccessMessage"] = "Cập nhật trạng thái sự kiện thành công!";
+        }
+        catch (System.Collections.Generic.KeyNotFoundException)
+        {
+            return NotFound();
+        }
+
+        return RedirectToPage();
     }
 }
