@@ -42,18 +42,18 @@ namespace RazorPages.Pages.Events
 
             EventItem = eventItem;
 
-            // Cộng thêm 7 tiếng vì DB lưu chuẩn giờ quốc tế UTC, cần chuyển về giờ Việt Nam để so sánh ngày chuẩn xác nhất
+            // Add 7 hours because the DB stores in UTC, need to convert to Vietnam time for accurate date comparison
             var today = DateTime.UtcNow.AddHours(7).Date;
             var targetDate = EventItem.StartTime.AddHours(7).Date;
             var daysDifference = (targetDate - today).Days;
 
-            // API wttr.in chỉ hỗ trợ trả dữ liệu dự báo chuẩn trong vòng 3 ngày tới (hôm nay, ngày mai, ngày mốt)
+            // API wttr.in only supports weather forecasts within the next 3 days (today, tomorrow, the day after)
             if (daysDifference >= 0 && daysDifference <= 2)
             {
                 IsForecastAvailable = true;
                 if (EventItem.Venue != null && !string.IsNullOrWhiteSpace(EventItem.Venue.Address))
                 {
-                    // Lấy dự báo cho địa chỉ của Venue để hiển thị khuyến cáo chuẩn bị thời trang phù hợp cho sinh viên
+                    // Fetch weather forecast for Venue address to recommend suitable clothing for students
                     EventWeather = await _weatherService.GetWeatherForecastAsync(EventItem.Venue.Address, EventItem.StartTime.AddHours(7));
                 }
             }
@@ -62,7 +62,7 @@ namespace RazorPages.Pages.Events
                 IsForecastAvailable = false;
             }
 
-            // Kiểm tra xem user hiện tại là Student và chưa feedback
+            // Check if the current user is a Student and has not submitted feedback yet
             var studentIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(studentIdString) && Guid.TryParse(studentIdString, out var studentId))
             {

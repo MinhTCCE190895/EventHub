@@ -5,9 +5,9 @@
     var maxCapacity = Model.EventItem.Venue?.MaxCapacity ?? 0;
     var bookedCount = Model.EventItem.RegisteredCount;
     var remaining = maxCapacity - bookedCount;
-    var now = DateTime.UtcNow.AddHours(7); // Đã đồng bộ giờ VN để so sánh
+    var now = DateTime.UtcNow.AddHours(7); // Synchronized to VN time for comparison
     
-    // Tính toán trạng thái sự kiện
+    // Calculate event status
     string statusText = "Đang diễn ra";
     string statusClass = "status-ongoing";
     if (Model.EventItem.StartTime.AddHours(7) > now)

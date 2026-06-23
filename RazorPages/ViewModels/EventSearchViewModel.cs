@@ -27,14 +27,14 @@ public class EventSearchViewModel
 
     public string ViewType { get; set; } = "Grid";
 
-    // Kết quả trả về từ service sau khi map
+    // Results returned from service after mapping
     public List<EventCardDTO> Results { get; set; } = new();
 
     public int TotalCount { get; set; }
 
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / EventSearchDTO.PageSize);
 
-    // Dùng để populate dropdown và checkbox trên form
+    // Used to populate dropdowns and checkboxes on the form
     public List<Category> Categories { get; set; } = new();
     public List<Tag> Tags { get; set; } = new();
 }
