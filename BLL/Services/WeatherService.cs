@@ -6,21 +6,15 @@ using Microsoft.Extensions.Logging;
 
 namespace BLL.Services;
 
-public class WeatherService : IWeatherService
+public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<WeatherService> logger) : IWeatherService
 {
-    private readonly HttpClient _httpClient;
-    private readonly IMemoryCache _cache;
-    private readonly ILogger<WeatherService> _logger;
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly IMemoryCache _cache = cache;
+    private readonly ILogger<WeatherService> _logger = logger;
     
     // Semaphore dùng để khóa luồng, chỉ cho 1 request gọi API ngoài tại 1 thời điểm (FE-08 Cache Stampede)
-    private static readonly SemaphoreSlim _weatherSemaphore = new SemaphoreSlim(1, 1);
+    private static readonly SemaphoreSlim _weatherSemaphore = new(1, 1);
 
-    public WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<WeatherService> logger)
-    {
-        _httpClient = httpClient;
-        _cache = cache;
-        _logger = logger;
-    }
 
     public async Task<WeatherDTO?> GetWeatherAsync(string location)
     {
@@ -93,7 +87,94 @@ public class WeatherService : IWeatherService
         return fallbackWeather;
     }
 
-    private string NormalizeLocation(string location)
+    public async Task<WeatherDTO?> GetWeatherForecastAsync(string location, DateTime targetDate)
+    {
+        // Cộng 7 tiếng để đồng bộ chuẩn múi giờ Việt Nam khi so khớp khoảng cách ngày
+        var today = DateTime.UtcNow.AddHours(7).Date;
+        var targetDateLocal = targetDate.Date;
+        var daysDifference = (targetDateLocal - today).Days;
+
+        // Chặn sớm nếu nằm ngoài khoảng dự báo 3 ngày để tránh request API vô ích vì wttr.in chỉ lưu dự báo ngắn hạn
+        if (daysDifference < 0 || daysDifference > 2)
+        {
+            return null;
+        }
+
+        string normalized = NormalizeLocation(location);
+        string cacheKey = $"weather_fc_{normalized.ToLower().Replace(" ", "_")}_{targetDateLocal:yyyyMMdd}";
+
+        if (_cache.TryGetValue(cacheKey, out WeatherDTO? cachedWeather))
+        {
+            return cachedWeather;
+        }
+
+        await _weatherSemaphore.WaitAsync();
+        try
+        {
+            if (_cache.TryGetValue(cacheKey, out cachedWeather))
+            {
+                return cachedWeather;
+            }
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(3);
+            string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(jsonString);
+                var root = doc.RootElement;
+                
+                if (root.TryGetProperty("weather", out var weatherList) && weatherList.ValueKind == JsonValueKind.Array)
+                {
+                    string targetDateStr = targetDateLocal.ToString("yyyy-MM-dd");
+                    foreach (var day in weatherList.EnumerateArray())
+                    {
+                        if (day.TryGetProperty("date", out var dateProp) && dateProp.GetString() == targetDateStr)
+                        {
+                            var hourlyArray = day.GetProperty("hourly");
+                            var midDay = hourlyArray[4];
+                            
+                            double temp = double.Parse(midDay.GetProperty("tempC").GetString() ?? day.GetProperty("avgtempC").GetString() ?? "28");
+                            string desc = midDay.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
+                            double wind = double.Parse(midDay.GetProperty("windspeedKmph").GetString() ?? "10");
+                            int humidity = int.Parse(midDay.GetProperty("humidity").GetString() ?? "75");
+
+                            var weather = new WeatherDTO
+                            {
+                                Location = normalized,
+                                Temperature = temp,
+                                Condition = TranslateCondition(desc),
+                                WindSpeed = wind,
+                                Humidity = humidity,
+                                WeatherIconClass = MapConditionToIcon(desc),
+                                FetchedAt = DateTime.UtcNow
+                            };
+
+                            _cache.Set(cacheKey, weather, TimeSpan.FromMinutes(30));
+                            return weather;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gọi API dự báo thời tiết cho {Location} ngày {Date}.", location, targetDateLocal);
+        }
+        finally
+        {
+            _weatherSemaphore.Release();
+        }
+
+        var fallbackWeather = GetFallbackWeather(normalized);
+        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5));
+        return fallbackWeather;
+    }
+
+
+    private static string NormalizeLocation(string location)
     {
         // Kiểm tra an toàn null hoặc trống để không bị lỗi cắt chuỗi
         if (string.IsNullOrWhiteSpace(location)) return "Can Tho";
@@ -146,7 +227,7 @@ public class WeatherService : IWeatherService
         return cityCandidate;
     }
 
-    private string TranslateCondition(string condition)
+    private static string TranslateCondition(string condition)
     {
         condition = condition.ToLower();
         if (condition.Contains("sunny") || condition.Contains("clear")) return "Nắng ráo";
@@ -157,7 +238,7 @@ public class WeatherService : IWeatherService
         return "Nhiệt đới";
     }
 
-    private string MapConditionToIcon(string condition)
+    private static string MapConditionToIcon(string condition)
     {
         condition = condition.ToLower();
         if (condition.Contains("sunny") || condition.Contains("clear")) return "bi-sun-fill text-warning";
@@ -167,7 +248,7 @@ public class WeatherService : IWeatherService
         return "bi-cloud-sun text-warning";
     }
 
-    private WeatherDTO GetFallbackWeather(string location)
+    private static WeatherDTO GetFallbackWeather(string location)
     {
         // Random nhẹ nhiệt độ để trông sinh động
         var hour = DateTime.Now.Hour;

@@ -22,47 +22,48 @@ public class SearchService : ISearchService
     {
         var query = _eventRepo.BuildSearchQuery();
 
-        // Only show published events
+        // Chỉ lấy sự kiện đã Publish để tránh sinh viên nhìn thấy các bản nháp đang chỉnh sửa của Organizer
         query = query.Where(e => e.Status == "Published");
 
         var keyword = searchDto.Keyword?.Trim();
         if (!string.IsNullOrEmpty(keyword))
         {
-            // EF Core maps Contains to LIKE in SQL, no need for manual ToLower
+            // Tìm cả trong tiêu đề lẫn mô tả để tăng khả năng khớp kết quả cho sinh viên
             query = query.Where(e => e.Title.Contains(keyword) || e.Description.Contains(keyword));
         }
 
         if (searchDto.CategoryId.HasValue && searchDto.CategoryId > 0)
         {
+            // Cần chặn > 0 vì khi chọn "Tất cả danh mục" phía FE sẽ truyền mặc định là 0
             query = query.Where(e => e.EventCategories.Any(ec => ec.CategoryId == searchDto.CategoryId));
         }
 
         if (searchDto.TagIds.Count > 0)
         {
-            // Event is valid if it matches at least one filtered tag (OR logic)
+            // Áp dụng bộ lọc Any (OR) để hiển thị nhanh mọi sự kiện chứa ít nhất một thẻ sinh viên tích chọn
             query = query.Where(e => e.EventTags.Any(et => searchDto.TagIds.Contains(et.TagId)));
         }
 
-        // Get current time once for consistent comparisons
+        // Dùng múi giờ UTC gốc để so sánh chính xác với dữ liệu lưu dưới DB
         var now = DateTime.UtcNow;
         query = searchDto.TimeFilter switch
         {
             "Upcoming" => query.Where(e => e.StartTime > now),
             "Ongoing" => query.Where(e => e.StartTime <= now && e.EndTime >= now),
             "Past" => query.Where(e => e.EndTime < now),
-            // Default: Show all events (no filter) when "Tất cả" is selected
+            // Trạng thái mặc định: Hiển thị toàn bộ sự kiện không lọc thời gian
             _ => query
         };
 
         if (searchDto.StartDate.HasValue)
         {
-            // Filter events starting from the chosen date
+            // Cho phép sinh viên lọc thủ công sự kiện diễn ra bắt đầu từ ngày mong muốn
             query = query.Where(e => e.StartTime >= searchDto.StartDate.Value);
         }
 
         if (searchDto.EndDate.HasValue)
         {
-            // Filter events starting before the end of the chosen date
+            // Cộng thêm 1 ngày trừ đi 1 tick để lấy trọn vẹn đến 23:59:59 của ngày kết thúc lọc
             var endOfDay = searchDto.EndDate.Value.Date.AddDays(1).AddTicks(-1);
             query = query.Where(e => e.StartTime <= endOfDay);
         }
@@ -75,8 +76,10 @@ public class SearchService : ISearchService
             "NameAsc" => query.OrderBy(e => e.Title),
             "NameDesc" => query.OrderByDescending(e => e.Title),
             "Popularity" => query.OrderByDescending(e => e.Bookings.Count),
-            // Default: Prioritize ongoing events first, then upcoming events ordered by start time
-            _ => query.OrderBy(e => e.StartTime > now).ThenBy(e => e.StartTime)
+            // Mặc định gom các sự kiện kết thúc đẩy xuống dưới cùng để sinh viên dễ theo dõi các sự kiện đang/sắp chạy
+            _ => query.OrderBy(e => e.EndTime < now)
+                      .ThenBy(e => e.StartTime > now)
+                      .ThenBy(e => e.StartTime)
         };
 
         var skip = (searchDto.PageNumber - 1) * EventSearchDTO.PageSize;

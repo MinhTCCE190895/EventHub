@@ -52,199 +52,220 @@
         </div>
     }
 
-    <!-- BỐ CỤC CHÍNH -->
+    <!-- BỐ CỤC CHÍNH: SPLIT-SCREEN REPORT -->
     <div class="row g-4">
-        <!-- Cột trái: Thông tin sự kiện và hình ảnh -->
+        <!-- Cột trái: Tấm giấy trắng tài liệu (Whitepaper Sheet) -->
         <div class="col-lg-8">
-            <!-- Banner & Header -->
-            <div class="card border-0 shadow-sm overflow-hidden rounded-4 mb-4">
-                <div class="position-relative" style="height: 380px; overflow: hidden;">
-                    <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop" : Model.EventItem.BannerUrl)" 
-                         class="w-100 h-100" style="object-fit: cover;" alt="@Model.EventItem.Title" />
-                    <div class="position-absolute top-0 end-0 m-3">
+            <div class="whitepaper-sheet shadow-sm">
+                <!-- Header của Whitepaper -->
+                <div class="whitepaper-header">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
                         <span class="card-badge-overlay @statusClass" style="position: static; font-size: 0.72rem; padding: 0.35rem 0.75rem;">@statusText</span>
                     </div>
-                </div>
-                <div class="card-body p-4">
-                    <!-- Danh mục và Tags -->
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        @if (Model.EventItem.EventCategories != null)
-                        {
-                            @foreach (var ec in Model.EventItem.EventCategories)
-                            {
-                                <span class="badge bg-slate-100 text-slate-700 px-3 py-1.5 rounded-pill fs-7 fw-semibold border border-slate-200">
-                                    <i class="bi bi-grid me-1"></i> @ec.Category.Name
-                                </span>
-                            }
-                        }
-                        @if (Model.EventItem.EventTags != null)
-                        {
-                            @foreach (var et in Model.EventItem.EventTags)
-                            {
-                                <span class="badge bg-primary-subtle text-primary-emphasis px-3 py-1.5 rounded-pill fs-7 fw-semibold">
-                                    #@et.Tag.Name
-                                </span>
-                            }
-                        }
-                    </div>
-
-                    <h1 class="h2 fw-bold text-slate-800 mb-3">@Model.EventItem.Title</h1>
                     
-                    <hr class="border-slate-100 my-4" />
+                    <h1 class="whitepaper-title">@Model.EventItem.Title</h1>
+                    
+                    <!-- Danh mục và Tags được thiết kế đồng bộ dạng text tối giản của báo cáo khoa học -->
+                    <div class="whitepaper-subtitle-meta d-flex flex-wrap align-items-center gap-3 mt-2 text-slate-500 fs-7">
+                        @if (Model.EventItem.EventCategories != null && Model.EventItem.EventCategories.Any())
+                        {
+                            <span>Danh mục: <strong class="text-slate-800">@string.Join(", ", Model.EventItem.EventCategories.Select(ec => ec.Category.Name))</strong></span>
+                        }
+                        @if (Model.EventItem.EventTags != null && Model.EventItem.EventTags.Any())
+                        {
+                            <span>Tags: <strong class="text-slate-800">@string.Join(" ", Model.EventItem.EventTags.Select(et => "#" + et.Tag.Name))</strong></span>
+                        }
+                    </div>
+                </div>
 
-                    <!-- Thông tin tóm tắt -->
-                    <div class="row g-3">
+                <!-- Banner ảnh minh họa được tinh giản, gọn gàng -->
+                <div class="whitepaper-banner-wrapper mb-4">
+                    <img src="@(string.IsNullOrEmpty(Model.EventItem.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1200&auto=format&fit=crop" : Model.EventItem.BannerUrl)" 
+                         class="w-100 h-100" style="object-fit: cover;" alt="@Model.EventItem.Title" />
+                </div>
+
+                <!-- Phần 1: Thông tin logistics chung -->
+                <div class="whitepaper-section">
+                    <h5 class="whitepaper-section-title">1. Thông tin tổng quan</h5>
+                    <div class="row g-3 mt-1">
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-box-minimal me-3">
-                                    <i class="bi bi-calendar3 fs-5 text-primary"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Thời gian diễn ra</small>
-                                    <span class="fw-semibold text-slate-700">@Model.EventItem.StartTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</span>
-                                </div>
+                            <div class="whitepaper-meta-box">
+                                <small class="text-muted">Thời gian diễn ra</small>
+                                <div class="fw-bold text-slate-800">@Model.EventItem.StartTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-box-minimal me-3">
-                                    <i class="bi bi-clock-history fs-5 text-primary"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Thời gian kết thúc</small>
-                                    <span class="fw-semibold text-slate-700">@Model.EventItem.EndTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</span>
-                                </div>
+                            <div class="whitepaper-meta-box">
+                                <small class="text-muted">Thời gian kết thúc</small>
+                                <div class="fw-bold text-slate-800">@Model.EventItem.EndTime.AddHours(7).ToString("dd/MM/yyyy HH:mm")</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center mt-3">
-                                <div class="icon-box-minimal me-3">
-                                    <i class="bi bi-geo-alt fs-5 text-primary"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Địa điểm tổ chức</small>
-                                    <span class="fw-semibold text-slate-700">@Model.EventItem.Venue?.Name</span>
-                                </div>
+                            <div class="whitepaper-meta-box">
+                                <small class="text-muted">Địa điểm tổ chức</small>
+                                <div class="fw-bold text-slate-800">@Model.EventItem.Venue?.Name</div>
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center mt-3">
-                                <div class="icon-box-minimal me-3">
-                                    <i class="bi bi-person fs-5 text-primary"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Ban tổ chức</small>
-                                    <span class="fw-semibold text-slate-700">@Model.EventItem.Organizer?.FullName</span>
-                                </div>
+                            <div class="whitepaper-meta-box">
+                                <small class="text-muted">Ban tổ chức</small>
+                                <div class="fw-bold text-slate-800">@Model.EventItem.Organizer?.FullName</div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Mô tả chi tiết -->
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                <h4 class="fw-bold text-slate-800 mb-3"><i class="bi bi-text-left me-2 text-primary"></i>Mô tả sự kiện</h4>
-                <div class="text-slate-600 lh-lg" style="white-space: pre-line;">
-                    @Model.EventItem.Description
+                <hr class="whitepaper-divider" />
+
+                <!-- Phần 2: Nội dung mô tả chi tiết -->
+                <div class="whitepaper-section">
+                    <h5 class="whitepaper-section-title">2. Nội dung sự kiện</h5>
+                    <div class="whitepaper-content-text mt-2">
+                        @Model.EventItem.Description
+                    </div>
                 </div>
-            </div>
 
-            <!-- Địa chỉ cụ thể -->
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <h4 class="fw-bold text-slate-800 mb-3"><i class="bi bi-map me-2 text-primary"></i>Địa điểm cụ thể</h4>
-                <div class="p-3 bg-light rounded-3 d-flex align-items-start">
-                    <i class="bi bi-info-circle text-primary me-2 mt-1"></i>
-                    <div>
-                        <strong class="text-slate-800">@Model.EventItem.Venue?.Name</strong>
-                        <p class="text-muted small mb-0 mt-1">@Model.EventItem.Venue?.Address</p>
+                <hr class="whitepaper-divider" />
+
+                <!-- Phần 3: Địa điểm và Sơ đồ vị trí -->
+                <div class="whitepaper-section">
+                    <h5 class="whitepaper-section-title">3. Địa điểm chi tiết</h5>
+                    <div class="mt-2 text-slate-700">
+                        <div><strong>@Model.EventItem.Venue?.Name</strong></div>
+                        <div class="text-muted small mt-1">@Model.EventItem.Venue?.Address</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cột phải: Panel Đặt vé & Trạng thái chỗ ngồi -->
+        <!-- Cột phải: Bảng điều khiển lơ lửng (Glassmorphic Action Panel) -->
         <div class="col-lg-4">
             <div class="sticky-top" style="top: 2rem; z-index: 100;">
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                    <div class="bg-primary text-white p-4 text-center gradient-primary-box">
-                        <i class="bi bi-ticket-perforated display-5"></i>
-                        <h4 class="fw-bold mt-2 mb-0">HỘP ĐẶT VÉ</h4>
-                        <p class="text-white-50 small mb-0">Hệ thống xử lý vé trực tuyến thời gian thực</p>
+                <div class="glass-action-panel shadow-sm">
+                    <!-- Section Đặt vé -->
+                    <div class="text-center mb-4">
+                        <i class="bi bi-ticket-perforated-fill text-primary" style="font-size: 2.2rem;"></i>
+                        <h5 class="fw-bold text-slate-800 mt-2 mb-1">ĐĂNG KÝ THAM GIA</h5>
+                        <p class="text-muted small mb-0">Hệ thống phân phối vé sự kiện tự động</p>
                     </div>
-                    <div class="card-body p-4">
-                        <!-- Thống kê vé -->
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Tổng số chỗ ngồi:</span>
-                                <strong class="text-slate-800">@maxCapacity</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Vé đã đăng ký:</span>
-                                <strong class="text-slate-800">@bookedCount</strong>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <span class="text-slate-700 fw-semibold">Tình trạng còn lại:</span>
-                                @if (remaining <= 0)
-                                {
-                                    <span class="badge bg-danger px-2.5 py-1.5 rounded">Hết vé</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success px-2.5 py-1.5 rounded">Còn @remaining vé</span>
-                                }
-                            </div>
-                        </div>
 
-                        <!-- Progress Bar Trực Quan -->
-                        <div class="mb-4">
-                            <small class="text-muted d-block mb-1">Tỷ lệ chỗ ngồi đã lấp đầy</small>
-                            @{
-                                double fillRate = maxCapacity > 0 ? ((double)bookedCount / maxCapacity) * 100 : 0;
-                                string progressColor = fillRate >= 100 ? "bg-danger" : (fillRate >= 90 ? "bg-warning" : "bg-primary");
-                            }
-                            <div class="progress rounded-pill" style="height: 10px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated @progressColor" 
-                                     role="progressbar" style="width: @fillRate%" aria-valuenow="@fillRate" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-1 fs-7 text-muted">
-                                <span>0%</span>
-                                <span>@fillRate.ToString("0.0")%</span>
-                                <span>100%</span>
-                            </div>
+                    <!-- Chỉ số sức chứa -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1.5">
+                            <span class="text-slate-600 small">Tổng chỗ ngồi:</span>
+                            <strong class="text-slate-800">@maxCapacity</strong>
                         </div>
-
-                        <!-- Các nút CTA -->
-                        <div class="d-grid gap-2">
-                            <!-- Nút đặt vé -->
-                            @if (Model.EventItem.EndTime.AddHours(7) < now)
+                        <div class="d-flex justify-content-between mb-1.5">
+                            <span class="text-slate-600 small">Đã đăng ký:</span>
+                            <strong class="text-slate-800">@bookedCount</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <span class="text-slate-700 fw-semibold">Tình trạng vé:</span>
+                            @if (remaining <= 0)
                             {
-                                <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
-                                    <i class="bi bi-calendar-x-fill me-1"></i> Sự kiện đã kết thúc
-                                </button>
-                            }
-                            else if (remaining <= 0)
-                            {
-                                <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
-                                    <i class="bi bi-x-circle-fill me-1"></i> Đã hết chỗ ngồi
-                                </button>
+                                <span class="badge bg-danger px-2 py-1 rounded-3">Hết vé</span>
                             }
                             else
                             {
-                                <a href="http://localhost:5210/events/@Model.EventItem.Id/book" class="btn btn-primary py-3 fw-bold rounded-3 shadow-sm hover-scale btn-gradient-primary">
-                                    <i class="bi bi-cursor-fill me-1"></i> Đăng Ký Đặt Vé Ngay
-                                </a>
-                            }
-
-                            <!-- Nút đánh giá phản hồi (chỉ hiện khi đủ điều kiện) -->
-                            @if (Model.ShowFeedbackButton)
-                            {
-                                <a asp-page="/Events/Feedback" asp-route-eventId="@Model.EventItem.Id" class="btn btn-warning py-2.5 fw-bold rounded-3 mt-2 text-dark">
-                                    <i class="bi bi-star-fill me-1"></i> Gửi đánh giá phản hồi
-                                </a>
+                                <span class="badge bg-success px-2 py-1 rounded-3">Còn @remaining vé</span>
                             }
                         </div>
+                    </div>
 
+                    <!-- Progress bar lấp đầy chỗ -->
+                    <div class="mb-4">
+                        <small class="text-muted d-block mb-1.5">Tỷ lệ đăng ký hiện tại</small>
+                        @{
+                            double fillRate = maxCapacity > 0 ? ((double)bookedCount / maxCapacity) * 100 : 0;
+                            string progressColor = fillRate >= 100 ? "bg-danger" : (fillRate >= 90 ? "bg-warning" : "bg-primary");
+                        }
+                        <div class="progress rounded-pill" style="height: 8px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @progressColor" 
+                                 role="progressbar" style="width: @fillRate%" aria-valuenow="@fillRate" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1 fs-7 text-muted">
+                            <span>0%</span>
+                            <span>@fillRate.ToString("0.0")%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Nút hành động chính -->
+                    <div class="d-grid gap-2 mb-4">
+                        @if (Model.EventItem.EndTime.AddHours(7) < now)
+                        {
+                            <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
+                                <i class="bi bi-calendar-x-fill me-1"></i> Sự kiện đã kết thúc
+                            </button>
+                        }
+                        else if (remaining <= 0)
+                        {
+                            <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
+                                <i class="bi bi-x-circle-fill me-1"></i> Đã hết chỗ ngồi
+                            </button>
+                        }
+                        else
+                        {
+                            <a href="http://localhost:5210/events/@Model.EventItem.Id/book" class="btn btn-primary py-3 fw-bold rounded-3 shadow-sm hover-scale btn-gradient-primary">
+                                <i class="bi bi-cursor-fill me-1"></i> Đăng Ký Đặt Vé Ngay
+                            </a>
+                        }
+
+                        @if (Model.ShowFeedbackButton)
+                        {
+                            <a asp-page="/Events/Feedback" asp-route-eventId="@Model.EventItem.Id" class="btn btn-warning py-2.5 fw-bold rounded-3 mt-2 text-dark">
+                                <i class="bi bi-star-fill me-1"></i> Gửi đánh giá phản hồi
+                            </a>
+                        }
+                    </div>
+
+                    <hr class="border-light my-4" />
+
+                    <!-- Widget Dự báo Thời tiết -->
+                    <div class="weather-section-glass">
+                        <h6 class="fw-bold text-slate-800 mb-3"><i class="bi bi-cloud-sun me-1 text-primary"></i> Dự báo thời tiết</h6>
+                        
+                        @if (Model.IsForecastAvailable)
+                        {
+                            @if (Model.EventWeather != null)
+                            {
+                                <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-white border border-light shadow-2xs">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold" style="font-size: 0.65rem; padding: 2px 6px;">
+                                                Dự báo ngày diễn ra
+                                            </span>
+                                        </div>
+                                        <h3 class="fw-bold text-slate-800 mb-0" style="font-size: 1.6rem;">@Model.EventWeather.Temperature.ToString("0")°C</h3>
+                                        <span class="text-slate-600 fw-medium small">@Model.EventWeather.Condition</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <i class="bi @Model.EventWeather.WeatherIconClass" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <small class="text-muted" style="font-size: 0.68rem;">Khu vực: @Model.EventWeather.Location</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-3 text-center bg-white border border-light rounded-3 text-muted">
+                                    <i class="bi bi-cloud-slash display-6 d-block mb-1 text-slate-400"></i>
+                                    <span class="small">Không thể tải dữ liệu thời tiết.</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Option A: Glassmorphism skeleton placeholder -->
+                            <div class="p-3.5 rounded-3 text-center border border-dashed border-slate-200 bg-white-50">
+                                <i class="bi bi-clock-history text-slate-400 d-block mb-2" style="font-size: 1.5rem;"></i>
+                                <h6 class="fw-bold text-slate-700 mb-1" style="font-size: 0.85rem;">Chưa có dự báo thời tiết</h6>
+                                <p class="text-muted mb-0 small" style="line-height: 1.3; font-size: 0.72rem;">
+                                    Dự báo thời tiết sẽ khả dụng trước ngày diễn ra sự kiện 3 ngày.
+                                </p>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -253,10 +274,108 @@
 </div>
 
 <style>
-    /* Premium visual tokens & animations */
-    .gradient-primary-box {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    /* CSS cho phong cách Whitepaper tài liệu học thuật */
+    .whitepaper-sheet {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-top: 6px solid #2563eb;
+        border-radius: 12px;
+        padding: 3rem;
     }
+    
+    .whitepaper-header {
+        border-bottom: 2px double #e2e8f0;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .whitepaper-doc-no {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: #64748b;
+        letter-spacing: 0.5px;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+    
+    .whitepaper-title {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.35;
+        margin-top: 0.5rem;
+        letter-spacing: -0.5px;
+    }
+    
+    .whitepaper-banner-wrapper {
+        border-radius: 8px;
+        overflow: hidden;
+        height: 280px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .whitepaper-section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .whitepaper-meta-box {
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        height: 100%;
+    }
+    
+    .whitepaper-meta-box small {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 2px;
+    }
+    
+    .whitepaper-content-text {
+        font-size: 0.95rem;
+        line-height: 1.75;
+        color: #334155;
+        text-align: justify;
+    }
+    
+    .whitepaper-divider {
+        border: 0;
+        border-top: 1px dashed #cbd5e1;
+        margin: 2rem 0;
+    }
+
+    /* Bảng điều khiển Glassmorphism bên phải */
+    .glass-action-panel {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        border-radius: 16px;
+        padding: 2rem;
+    }
+
+    .bg-white-50 {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    .shadow-2xs {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .shadow-3xs {
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+    }
+
     .btn-gradient-primary {
         background: linear-gradient(135deg, #2563eb, #3b82f6);
         border: none;
@@ -278,16 +397,16 @@
     .hover-scale:hover {
         transform: scale(1.02);
     }
-    .icon-box-minimal {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        background-color: #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+    
     .fs-7 {
-        font-size: 0.85rem !important;
+        font-size: 0.82rem !important;
     }
+    
+    /* Responsive padding */
+    @@media (max-width: 768px) {
+        .whitepaper-sheet {
+            padding: 1.5rem;
+        }
+        .whitepaper-banner-wrapper {
+            height: 180px;
 </style>
