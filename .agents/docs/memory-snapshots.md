@@ -49,6 +49,7 @@ graph TD
 ### 3.1. Detailed Changes Log
 
 - **2026-06-23 (Antigravity)**:
+  - **LongNH - Auth & SSO Fixes (`FE-01`)**: Triển khai `CookieAuthenticationEvents.OnValidatePrincipal` kiểm tra trạng thái hoạt động trong DB ở cả 3 project (MVC, RazorPages, Blazor) nhằm Force Logout tức thì khi Admin khóa tài khoản (`IsActive = false`). Đồng thời bổ sung `options.Cookie.Domain = ".unievent.edu.vn"` để chia sẻ cookie giữa các subdomain, xử lý triệt để kịch bản lỗi SSO.
   - **MinhTC - Tách nghiệp vụ Duyệt Sự Kiện (Admin Approve)**: Bổ sung logic duyệt độc lập `ChangeEventStatusAsync` trong `EventService`, tạo luồng POST API chuyên biệt `?handler=ChangeStatus` trong giao diện List Event `Index.cshtml`. Giới hạn truy cập (RBAC) với `if (!User.IsInRole("Admin"))` để chặn Organizer tự duyệt. Tích hợp trực tiếp các nút Duyệt/Hủy vào Data Grid dành riêng cho role Admin, ngăn chặn triệt để lỗi Over-posting trạng thái từ Form Edit cũ.
   - **MinhTC - Fix Logic Anomalies (FE-05, FE-13)**: Khắc phục các lỗi logic cho phân hệ Event CRUD: Xóa trường `Status` khỏi tính năng Edit Event (Chống Over-posting), xử lý `DbUpdateException` khi xóa `Venue`, `Category`, `Tag` đang được sử dụng (thông báo lỗi thay vì crash), cập nhật `CategoryService` và `TagService` tự động `.Trim()` và kiểm tra trùng lặp tên. Thêm logic xác thực sức chứa (Capacity Limits) khi Cập nhật Địa điểm (Venue) và Cập nhật Sự kiện (Event) để đảm bảo Sức chứa mới không được nhỏ hơn số lượng đã đăng ký hiện tại, hiển thị lỗi qua `ModelState`.
 - **2026-06-22 (Antigravity)**:

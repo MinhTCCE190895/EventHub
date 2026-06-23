@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using System.Security.Claims;
 using DAL.Data;
 
 namespace RazerPages.Configurations;
@@ -12,11 +14,26 @@ public static class ServiceExtensions
             .AddCookie(options =>
             {
                 options.Cookie.Name = ".EventHub.Auth";
+                options.Cookie.Domain = ".unievent.edu.vn";
                 options.LoginPath = "/Account/Login";
                 options.AccessDeniedPath = "/Account/AccessDenied";
                 
                 options.Events = new CookieAuthenticationEvents
                 {
+                    OnValidatePrincipal = async context =>
+                    {
+                        var userIdClaim = context.Principal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+                        {
+                            var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                            var user = await dbContext.Users.FindAsync(userId);
+                            if (user == null || !user.IsActive)
+                            {
+                                context.RejectPrincipal();
+                                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                            }
+                        }
+                    },
                     OnRedirectToLogin = context =>
                     {
                         var returnUrl = Uri.EscapeDataString(context.Request.Scheme + "://" + context.Request.Host + context.Request.PathBase + context.Request.Path + context.Request.QueryString);

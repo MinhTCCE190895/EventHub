@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using System.Security.Claims;
 using DAL.Data;
 
 namespace MVC.Configurations;
@@ -14,10 +16,29 @@ public static class ServiceExtensions
             .AddCookie(options =>
             {
                 options.Cookie.Name = ".EventHub.Auth";
+                options.Cookie.Domain = ".unievent.edu.vn";
                 options.LoginPath = "/Account/Login";
                 options.AccessDeniedPath = "/Account/AccessDenied";
                 options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 options.SlidingExpiration = true;
+
+                options.Events = new CookieAuthenticationEvents
+                {
+                    OnValidatePrincipal = async context =>
+                    {
+                        var userIdClaim = context.Principal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+                        {
+                            var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                            var user = await dbContext.Users.FindAsync(userId);
+                            if (user == null || !user.IsActive)
+                            {
+                                context.RejectPrincipal();
+                                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                            }
+                        }
+                    }
+                };
             });
     }
 
