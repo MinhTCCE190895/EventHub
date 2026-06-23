@@ -1,5 +1,5 @@
 @page
-@model RazorPages.Pages.Events.MyFeedbacksModel
+@model RazorPages.Pages.Feedback.MyFeedbacksModel
 @{
     ViewData["Title"] = "Đánh giá của tôi - UniEvent Hub";
 }
@@ -50,7 +50,7 @@
 
                         <!-- Action Button -->
                         <div class="mt-auto">
-                            <a asp-page="/Events/Feedback" asp-route-eventId="@ev.EventId" class="btn btn-primary w-100 py-2.5 fw-bold rounded-3 shadow-sm text-decoration-none text-center d-block">
+                            <a asp-page="/Feedback/Feedback" asp-route-eventId="@ev.EventId" class="btn btn-primary w-100 py-2.5 fw-bold rounded-3 shadow-sm text-decoration-none text-center d-block">
                                 <i class="bi bi-chat-left-text me-2"></i> Viết Đánh Giá
                             </a>
                         </div>

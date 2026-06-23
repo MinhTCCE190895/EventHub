@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace RazorPages.Pages.Events;
+namespace RazorPages.Pages.Feedback;
 
 [Authorize(Roles = "Student")]
 public class MyFeedbacksModel : PageModel

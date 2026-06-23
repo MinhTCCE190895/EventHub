@@ -8,19 +8,20 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace RazorPages.Pages.Events;
+namespace RazorPages.Pages.Follow;
 
 [Authorize(Roles = "Student")]
-public class OrganizersModel : PageModel
+public class FollowedModel : PageModel
 {
     private readonly IFollowService _followService;
 
-    public OrganizersModel(IFollowService followService)
+    public FollowedModel(IFollowService followService)
     {
         _followService = followService;
     }
 
-    public IEnumerable<OrganizerDto> Organizers { get; set; } = new List<OrganizerDto>();
+    public IEnumerable<OrganizerDto> FollowedOrganizers { get; set; } = new List<OrganizerDto>();
+    public IEnumerable<EventCardDTO> Events { get; set; } = new List<EventCardDTO>();
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -30,28 +31,10 @@ public class OrganizersModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        Organizers = await _followService.GetOrganizersWithFollowCountAsync(studentId);
+        FollowedOrganizers = await _followService.GetFollowedOrganizersAsync(studentId);
+        Events = await _followService.GetNewEventsFromFollowedOrganizersAsync(studentId);
+
         return Page();
-    }
-
-    public async Task<IActionResult> OnPostFollowAsync(Guid organizerId)
-    {
-        var studentIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(studentIdString) || !Guid.TryParse(studentIdString, out var studentId))
-        {
-            return RedirectToPage("/Account/Login");
-        }
-
-        try
-        {
-            await _followService.FollowAsync(studentId, organizerId);
-        }
-        catch (Exception ex)
-        {
-            ModelState.AddModelError(string.Empty, ex.Message);
-        }
-
-        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostUnfollowAsync(Guid organizerId)

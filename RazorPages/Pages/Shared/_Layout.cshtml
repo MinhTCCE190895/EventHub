@@ -40,7 +40,7 @@
                 @if (isAdminOrOrganizer)
                 {
                     <!-- Admin & Organizer only links -->
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true && currentPage != "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/Index">
+                    <a class="sidebar-link @(currentPage?.StartsWith("/Events") == true ? "active" : "")" asp-page="/Events/Index">
                         <i class="bi bi-calendar-event-fill"></i> Quản lý sự kiện
                     </a>
                     <a class="sidebar-link @(currentPage?.StartsWith("/Categories") == true ? "active" : "")" asp-page="/Categories/Index">
@@ -61,13 +61,13 @@
                 {
                     <!-- Student-only tabs -->
 
-                    <a class="sidebar-link @(currentPage == "/Events/MyFeedbacks" ? "active" : "")" asp-page="/Events/MyFeedbacks">
+                    <a class="sidebar-link @(currentPage == "/Feedback/MyFeedbacks" ? "active" : "")" asp-page="/Feedback/MyFeedbacks">
                         <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
                     </a>
-                    <a class="sidebar-link @(currentPage == "/Events/Organizers" || currentPage == "/Events/OrganizerDetails" ? "active" : "")" asp-page="/Events/Organizers">
+                    <a class="sidebar-link @(currentPage == "/Follow/Organizers" || currentPage == "/Follow/OrganizerDetails" ? "active" : "")" asp-page="/Follow/Organizers">
                         <i class="bi bi-people-fill"></i> Ban tổ chức
                     </a>
-                    <a class="sidebar-link @(currentPage == "/Events/Followed" ? "active" : "")" asp-page="/Events/Followed">
+                    <a class="sidebar-link @(currentPage == "/Follow/Followed" ? "active" : "")" asp-page="/Follow/Followed">
                         <i class="bi bi-heart-fill"></i> Đang theo dõi
                     </a>
                 }

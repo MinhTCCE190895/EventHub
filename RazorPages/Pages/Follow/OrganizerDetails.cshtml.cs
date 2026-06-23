@@ -13,7 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace RazorPages.Pages.Events;
+namespace RazorPages.Pages.Follow;
 
 [Authorize(Roles = "Student")]
 public class OrganizerDetailsModel : PageModel

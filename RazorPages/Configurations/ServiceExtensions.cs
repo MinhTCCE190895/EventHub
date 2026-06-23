@@ -78,9 +78,9 @@ public static class ServiceExtensions
             options.Conventions.AuthorizeFolder("/Tags",       "AdminOrOrganizer");
             options.Conventions.AuthorizeFolder("/Venues",     "AdminOrOrganizer");
 
-            // Student-only pages
-            options.Conventions.AuthorizePage("/Events/Feedback",    "RequireStudentRole");
-            options.Conventions.AuthorizePage("/Events/MyFeedbacks", "RequireStudentRole");
+            // Student-only folders
+            options.Conventions.AuthorizeFolder("/Feedback", "RequireStudentRole");
+            options.Conventions.AuthorizeFolder("/Follow",   "RequireStudentRole");
         });
     }
 
