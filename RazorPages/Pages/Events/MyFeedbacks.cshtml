@@ -5,81 +5,54 @@
 }
 
 <div class="page-header-minimal">
-    <span class="page-badge-minimal">My Submitted Feedbacks</span>
-    <h1 class="display-6 fw-bold mb-2">Đánh giá của tôi</h1>
-    <p class="text-muted">Xem lại các ý kiến đóng góp và đánh giá bạn đã thực hiện cho các sự kiện.</p>
+    <span class="page-badge-minimal">Pending Feedbacks</span>
+    <h1 class="display-6 fw-bold mb-2">Đánh giá sự kiện</h1>
+    <p class="text-muted">Danh sách các sự kiện bạn đã tham gia và chưa thực hiện gửi đánh giá phản hồi.</p>
 </div>
 
 <div class="container-fluid px-0 mt-4">
-    @if (Model.Feedbacks == null || !Model.Feedbacks.Any())
+    @if (Model.PendingEvents == null || !Model.PendingEvents.Any())
     {
         <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
-            <div class="display-1 text-muted mb-3"><i class="bi bi-chat-heart"></i></div>
-            <h5 class="fw-bold text-slate-700">Bạn chưa gửi đánh giá nào</h5>
-            <p class="text-muted mb-0">Sau khi tham gia các sự kiện, bạn có thể gửi phản hồi để giúp ban tổ chức cải thiện chất lượng nhé.</p>
-            <a asp-page="/Index" class="btn btn-primary-minimal mt-3 rounded-pill px-4">Khám phá sự kiện</a>
+            <div class="display-1 text-muted mb-3"><i class="bi bi-patch-check-fill text-success"></i></div>
+            <h5 class="fw-bold text-slate-700">Tuyệt vời! Bạn không có đánh giá nào chưa gửi</h5>
+            <p class="text-muted mb-0">Bạn đã hoàn thành đánh giá cho tất cả các sự kiện mình tham gia.</p>
+            <a asp-page="/Index" class="btn btn-primary-minimal mt-3 rounded-pill px-4">Khám phá sự kiện mới</a>
         </div>
     }
     else
     {
         <div class="row g-4">
-            @foreach (var fb in Model.Feedbacks)
+            @foreach (var ev in Model.PendingEvents)
             {
-                <div class="col-12 col-xl-6">
-                    <div class="card-minimal p-4 border-0 shadow-sm bg-glass position-relative overflow-hidden">
-                        <!-- Score Badge -->
-                        <div class="position-absolute" style="top: 1.5rem; right: 1.5rem; text-align: right;">
-                            <span class="d-block text-muted small text-uppercase" style="font-size: 0.7rem;">Điểm TB</span>
-                            <span class="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill fw-bold" style="font-size: 1rem;">
-                                @fb.AverageScore/5
-                            </span>
-                        </div>
-
-                        <!-- Event details -->
-                        <div style="max-width: 75%;">
-                            <span class="badge mb-2 bg-primary bg-opacity-10 text-primary px-2.5 py-1 rounded-pill small fw-semibold">
-                                <i class="bi bi-calendar-event me-1"></i> Sự kiện
-                            </span>
-                            <h4 class="fw-bold mb-2 text-slate-800 text-truncate" title="@fb.EventTitle">@fb.EventTitle</h4>
-                            <small class="text-muted d-block mb-3">
-                                <i class="bi bi-clock-history"></i> Đã gửi lúc: @fb.SubmittedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                            </small>
-                        </div>
-
-                        <hr style="border-top: 1px solid var(--border-color); margin: 1.25rem 0;" />
-
-                        <!-- Criteria details -->
-                        <div class="row g-3">
-                            @foreach (var crit in fb.CriteriaScores)
-                            {
-                                var percentage = crit.Value * 100 / 5;
-                                var criteriaIcon = crit.Key switch
-                                {
-                                    "Diễn giả" => "",
-                                    "Hậu cần" => "",
-                                    "Nội dung" => "",
-                                    "Tổ chức" => "",
-                                    _ => ""
-                                };
-
-                                <div class="col-6">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="small text-muted">@criteriaIcon @crit.Key</span>
-                                        <span class="small fw-bold text-slate-700">@crit.Value/5</span>
-                                    </div>
-                                    <div class="progress" style="height: 6px; background-color: #f1f5f9; border-radius: 4px; overflow: hidden;">
-                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @(percentage)%;" aria-valuenow="@crit.Value" aria-valuemin="0" aria-valuemax="5"></div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-
-                        <!-- Comment section -->
-                        <div class="mt-4 pt-3 border-top">
-                            <span class="text-muted small d-block mb-1.5">Nội dung góp ý của bạn:</span>
-                            <div class="bg-light p-3 rounded-3 text-slate-700 font-italic" style="font-style: italic; font-size: 0.95rem; line-height: 1.5; border-left: 3px solid var(--primary);">
-                                @(string.IsNullOrEmpty(fb.GeneralComment) ? "Bạn không để lại nhận xét bằng lời." : fb.GeneralComment)
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card-minimal border-0 shadow-sm bg-glass position-relative overflow-hidden h-100 d-flex flex-column justify-content-between p-4">
+                        <div>
+                            <!-- Header with status / icon -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-warning bg-opacity-10 text-warning px-2.5 py-1 rounded-pill small fw-semibold">
+                                    <i class="bi bi-clock-history me-1"></i> Đang chờ đánh giá
+                                </span>
                             </div>
+
+                            <!-- Event Details -->
+                            <h4 class="fw-bold mb-2 text-slate-800 text-truncate-2" title="@ev.EventTitle" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 3rem; line-height: 1.5;">
+                                @ev.EventTitle
+                            </h4>
+                            
+                            <div class="text-muted small mb-2 mt-3">
+                                <i class="bi bi-calendar3 me-2"></i> <strong>Thời gian:</strong> @ev.StartTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                            <div class="text-muted small mb-4">
+                                <i class="bi bi-geo-alt me-2"></i> <strong>Địa điểm:</strong> @ev.VenueName
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-auto">
+                            <a asp-page="/Events/Feedback" asp-route-eventId="@ev.EventId" class="btn btn-primary w-100 py-2.5 fw-bold rounded-3 shadow-sm text-decoration-none text-center d-block">
+                                <i class="bi bi-chat-left-text me-2"></i> Viết Đánh Giá
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -97,11 +70,8 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .bg-glass:hover {
-            transform: translateY(-3px);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-soft);
-        }
-        .font-italic {
-            font-style: italic;
         }
     </style>
 }

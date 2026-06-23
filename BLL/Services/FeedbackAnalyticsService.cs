@@ -94,64 +94,53 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
     /// </summary>
     public async Task<IEnumerable<EventFeedbackMetricsDto>> GetFeedbackMetricsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation(">>> [PLINQ Engine] Khởi chạy tính toán song song thống kê Feedback...");
+        _logger.LogInformation(">>> [SQL Engine] Khởi chạy tính toán thống kê Feedback qua LINQ SQL GroupBy...");
 
-        // Bước 1: Lấy toàn bộ dữ liệu phản hồi
-        var feedbacks = await _feedbackRepository.GetAllFeedbacksWithDetailsAsync(cancellationToken);
-        var feedbacksList = feedbacks.ToList();
-
-        if (!feedbacksList.Any())
-        {
-            return Enumerable.Empty<EventFeedbackMetricsDto>();
-        }
-
-        // Bước 2: Group feedbacks by Event
-        var groupedByEvent = feedbacksList
-            .Where(f => f.Booking != null && f.Booking.Event != null)
-            .GroupBy(f => f.Booking.EventId)
-            .ToList();
-
-        // Bước 3: Áp dụng PLINQ song song để xử lý đồng thời tính toán điểm cho nhiều sự kiện
-        // PLINQ sẽ tự động chia nhỏ mảng công việc và tận dụng các lõi CPU chạy song song.
-        var metrics = groupedByEvent
-            .AsParallel() // Kích hoạt xử lý song song PLINQ
-            .WithCancellation(cancellationToken)
-            .Select(group =>
+        // Bước 1: Tính toán điểm trung bình từng tiêu chí (Criteria) gom nhóm trực tiếp từ Database
+        var details = await _context.FeedbackDetails
+            .Where(fd => fd.Feedback.Booking != null && fd.Feedback.Booking.Event != null)
+            .GroupBy(fd => new { fd.Feedback.Booking.EventId, fd.Feedback.Booking.Event.Title, fd.Criteria })
+            .Select(g => new
             {
-                var eventId = group.Key;
-                var firstFeedback = group.First();
-                var eventTitle = firstFeedback.Booking.Event.Title;
-                var totalFeedbacks = group.Count();
-
-                // Lấy tất cả FeedbackDetails thuộc nhóm sự kiện này
-                var allDetails = group.SelectMany(f => f.FeedbackDetails).ToList();
-
-                // Dùng PLINQ để tính toán điểm trung bình cho từng tiêu chí (Criteria) song song
-                var criteriaAverages = allDetails
-                    .AsParallel() // Chạy PLINQ song song
-                    .GroupBy(d => d.Criteria)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => Math.Round(g.Average(d => d.Score), 1)
-                    );
-
-                // Tính toán điểm trung bình tổng quan cho toàn bộ sự kiện song song
-                var overallAverage = allDetails.Any()
-                    ? Math.Round(allDetails.AsParallel().Average(d => d.Score), 1)
-                    : 0.0;
-
-                return new EventFeedbackMetricsDto
-                {
-                    EventId = eventId,
-                    EventTitle = eventTitle,
-                    TotalFeedbacks = totalFeedbacks,
-                    OverallAverageScore = overallAverage,
-                    CriteriaAverages = criteriaAverages
-                };
+                EventId = g.Key.EventId,
+                EventTitle = g.Key.Title,
+                Criteria = g.Key.Criteria,
+                AverageScore = g.Average(fd => (double)fd.Score)
             })
-            .ToList();
+            .ToListAsync(cancellationToken);
 
-        _logger.LogInformation(">>> [PLINQ Engine] Hoàn tất tính toán thống kê phản hồi cho {Count} sự kiện.", metrics.Count);
+        // Bước 2: Thống kê số lượng phản hồi và điểm trung bình tổng quan trực tiếp dưới Database
+        var counts = await _context.Feedbacks
+            .Where(f => f.Booking != null && f.Booking.Event != null)
+            .GroupBy(f => new { f.Booking.EventId, f.Booking.Event.Title })
+            .Select(g => new
+            {
+                EventId = g.Key.EventId,
+                EventTitle = g.Key.Title,
+                TotalFeedbacks = g.Count(),
+                OverallAverageScore = g.SelectMany(f => f.FeedbackDetails).Average(fd => (double)fd.Score)
+            })
+            .ToListAsync(cancellationToken);
+
+        var detailsGrouped = details.GroupBy(d => d.EventId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var metrics = counts.Select(c =>
+        {
+            var eventDetails = detailsGrouped.TryGetValue(c.EventId, out var dList) ? dList : new();
+            return new EventFeedbackMetricsDto
+            {
+                EventId = c.EventId,
+                EventTitle = c.EventTitle,
+                TotalFeedbacks = c.TotalFeedbacks,
+                OverallAverageScore = Math.Round(c.OverallAverageScore, 1),
+                CriteriaAverages = eventDetails.ToDictionary(
+                    ed => ed.Criteria,
+                    ed => Math.Round(ed.AverageScore, 1)
+                )
+            };
+        }).ToList();
+
+        _logger.LogInformation(">>> [SQL Engine] Hoàn tất tính toán thống kê phản hồi cho {Count} sự kiện.", metrics.Count);
         return metrics;
     }
 

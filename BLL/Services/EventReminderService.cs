@@ -1,6 +1,8 @@
 using DAL.Data;
 using DAL.Repositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace BLL.Services;
 
@@ -23,36 +25,65 @@ public class EventReminderService : IEventReminderService
         _logger = logger;
     }
 
-    /// <summary>
-    /// LUỒNG HOẠT ĐỘNG CHÍNH (TPL Core Engine):
-    /// 1. Gọi Repository để lấy ra tất cả EventReminders đến hạn gửi và chưa được xử lý (IsEmailSent == false).
-    /// 2. Duyệt qua từng EventReminder.
-    /// 3. Lọc ra danh sách Bookings của Event đó có trạng thái "Confirmed".
-    /// 4. Sử dụng Parallel.ForEachAsync để bắt đầu xử lý đa luồng (TPL) gửi mail song song cho toàn bộ sinh viên đã đăng ký.
-    /// 5. Sau khi hoàn tất tiến trình gửi mail của một sự kiện, cập nhật trạng thái IsEmailSent = true và SentAt = DateTime.UtcNow.
-    /// 6. Gọi Repository để cập nhật thay đổi xuống Database.
-    /// </summary>
+
     public async Task ProcessPendingRemindersAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
         _logger.LogInformation(">>> [TPL Core Engine] Bắt đầu quét các email nhắc nhở lúc: {Time}", now);
 
-        // Bước 1 & 2: Lấy dữ liệu qua Repository (Eager Loading tránh N+1 Query)
-        var pendingReminders = await _reminderRepository.GetPendingRemindersWithDetailsAsync(now, cancellationToken);
-        var remindersList = pendingReminders.ToList();
+        List<DAL.Entities.EventReminder> remindersList;
 
-        if (!remindersList.Any())
+        // Sử dụng Transaction với mức cô lập Serializable để tránh tranh chấp (Race Condition) giữa nhiều instance của Worker
+        using (var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken))
         {
-            _logger.LogInformation(">>> [TPL Core Engine] Không tìm thấy email nhắc nhở nào cần gửi.");
-            return;
+            try
+            {
+                var pendingReminders = await _reminderRepository.GetPendingRemindersWithDetailsAsync(now, cancellationToken);
+                remindersList = pendingReminders.ToList();
+
+                if (!remindersList.Any())
+                {
+                    _logger.LogInformation(">>> [TPL Core Engine] Không tìm thấy email nhắc nhở nào cần gửi.");
+                    await transaction.CommitAsync(cancellationToken);
+                    return;
+                }
+
+                // Cập nhật trạng thái đã gửi/đang gửi ngay lập tức rồi lưu thay đổi và commit trước khi tiến hành gửi mail
+                foreach (var reminder in remindersList)
+                {
+                    reminder.IsEmailSent = true;
+                    reminder.SentAt = now;
+                    _reminderRepository.Update(reminder);
+                }
+
+                await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ">>> [TPL Core Engine] Gặp lỗi khi khóa/cập nhật trạng thái reminders. Tiến hành rollback.");
+                await transaction.RollbackAsync(cancellationToken);
+                return;
+            }
         }
 
         _logger.LogInformation(">>> [TPL Core Engine] Phát hiện {Count} sự kiện cần gửi email nhắc nhở.", remindersList.Count);
 
         foreach (var reminder in remindersList)
         {
-            if (!reminder.IsCanReminder) continue;
-            // Bước 3: Lọc danh sách đăng ký đã xác nhận (Confirmed)
+            var rawBookingsCount = reminder.Event?.Bookings?.Count ?? 0;
+            _logger.LogInformation(">>> [DEBUG] Sự kiện '{EventTitle}' (Id: {EventId}) - Tổng số Bookings trong RAM: {RawCount}",
+                reminder.Event?.Title, reminder.EventId, rawBookingsCount);
+
+            if (reminder.Event?.Bookings != null)
+            {
+                foreach (var b in reminder.Event.Bookings)
+                {
+                    _logger.LogInformation(">>> [DEBUG] Booking Id: {BookingId} | Status: '{Status}' | StudentEmail: '{Email}'",
+                        b.Id, b.Status, b.Student?.Email);
+                }
+            }
+
             var activeBookings = reminder.Event.Bookings
                 .Where(b => b.Status == "Confirmed")
                 .ToList();
@@ -62,12 +93,10 @@ public class EventReminderService : IEventReminderService
                 _logger.LogInformation(">>> [TPL Core Engine] Đang xử lý gửi email cho sự kiện '{EventTitle}' tới {UserCount} sinh viên song song...",
                     reminder.Event.Title, activeBookings.Count);
 
-                // Bước 4: Sử dụng Parallel.ForEachAsync để khởi chạy Task chạy song song
-                // Tận dụng ThreadPool để xử lý nhiều yêu cầu I/O (gửi mail SMTP) đồng thời thay vì chạy tuần tự.
                 await Parallel.ForEachAsync(activeBookings, new ParallelOptions
                 {
                     CancellationToken = cancellationToken,
-                    MaxDegreeOfParallelism = 10 // Giới hạn tối đa 10 luồng gửi song song cùng lúc để tránh làm nghẽn SMTP Server
+                    MaxDegreeOfParallelism = 10
                 }, async (booking, ct) =>
                 {
                     try
@@ -124,14 +153,6 @@ public class EventReminderService : IEventReminderService
                     }
                 });
             }
-
-            // Bước 5 & 6: Cập nhật trạng thái và lưu lại
-            reminder.IsEmailSent = true;
-            reminder.SentAt = DateTime.UtcNow;
-            _reminderRepository.Update(reminder);
         }
-
-        // Lưu tất cả cập nhật trạng thái reminders vào Database
-        await _context.SaveChangesAsync(cancellationToken);
     }
 }

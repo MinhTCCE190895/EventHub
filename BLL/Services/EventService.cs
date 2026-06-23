@@ -5,6 +5,8 @@ using DAL.Entities;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Microsoft.AspNetCore.SignalR;
+using BLL.SignalR;
 
 namespace BLL.Services;
 
@@ -14,17 +16,20 @@ public class EventService : IEventService
     private readonly IRepository<User> _userRepository;
     private readonly AppDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IHubContext<EventHub> _hubContext;
 
     public EventService(
         IEventRepository eventRepository,
         IRepository<User> userRepository,
         AppDbContext context,
-        IMapper mapper)
+        IMapper mapper,
+        IHubContext<EventHub> hubContext)
     {
         _eventRepository = eventRepository;
         _userRepository = userRepository;
         _context = context;
         _mapper = mapper;
+        _hubContext = hubContext;
     }
 
     public async Task<IEnumerable<EventDTO>> GetAllEventsAsync(CancellationToken cancellationToken = default)
@@ -62,6 +67,16 @@ public class EventService : IEventService
         }
 
         await _eventRepository.AddAsync(newEvent, cancellationToken);
+        
+        // Tự động tạo bản ghi EventReminder đi kèm sự kiện mới
+        var reminder = new EventReminder
+        {
+            EventId = newEvent.Id,
+            ScheduledTime = newEvent.StartTime.AddDays(-1),
+            IsEmailSent = false
+        };
+        await _context.EventReminders.AddAsync(reminder, cancellationToken);
+
         await _context.SaveChangesAsync(cancellationToken);
 
         // Reload để có navigation properties
@@ -76,10 +91,13 @@ public class EventService : IEventService
         var ev = await _eventRepository.Query()
             .Include(e => e.EventCategories)
             .Include(e => e.EventTags)
+            .Include(e => e.EventReminder)
             .FirstOrDefaultAsync(e => e.Id == dto.Id, cancellationToken);
 
         if (ev == null)
             throw new KeyNotFoundException("Sự kiện không tồn tại.");
+
+        var oldStartTime = ev.StartTime;
 
         if (ev.VenueId != dto.VenueId)
         {
@@ -104,6 +122,27 @@ public class EventService : IEventService
         {
             foreach (var id in dto.TagIds)
                 ev.EventTags.Add(new EventTag { TagId = id, EventId = ev.Id });
+        }
+
+        // Nếu cập nhật thời gian bắt đầu của sự kiện, cập nhật lại lịch nhắc nhở EventReminder tương ứng
+        if (ev.StartTime != oldStartTime)
+        {
+            if (ev.EventReminder != null)
+            {
+                ev.EventReminder.ScheduledTime = ev.StartTime.AddDays(-1);
+                ev.EventReminder.IsEmailSent = false;
+                ev.EventReminder.SentAt = null;
+            }
+            else
+            {
+                var newReminder = new EventReminder
+                {
+                    EventId = ev.Id,
+                    ScheduledTime = ev.StartTime.AddDays(-1),
+                    IsEmailSent = false
+                };
+                await _context.EventReminders.AddAsync(newReminder, cancellationToken);
+            }
         }
 
         _eventRepository.Update(ev);
@@ -133,6 +172,7 @@ public class EventService : IEventService
     public async Task ChangeEventStatusAsync(Guid id, string newStatus, CancellationToken cancellationToken = default)
     {
         var ev = await _eventRepository.Query()
+            .Include(e => e.Venue)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
         if (ev == null)
@@ -142,5 +182,12 @@ public class EventService : IEventService
         
         _eventRepository.Update(ev);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Phát tín hiệu SignalR khi duyệt (Publish) sự kiện để đồng bộ Dashboard thời gian thực
+        if (newStatus == "Published")
+        {
+            var maxCapacity = ev.Venue?.MaxCapacity ?? 0;
+            await _hubContext.Clients.All.SendAsync("ReceiveEventPublished", ev.Id, ev.Title, maxCapacity, cancellationToken);
+        }
     }
 }
