@@ -355,7 +355,7 @@
 @section Scripts {
     <script>
         let debounceTimer;
-        let fetchController = null; // Biến lưu AbortController để hủy request cũ khi người dùng spam click nhanh
+        let fetchController = null; // Store AbortController to cancel previous request when user spams fast clicks
         const form = document.getElementById('searchForm');
         const keywordInput = document.getElementById('keywordInput');
 
@@ -375,7 +375,7 @@
 
         // Standard instant submission trigger
         function submitInstant() {
-            // Hủy kết nối của yêu cầu cũ nếu nó đang chạy ngầm trên mạng để tránh bị chậm
+            // Cancel previous request if it's running in the background to avoid sluggishness
             if (fetchController) {
                 fetchController.abort();
             }
@@ -438,7 +438,7 @@
             resultsWrapper.innerHTML = skeletonHtml;
 
             // Fetch dynamic partial content
-            fetch(newUrl, { signal }) // Gửi kèm signal để hủy được nếu cần
+            fetch(newUrl, { signal }) // Send along with signal to allow cancellation if needed
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
@@ -459,7 +459,7 @@
                     bindPaginationLinks();
                 })
                 .catch(err => {
-                    // Nếu là lỗi hủy request chủ động thì bỏ qua, không log lỗi đỏ ở console
+                    // If it is an active request cancellation error, ignore it and do not log red error in console
                     if (err.name === 'AbortError') {
                         return;
                     }

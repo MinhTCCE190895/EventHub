@@ -21,7 +21,7 @@ public class IndexModel : PageModel
     private readonly AppDbContext _context;
     private readonly ILogger<IndexModel> _logger;
 
-    // Lấy ID thật thay vì fix cứng
+    // Get actual ID instead of hardcoding
     public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true 
         ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) 
         : null;
@@ -52,7 +52,7 @@ public class IndexModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        // Lấy Bookmark nếu User đã đăng nhập và là Student
+        // Retrieve bookmarks if user is authenticated and is a student
         if (CurrentStudentId.HasValue && User.IsInRole("Student"))
         {
             BookmarkedEventIds = await _context.Bookmarks
