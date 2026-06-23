@@ -76,6 +76,12 @@ public class EditModel : PageModel
         {
             return NotFound();
         }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("Input.VenueId", ex.Message);
+            await LoadDropdownsAsync();
+            return Page();
+        }
     }
 
     private async Task LoadDropdownsAsync()

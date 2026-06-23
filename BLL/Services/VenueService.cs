@@ -59,11 +59,18 @@ public class VenueService : IVenueService
     public async Task UpdateVenueAsync(VenueUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         var venue = await _venueRepository.Query()
+            .Include(v => v.Events)
             .FirstOrDefaultAsync(v => v.Id == dto.Id, cancellationToken);
 
         if (venue == null)
         {
             throw new KeyNotFoundException("Venue not found.");
+        }
+
+        var maxRegistered = venue.Events.Any() ? venue.Events.Max(e => e.RegisteredCount) : 0;
+        if (dto.MaxCapacity < maxRegistered)
+        {
+            throw new InvalidOperationException($"Không thể giảm sức chứa xuống {dto.MaxCapacity} vì đang có sự kiện có {maxRegistered} lượt đăng ký.");
         }
 
         _mapper.Map(dto, venue);

@@ -81,6 +81,15 @@ public class EventService : IEventService
         if (ev == null)
             throw new KeyNotFoundException("Sự kiện không tồn tại.");
 
+        if (ev.VenueId != dto.VenueId)
+        {
+            var newVenue = await _context.Venues.FirstOrDefaultAsync(v => v.Id == dto.VenueId, cancellationToken);
+            if (newVenue != null && ev.RegisteredCount > newVenue.MaxCapacity)
+            {
+                throw new InvalidOperationException($"Sự kiện đã có {ev.RegisteredCount} lượt đăng ký, không thể chuyển sang địa điểm có sức chứa {newVenue.MaxCapacity}.");
+            }
+        }
+
         _mapper.Map(dto, ev);
 
         ev.EventCategories.Clear();

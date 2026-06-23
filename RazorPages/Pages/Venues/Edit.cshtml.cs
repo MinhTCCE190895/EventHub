@@ -80,6 +80,11 @@ public class EditModel : PageModel
         {
             return NotFound();
         }
+        catch (System.InvalidOperationException ex)
+        {
+            ModelState.AddModelError("VenueUpdateDTO.MaxCapacity", ex.Message);
+            return Page();
+        }
 
         return RedirectToPage("./Index");
     }
