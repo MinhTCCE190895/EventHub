@@ -69,8 +69,7 @@ public class AccountController : Controller
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
-        // Xác thực ReturnUrl để chống tấn công Open Redirect
-        // Cho phép redirect về local MVC hoặc các domain hợp lệ của RazorPages/Blazor
+        // Prevent Open Redirect. Validate against local routes or trusted SSO subdomains.
         if (!string.IsNullOrEmpty(model.ReturnUrl) && 
            (Url.IsLocalUrl(model.ReturnUrl) || 
             model.ReturnUrl.StartsWith("http://localhost:5129") || 
@@ -80,13 +79,12 @@ public class AccountController : Controller
             return Redirect(model.ReturnUrl);
         }
 
-        // Điều hướng người dùng về Razor Pages dựa trên Role bằng pattern matching (C# 8+)
-        // Giúp code clean, dễ đọc và thể hiện ý định rõ ràng hơn so với if-else liên tục
+        // Route users to their respective sub-systems based on RBAC
         return user.Role switch
         {
-            "Organizer" => Redirect("http://localhost:5129/Events"), // Organizer ưu tiên vào trang quản lý
-            "Admin" or "Student" => Redirect("http://localhost:5129/"), // Admin và Student trả về trang chủ hệ thống
-            _ => RedirectToAction("Index", "Home") // Fallback an toàn
+            "Organizer" => Redirect("http://localhost:5129/Events"),
+            "Admin" or "Student" => Redirect("http://localhost:5129/"),
+            _ => RedirectToAction("Index", "Home")
         };
     }
 
@@ -110,21 +108,19 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        // Chặn role Admin được tạo qua form đăng ký (Bảo vệ RBAC)
+        // Prevent Admin role injection via public registration
         if (model.Role == "Admin")
         {
             ModelState.AddModelError("Role", "Không thể đăng ký tài khoản Admin.");
             return View(model);
         }
 
-        // Kiểm tra tính duy nhất của Email
         if (await _userService.EmailExistsAsync(model.Email))
         {
             ModelState.AddModelError("Email", "Email này đã được sử dụng.");
             return View(model);
         }
 
-        // Map ViewModel xuống DTO để xử lý
         var dto = new RegisterDto
         {
             FullName = model.FullName,
@@ -135,7 +131,6 @@ public class AccountController : Controller
             Role = model.Role
         };
 
-        // Lưu thông tin đăng ký
         await _userService.RegisterAsync(dto);
         _logger.LogInformation("New user registered: {Email}", model.Email);
 

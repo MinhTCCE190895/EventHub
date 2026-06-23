@@ -33,7 +33,6 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Registering new user {Email} with role {Role}", dto.Email, dto.Role);
 
-        // Khởi tạo Entity User mới với các thông tin cơ bản
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -41,13 +40,11 @@ public class UserService : IUserService
             Email = dto.Email,
             StudentCode = dto.StudentCode,
             Role = dto.Role,
-            // Mã hóa mật khẩu một chiều bằng BCrypt để đảm bảo an toàn nếu lộ database
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-            IsActive = true, // Mặc định tài khoản mới tạo được phép hoạt động
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password), // bcrypt work factor defaults to 11
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Lưu vào cơ sở dữ liệu thông qua UnitOfWork/Repository pattern
         await _userRepo.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -59,7 +56,6 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Login attempt for {Email}", email);
 
-        // 1. Tìm user theo Email trong Database
         var user = await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
@@ -68,17 +64,15 @@ public class UserService : IUserService
             return null;
         }
 
-        // 2. Kiểm tra trạng thái hoạt động (bị khóa bởi Admin)
         if (!user.IsActive)
         {
             _logger.LogWarning("Login failed — account {Email} is locked", email);
             return null;
         }
 
-        // 3. Xác thực mật khẩu bằng BCrypt
         try
         {
-            // Bảo vệ ứng dụng khỏi crash (throw Exception) khi verify các hash lỗi hoặc cũ không phải chuẩn BCrypt
+            // Prevent BCrypt.Verify from throwing SaltParseException on legacy or malformed hashes
             if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
             {
                 _logger.LogWarning("Login failed — invalid password hash format for {Email}", email);
@@ -97,7 +91,6 @@ public class UserService : IUserService
             return null;
         }
 
-        // Đăng nhập thành công, trả về Entity User
         return user;
     }
 }
