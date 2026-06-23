@@ -48,6 +48,8 @@ graph TD
 
 ### 3.1. Detailed Changes Log
 
+- **2026-06-23 (Antigravity)**:
+  - **MinhTC - Fix Logic Anomalies (FE-05, FE-13)**: Khắc phục các lỗi logic cho phân hệ Event CRUD: Xóa trường `Status` khỏi tính năng Edit Event (Chống Over-posting), xử lý `DbUpdateException` khi xóa `Venue`, `Category`, `Tag` đang được sử dụng (thông báo lỗi thay vì crash), cập nhật `CategoryService` và `TagService` tự động `.Trim()` và kiểm tra trùng lặp tên.
 - **2026-06-22 (Antigravity)**:
   - **Tài liệu hóa Edge Cases & Phân chia lỗi logic**: Biên soạn tài liệu phân tích chi tiết các kịch bản lỗi logic, UX edge cases và phân chia cụ thể cho các thành viên trong nhóm phục vụ giai đoạn kiểm thử và hoàn thiện.
   - **QuiNC - Fix Weather & AJAX Search Edge Cases (`FE-08`, `FE-03`)**: Sửa lỗi `NormalizeLocation` tránh crash khi đầu vào địa chỉ thiếu `, [Campus Name]`; giải quyết triệt để Cache Stampede bằng `SemaphoreSlim` (Double-checked locking pattern) trong `WeatherService.cs`; và tích hợp `AbortController` hủy các AJAX request tìm kiếm thừa khi người dùng spam click nhanh trên trang Explore (`Index.cshtml`).

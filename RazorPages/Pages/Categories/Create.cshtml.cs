@@ -32,9 +32,16 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        await _categoryService.CreateCategoryAsync(CategoryCreateDTO);
-        TempData["SuccessMessage"] = "Category created successfully!";
-        
-        return RedirectToPage("./Index");
+        try
+        {
+            await _categoryService.CreateCategoryAsync(CategoryCreateDTO);
+            TempData["SuccessMessage"] = "Category created successfully!";
+            return RedirectToPage("./Index");
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            ModelState.AddModelError("CategoryCreateDTO.Name", ex.Message);
+            return Page();
+        }
     }
 }

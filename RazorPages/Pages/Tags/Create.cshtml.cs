@@ -32,9 +32,16 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        await _tagService.CreateTagAsync(TagCreateDTO);
-        TempData["SuccessMessage"] = "Tag created successfully!";
-        
-        return RedirectToPage("./Index");
+        try
+        {
+            await _tagService.CreateTagAsync(TagCreateDTO);
+            TempData["SuccessMessage"] = "Tag created successfully!";
+            return RedirectToPage("./Index");
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            ModelState.AddModelError("TagCreateDTO.Name", ex.Message);
+            return Page();
+        }
     }
 }

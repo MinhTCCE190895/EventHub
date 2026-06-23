@@ -48,6 +48,10 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDTO> CreateCategoryAsync(CategoryCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        dto.Name = dto.Name?.Trim() ?? string.Empty;
+        var exists = await _categoryRepository.Query().AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
+        if (exists) throw new InvalidOperationException("Tên danh mục đã tồn tại.");
+
         var newCategory = _mapper.Map<Category>(dto);
 
         await _categoryRepository.AddAsync(newCategory, cancellationToken);
@@ -58,6 +62,10 @@ public class CategoryService : ICategoryService
 
     public async Task UpdateCategoryAsync(CategoryUpdateDTO dto, CancellationToken cancellationToken = default)
     {
+        dto.Name = dto.Name?.Trim() ?? string.Empty;
+        var exists = await _categoryRepository.Query().AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower() && c.Id != dto.Id, cancellationToken);
+        if (exists) throw new InvalidOperationException("Tên danh mục đã tồn tại.");
+
         var category = await _categoryRepository.Query()
             .FirstOrDefaultAsync(c => c.Id == dto.Id, cancellationToken);
 

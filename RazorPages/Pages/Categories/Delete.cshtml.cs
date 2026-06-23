@@ -39,6 +39,11 @@ public class DeleteModel : PageModel
             await _categoryService.DeleteCategoryAsync(id);
             TempData["SuccessMessage"] = "Category deleted successfully!";
         }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Không thể xóa danh mục này vì đang được sử dụng.";
+            return RedirectToPage("./Delete", new { id });
+        }
         catch (System.Collections.Generic.KeyNotFoundException)
         {
             return NotFound();

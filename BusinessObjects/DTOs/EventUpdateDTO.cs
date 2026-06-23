@@ -22,9 +22,6 @@ public class EventUpdateDTO
     [Required(ErrorMessage = "Vui lòng chọn ngày kết thúc.")]
     public DateTime EndTime { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn trạng thái.")]
-    public string Status { get; set; } = null!;
-
     [Required(ErrorMessage = "Vui lòng chọn địa điểm.")]
     public int VenueId { get; set; }
 

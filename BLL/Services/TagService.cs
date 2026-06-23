@@ -48,6 +48,10 @@ public class TagService : ITagService
 
     public async Task<TagDTO> CreateTagAsync(TagCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        dto.Name = dto.Name?.Trim() ?? string.Empty;
+        var exists = await _tagRepository.Query().AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
+        if (exists) throw new InvalidOperationException("Tên thẻ đã tồn tại.");
+
         var newTag = _mapper.Map<Tag>(dto);
 
         await _tagRepository.AddAsync(newTag, cancellationToken);
@@ -58,6 +62,10 @@ public class TagService : ITagService
 
     public async Task UpdateTagAsync(TagUpdateDTO dto, CancellationToken cancellationToken = default)
     {
+        dto.Name = dto.Name?.Trim() ?? string.Empty;
+        var exists = await _tagRepository.Query().AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower() && t.Id != dto.Id, cancellationToken);
+        if (exists) throw new InvalidOperationException("Tên thẻ đã tồn tại.");
+
         var tag = await _tagRepository.Query()
             .FirstOrDefaultAsync(t => t.Id == dto.Id, cancellationToken);
 

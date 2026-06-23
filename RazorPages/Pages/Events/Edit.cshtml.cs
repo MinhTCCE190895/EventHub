@@ -34,12 +34,6 @@ public class EditModel : PageModel
     public List<SelectListItem> Organizers { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
     public List<SelectListItem> Tags { get; set; } = new();
-    public List<SelectListItem> Statuses { get; } = new()
-    {
-        new SelectListItem { Value = "Draft",     Text = "Bản nháp" },
-        new SelectListItem { Value = "Published", Text = "Phát hành" },
-        new SelectListItem { Value = "Cancelled", Text = "Đã hủy" }
-    };
 
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
@@ -54,7 +48,6 @@ public class EditModel : PageModel
             BannerUrl   = ev.BannerUrl,
             StartTime   = ev.StartTime,
             EndTime     = ev.EndTime,
-            Status      = ev.Status,
             VenueId     = ev.VenueId,
             OrganizerId = ev.OrganizerId,
             CategoryIds = ev.CategoryIds,
