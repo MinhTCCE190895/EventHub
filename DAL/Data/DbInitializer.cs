@@ -158,10 +158,17 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        if (await context.Events.AnyAsync())
-            return;
+        using (var seedMutex = new Mutex(false, "UniEventHubDbSeedMutex"))
+        {
+            try
+            {
+                var hasHandle = seedMutex.WaitOne(TimeSpan.FromSeconds(30));
+                if (hasHandle)
+                {
+                    if (await context.Events.AnyAsync())
+                        return;
 
-        var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
+                    var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
         var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
         // --- Categories ---
@@ -415,7 +422,16 @@ public static class DbInitializer
         );
 
         await context.SaveChangesAsync();
-
-       
+                }
+            }
+            finally
+            {
+                try
+                {
+                    seedMutex.ReleaseMutex();
+                }
+                catch (Exception) { }
+            }
+        }
     }
 }
