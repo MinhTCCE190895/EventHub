@@ -444,3 +444,18 @@ sequenceDiagram
 
 4. **Tại sao gọi API thời tiết ngoài mà lại không dùng `try/catch` bắt lỗi ném ra ngoài (throw)?**
    * *Trả lời*: Thời tiết chỉ là tính năng bổ sung (Widget). Nếu dịch vụ thời tiết bên thứ ba sập hoặc mất kết nối mạng, trang web chính vẫn phải hoạt động bình thường. Ta dùng `try-catch` nội bộ và trả về dữ liệu giả làm (Fallback data) để trang web không bị crash lỗi 500.
+
+5. **Giải thích AJAX một cách đơn giản, ứng dụng như thế nào trong bài?**
+   * *Trả lời*: AJAX (Asynchronous JavaScript and XML) là kỹ thuật gửi và nhận dữ liệu ngầm giữa Trình duyệt và Server mà **không cần load lại toàn bộ trang web**.
+     - Khi sinh viên gõ tìm kiếm hoặc bấm phân trang, JS sẽ gọi hàm `fetch(newUrl)` gửi request ngầm lên PageModel.
+     - PageModel xử lý xong chỉ trả về phần HTML danh sách sự kiện mới. JS nhận được sẽ dùng `innerHTML` đè đè phần HTML này vào khu vực chứa kết quả (`#resultsWrapper`). Nhờ thế giao diện cập nhật ngay lập tức và giữ nguyên trạng thái cuộn trang.
+
+6. **Cache Stampede là gì và SemaphoreSlim giúp ích gì trong WeatherService?**
+   * *Trả lời*: 
+     - **Cache Stampede** (Bão Cache) xảy ra khi dữ liệu cache hết hạn ngay tại thời điểm có nhiều người dùng truy cập trang web đồng thời. Khi đó, tất cả các luồng xử lý đều thấy cache trống và đồng loạt gửi request tới API ngoài (wttr.in), làm treo ứng dụng hoặc bị API ngoài chặn.
+     - **SemaphoreSlim** đóng vai trò là một chiếc **khóa cửa (Lock)**. Khi cache trống, chỉ cho phép đúng 1 luồng duy nhất đi qua cửa để gọi API ngoài wttr.in và nạp lại Cache. Các luồng khác phải xếp hàng đợi. Khi luồng đầu tiên làm xong và nhả khóa, các luồng sau sẽ check lại cache (Double-checked locking) và lấy trực tiếp dữ liệu từ cache RAM luôn, không gọi ra API ngoài nữa.
+
+7. **AutoMapper dùng để làm gì và tại sao lại cần thiết?**
+   * *Trả lời*: 
+     - AutoMapper là thư viện giúp tự động sao chép (map) dữ liệu từ Entity (các bảng dưới DB) sang DTO (Data Transfer Object - vật chứa data gọn nhẹ để truyền lên UI).
+     - Việc dùng AutoMapper giúp tránh việc phải viết code gán thủ công từng thuộc tính (`dto.Title = event.Title; ...`) cho hàng loạt đối tượng, giúp code ngắn gọn hơn nhiều, hạn chế sai sót và tránh lỗi tham chiếu vòng (Circular Dependency) giữa các tầng.
