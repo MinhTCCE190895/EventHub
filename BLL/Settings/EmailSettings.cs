@@ -1,5 +1,7 @@
 namespace BLL.Settings;
 
+// Chứa các cấu hình kết nối phục vụ cho việc gửi Email qua giao thức SMTP.
+// Ánh xạ dữ liệu cấu hình từ file appsettings.json vào các thuộc tính để sử dụng thông qua IOptions.
 public class EmailSettings
 {
     public string SmtpHost { get; set; } = null!;

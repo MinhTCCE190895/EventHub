@@ -27,12 +27,9 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         _logger = logger;
     }
 
-    /// <summary>
-    /// LUỒNG KIỂM TRA QUYỀN ĐÁNH GIÁ:
-    /// 1. Tìm Booking ứng với EventId và StudentId.
-    /// 2. Vé phải ở trạng thái "Confirmed".
-    /// 3. Người dùng chưa từng gửi Feedback cho Booking này.
-    /// </summary>
+
+    // Kiểm tra sinh viên có được phép gửi đánh giá cho sự kiện hay không.
+    // Tìm vé của sinh viên đó, nếu trạng thái là "Confirmed" và chưa có Feedback gắn kèm thì hợp lệ.
     public async Task<bool> CanSubmitFeedbackAsync(Guid eventId, Guid studentId)
     {
         var booking = await _bookingRepository.Query()
@@ -45,12 +42,9 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         return booking.Feedback == null;
     }
 
-    /// <summary>
-    /// LUỒNG LƯU ĐÁNH GIÁ MỚI:
-    /// 1. Tạo bản ghi Feedback.
-    /// 2. Tạo danh sách FeedbackDetail tương ứng với các tiêu chí và điểm số gửi lên.
-    /// 3. Lưu dữ liệu xuống database.
-    /// </summary>
+
+    // Lưu thông tin phản hồi và điểm số chi tiết của sinh viên vào Database.
+    // Kiểm tra mã đặt vé -> Tạo đối tượng Feedback -> Duyệt danh sách điểm để add vào FeedbackDetails -> Lưu qua DbContext.
     public async Task SubmitFeedbackAsync(FeedbackSubmissionDto dto)
     {
         // Kiểm tra xem booking có tồn tại không
@@ -82,16 +76,9 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// LUỒNG THỐNG KÊ PHÂN TÍCH PHẢN HỒI (PLINQ Core Engine):
-    /// 1. Lấy toàn bộ danh sách feedback từ DB kèm FeedbackDetails, Booking, Event.
-    /// 2. Sử dụng LINQ gom nhóm (GroupBy) theo EventId để phân loại đánh giá cho từng sự kiện.
-    /// 3. Ứng với mỗi sự kiện, sử dụng PLINQ (.AsParallel()) để xử lý song song các tác vụ tính toán điểm trên các CPU core:
-    ///    - Lọc và gom nhóm các chi tiết tiêu chí (Criteria).
-    ///    - Tính toán điểm trung bình song song cho từng tiêu chí (Diễn giả, Hậu cần, Nội dung, Tổ chức).
-    ///    - Tính toán điểm trung bình tổng quan (Overall Average Score).
-    /// 4. Trả về kết quả tổng hợp.
-    /// </summary>
+
+    // Tính toán các chỉ số thống kê (Điểm tiêu chí, điểm tổng quan) của từng sự kiện.
+    // Chạy GroupBy trực tiếp dưới SQL để tính trung bình tiêu chí và tổng số feedback, sau đó map kết quả vào Dictionary để tối ưu tốc độ trả về.
     public async Task<IEnumerable<EventFeedbackMetricsDto>> GetFeedbackMetricsAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(">>> [SQL Engine] Khởi chạy tính toán thống kê Feedback qua LINQ SQL GroupBy...");
@@ -144,6 +131,8 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         return metrics;
     }
 
+    // Lấy toàn bộ danh sách đánh giá chi tiết của một sự kiện cụ thể.
+    // Tải dữ liệu từ DB lên RAM, sử dụng PLINQ (.AsParallel()) để chia nhỏ danh sách và tính điểm trung bình song song nhằm tăng hiệu năng.
     public async Task<IEnumerable<EventFeedbackDetailDto>> GetFeedbacksByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default)
     {
         var feedbacks = await _feedbackRepository.GetFeedbacksByEventIdAsync(eventId, cancellationToken);
@@ -168,6 +157,8 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
             .ToList();
     }
 
+    // Lấy lịch sử tất cả các đánh giá mà một sinh viên đã gửi.
+    // Lấy danh sách từ Repo theo StudentId, sau đó dùng PLINQ map sang DTO và tính điểm trung bình cho từng feedback.
     public async Task<IEnumerable<StudentFeedbackDto>> GetFeedbacksByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
     {
         var feedbacks = await _feedbackRepository.GetFeedbacksByStudentIdAsync(studentId, cancellationToken);

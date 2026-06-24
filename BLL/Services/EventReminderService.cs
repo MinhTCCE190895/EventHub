@@ -25,10 +25,12 @@ public class EventReminderService : IEventReminderService
         _logger = logger;
     }
 
-
+    // Quét và xử lý gửi email nhắc nhở cho các sự kiện sắp diễn ra.
+    // Mở Transaction mức Serializable -> Lấy các reminder chưa gửi -> Cập nhật trạng thái đã gửi trong DB -> Commit -> Dùng Parallel.ForEachAsync gửi email song song hàng loạt.
     public async Task ProcessPendingRemindersAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
+        // log debug để biết lúc nó đang hoạt động
         _logger.LogInformation(">>> [TPL Core Engine] Bắt đầu quét các email nhắc nhở lúc: {Time}", now);
 
         List<DAL.Entities.EventReminder> remindersList;
@@ -42,8 +44,8 @@ public class EventReminderService : IEventReminderService
                 remindersList = pendingReminders.ToList();
 
                 if (!remindersList.Any())
-                {
-                    _logger.LogInformation(">>> [TPL Core Engine] Không tìm thấy email nhắc nhở nào cần gửi.");
+                {// log debug ko tìm thấy sự kiện cần gửi mail
+                    _logger.LogInformation(">>> [TPL Core Engine] Không tìm thấy sự kiện nào cần gửi mail nhắc nhở.");
                     await transaction.CommitAsync(cancellationToken);
                     return;
                 }
@@ -61,16 +63,17 @@ public class EventReminderService : IEventReminderService
             }
             catch (Exception ex)
             {
+                // log debug báo lỗi
                 _logger.LogError(ex, ">>> [TPL Core Engine] Gặp lỗi khi khóa/cập nhật trạng thái reminders. Tiến hành rollback.");
                 await transaction.RollbackAsync(cancellationToken);
                 return;
             }
         }
-
+        // log debug xem có bao nhiêu sự kiện cần gửi mail.
         _logger.LogInformation(">>> [TPL Core Engine] Phát hiện {Count} sự kiện cần gửi email nhắc nhở.", remindersList.Count);
 
         foreach (var reminder in remindersList)
-        {
+        {   // log debug xem tên sự kiện, id và số lượt book
             var rawBookingsCount = reminder.Event?.Bookings?.Count ?? 0;
             _logger.LogInformation(">>> [DEBUG] Sự kiện '{EventTitle}' (Id: {EventId}) - Tổng số Bookings trong RAM: {RawCount}",
                 reminder.Event?.Title, reminder.EventId, rawBookingsCount);
@@ -78,7 +81,7 @@ public class EventReminderService : IEventReminderService
             if (reminder.Event?.Bookings != null)
             {
                 foreach (var b in reminder.Event.Bookings)
-                {
+                {   // log debug sinh viên book
                     _logger.LogInformation(">>> [DEBUG] Booking Id: {BookingId} | Status: '{Status}' | StudentEmail: '{Email}'",
                         b.Id, b.Status, b.Student?.Email);
                 }
@@ -89,7 +92,7 @@ public class EventReminderService : IEventReminderService
                 .ToList();
 
             if (activeBookings.Any())
-            {
+            {   // log debug thông báo gủi thành công đến từng sv
                 _logger.LogInformation(">>> [TPL Core Engine] Đang xử lý gửi email cho sự kiện '{EventTitle}' tới {UserCount} sinh viên song song...",
                     reminder.Event.Title, activeBookings.Count);
 
@@ -148,7 +151,7 @@ public class EventReminderService : IEventReminderService
                         await _emailSender.SendEmailAsync(studentEmail, subject, body, ct);
                     }
                     catch (Exception ex)
-                    {
+                    {   // log debug Gửi ko thành công.
                         _logger.LogError(ex, ">>> [TPL Core Engine] Lỗi khi gửi email cho sinh viên ở Booking Id: {BookingId}.", booking.Id);
                     }
                 });

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace BLL.BackgroundServices;
 
+// Chạy ngầm định kỳ để tự động kích hoạt tiến trình gửi email nhắc nhở sự kiện.
+// Khởi chạy vòng lặp vô hạn song song với ứng dụng -> Gọi hàm xử lý chính -> Tạm dừng 15 giây trước khi lặp lại vòng quét tiếp theo.
 public class EmailReminderWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -38,6 +40,8 @@ public class EmailReminderWorker : BackgroundService
         _logger.LogInformation("EmailReminderWorker is stopping.");
     }
 
+    // Tạo phạm vi dịch vụ (Scope) để gọi tầng nghiệp vụ xử lý gửi email.
+    // Khởi tạo Dependency Injection Scope -> Giải mã dịch vụ IEventReminderService -> Gọi hàm xử lý các reminder đang chờ gửi.
     private async Task SendPendingRemindersAsync(CancellationToken stoppingToken)
     {
         using var scope = _serviceProvider.CreateScope();

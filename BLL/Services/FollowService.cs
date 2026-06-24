@@ -25,6 +25,8 @@ public class FollowService : IFollowService
         _logger = logger;
     }
 
+    // Lấy danh sách tất cả các đơn vị tổ chức kèm số lượng người theo dõi.
+    // Lọc user có vai trò "Organizer" và đang hoạt động -> Đếm tổng số follower -> Kiểm tra user hiện tại có follow chưa -> Sắp xếp giảm dần theo lượng follow.
     public async Task<IEnumerable<OrganizerDto>> GetOrganizersWithFollowCountAsync(Guid currentUserId)
     {
         _logger.LogInformation("Getting organizers with follow count for user {UserId}", currentUserId);
@@ -43,11 +45,15 @@ public class FollowService : IFollowService
             .ToListAsync();
     }
 
+    // Kiểm tra xem một người dùng có đang theo dõi một đơn vị tổ chức hay không.
+    // Dùng AnyAsync kiểm tra xem có bản ghi trùng khớp cặp mã FollowerId và FolloweeId trong bảng Follows không.
     public async Task<bool> IsFollowingAsync(Guid followerId, Guid followeeId)
     {
         return await _context.Follows.AnyAsync(f => f.FollowerId == followerId && f.FolloweeId == followeeId);
     }
 
+    // Thực hiện theo dõi một đơn vị tổ chức.
+    // Kiểm tra đối tượng có phải Organizer đang hoạt động không -> Kiểm tra nếu chưa từng theo dõi thì thêm bản ghi mới vào bảng Follows -> Lưu xuống DB.
     public async Task FollowAsync(Guid followerId, Guid followeeId)
     {
         _logger.LogInformation("User {FollowerId} attempting to follow organizer {FolloweeId}", followerId, followeeId);
@@ -73,6 +79,8 @@ public class FollowService : IFollowService
         }
     }
 
+    // Hủy theo dõi một đơn vị tổ chức.
+    // Tìm bản ghi theo dõi tương ứng trong bảng Follows -> Nếu có thì tiến hành xóa bản ghi đó và lưu thay đổi xuống DB.
     public async Task UnfollowAsync(Guid followerId, Guid followeeId)
     {
         _logger.LogInformation("User {FollowerId} attempting to unfollow organizer {FolloweeId}", followerId, followeeId);
@@ -86,6 +94,8 @@ public class FollowService : IFollowService
         }
     }
 
+    // Lấy danh sách các đơn vị tổ chức mà người dùng hiện tại đang theo dõi.
+    // Lọc bảng Follows theo mã người dùng -> Map thông tin của đơn vị tổ chức sang DTO kèm tính toán số lượng follow -> Sắp xếp theo lượng follow giảm dần.
     public async Task<IEnumerable<OrganizerDto>> GetFollowedOrganizersAsync(Guid followerId)
     {
         _logger.LogInformation("Getting followed organizers for user {FollowerId}", followerId);
@@ -104,6 +114,8 @@ public class FollowService : IFollowService
             .ToListAsync();
     }
 
+    // Lấy danh sách các sự kiện mới nhất từ các đơn vị tổ chức đã theo dõi.
+    // Tìm danh sách Id của các đơn vị được follow -> Lọc các sự kiện thuộc danh sách Id đó ở trạng thái "Published" -> Sắp xếp theo thời gian và dùng AutoMapper để chuyển sang DTO.
     public async Task<IEnumerable<EventCardDTO>> GetNewEventsFromFollowedOrganizersAsync(Guid followerId)
     {
         _logger.LogInformation("Getting new events from followed organizers for user {FollowerId}", followerId);

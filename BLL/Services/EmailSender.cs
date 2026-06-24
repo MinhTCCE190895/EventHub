@@ -17,6 +17,8 @@ public class EmailSender : IEmailSender
         _logger = logger;
     }
 
+    // Thực hiện cấu hình và gửi thư điện tử (Email) bất đồng bộ.
+    // Khởi tạo SmtpClient từ cấu hình hệ thống -> Tạo đối tượng MailMessage với định dạng HTML -> Gọi SendMailAsync để gửi qua giao thức SMTP.
     public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
         try
