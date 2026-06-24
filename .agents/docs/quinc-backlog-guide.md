@@ -27,11 +27,11 @@
 ## 🎯 Chi Tiết 4 Chức Năng & Luồng Xử Xử Lý (Giải thích kiểu thực tế)
 
 ### Chức năng 1: Giao diện Explore Events (Grid vs List)
-* **Ý tưởng**: Cho sinh viên chuyển đổi nhanh giữa xem dạng Lưới (Grid) hoặc Danh sách (List) ngay trên trang, có thêm hiệu ứng chấm LED trạng thái (sắp diễn ra, đang diễn ra) với đổi màu xám nếu sự kiện đã kết thúc để giao diện trông xịn hơn.
+* **Ý tưởng**: Cho sinh viên chuyển đổi nhanh giữa xem dạng Lưới (Grid) hoặc Danh sách (List) ngay trên trang, có thêm hiệu ứng chấm LED trạng thái (sắp diễn ra, đang diễn ra) với đổi màu xám nếu sự kiện đã kết thúc để giao diện trông xịn hơn. Toàn bộ dữ liệu hiển thị trên Lưới/Danh sách đều được truy vấn động từ cơ sở dữ liệu.
 * **Flow chạy qua các file**:
   1. **Index.cshtml (Giao diện)**: Khi bấm đổi View, gọi hàm JS `changeView` để nhét chữ "Grid" hoặc "List" vào hidden input, rồi gọi AJAX fetch dữ liệu mới.
-  2. **Index.cshtml.cs (PageModel)**: Nhận cái ViewType đó qua binding, gọi Service lấy đúng dữ liệu rồi trả về.
-  3. **Index.cshtml (JS nhận kết quả)**: Lấy HTML mới đè vào khu vực `#resultsWrapper` để đổi giao diện mà không bị reload lại cả trang web.
+  2. **Index.cshtml.cs (PageModel)**: Nhận cái `ViewType` đó qua binding, gọi BLL `SearchService` xuống DAL `EventRepository` thực hiện truy vấn cơ sở dữ liệu SQL Server để lấy đúng danh sách sự kiện (đã lọc và nạp sẵn dữ liệu liên quan để tránh lỗi N+1), map sang DTO rồi trả về HTML.
+  3. **Index.cshtml (JS nhận kết quả)**: Lấy HTML mới nhận được đè vào khu vực `#resultsWrapper` để đổi giao diện mà không bị reload lại cả trang web.
 * **Code cốt lõi**:
   ```javascript
   function changeView(viewType) {
