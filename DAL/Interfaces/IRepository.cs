@@ -1,6 +1,6 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace DAL.Repositories;
+namespace DAL.Interfaces;
 
 public interface IRepository<T> where T : class
 {

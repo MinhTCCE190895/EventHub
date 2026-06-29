@@ -48,6 +48,12 @@ graph TD
 
 ### 3.1. Detailed Changes Log
 
+- **2026-06-29 (Antigravity / LongNH)**:
+  - **Tái cấu trúc toàn diện kiến trúc 3 tầng (3-Layer Architecture Refactoring)**:
+    - Xóa các file rác và template thừa (`BLL/Class1.cs`, `DAL/Class1.cs`, thư mục rỗng `DAL/Models/`, thư mục test `CascadeTest/`).
+    - Quy tụ toàn bộ DTO về `BusinessObjects/DTOs`, xóa các DTO bị trùng lặp (`AuthDtos.cs`, `FeedbackDtos.cs` trong `BLL/DTOs`).
+    - Sử dụng `git mv` di chuyển 12 file interface dịch vụ sang `BLL/Interfaces` (namespace `BLL.Interfaces`) và 5 file interface repository sang `DAL/Interfaces` (namespace `DAL.Interfaces`) giúp bảo toàn trọn vẹn lịch sử Git commit.
+    - Cập nhật toàn bộ DI Container (`DependencyInjection.cs`), các tầng dịch vụ và presentation layers (`RazorPages`, `MVC`, `Blazor`) sử dụng namespace mới. Kiểm chứng build và startup runtime 100% thành công.
 - **2026-06-30 (Antigravity)**:
   - **MinhTC & LongNH - Chuẩn hóa Cascade Restrict & Xử lý Exception (`FE-05`, `FE-02`, `FE-09`)**:
     - Cấu hình chuẩn `DeleteBehavior.Restrict` trong `CompositeKeysConfiguration.cs` cho `EventCategory` và `EventTag` từ `Category` và `Tag`.
@@ -113,6 +119,13 @@ graph TD
     - Configured Cookie Authentication, AccountController, and BCrypt password hashing.
     - Set up shared EF Core Data Protection keys in BLL/MVC to enable SSO.
   - Integrated wttr.in weather API with 30-min `IMemoryCache` for Weather Widget.
+
+- **2026-06-29 (Antigravity / LongNH)**:
+  - Hoàn tất kế hoạch chuẩn hóa kiến trúc 3-Layer (BLL, DAL, Presentation).
+  - Dọn dẹp rác & file thừa: Xóa `BLL/Class1.cs`, `DAL/Class1.cs`, thư mục rỗng `DAL/Models/` và test ngoài luồng `CascadeTest/`.
+  - Quy tụ DTO: Xóa DTO trùng lặp `BLL/DTOs/AuthDtos.cs`, `FeedbackDtos.cs`, refactor toàn bộ sang `using BusinessObjects.DTOs;`.
+  - Phân tách Interface: Dùng `git mv` chuyển các interface sang `BLL/Interfaces/` (`namespace BLL.Interfaces;`) và `DAL/Interfaces/` (`namespace DAL.Interfaces;`).
+  - Chuẩn hóa bộ xử lý file: Xử lý đọc/ghi với `[System.Text.Encoding]::UTF8` bảo toàn tuyệt đối phông chữ tiếng Việt trên toàn bộ giải pháp.
 
 - **2026-06-14 (Antigravity / MinhTC / QuiNC)**:
   - Setup core PRN222 architectural rules (3-Layer structure, connection safety, async/await).

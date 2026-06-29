@@ -1,5 +1,6 @@
-using DAL.Data;
+﻿using DAL.Data;
 using DAL.Repositories;
+using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

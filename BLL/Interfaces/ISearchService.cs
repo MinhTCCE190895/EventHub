@@ -1,6 +1,6 @@
-using BusinessObjects.DTOs;
+﻿using BusinessObjects.DTOs;
 
-namespace BLL.Services;
+namespace BLL.Interfaces;
 
 public interface ISearchService
 {

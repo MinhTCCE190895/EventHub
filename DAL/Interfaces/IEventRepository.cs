@@ -1,6 +1,6 @@
-using DAL.Entities;
+﻿using DAL.Entities;
 
-namespace DAL.Repositories;
+namespace DAL.Interfaces;
 
 public interface IEventRepository : IRepository<Event>
 {

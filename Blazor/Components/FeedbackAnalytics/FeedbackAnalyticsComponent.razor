@@ -1,7 +1,8 @@
-@page "/feedback-analytics"
+﻿@page "/feedback-analytics"
 @rendermode InteractiveServer
-@using BLL.DTOs
+@using BusinessObjects.DTOs
 @using BLL.Services
+@using BLL.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin,Organizer")]
 @inject IFeedbackAnalyticsService FeedbackService

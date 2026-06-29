@@ -1,4 +1,4 @@
-namespace BLL.Services;
+﻿namespace BLL.Interfaces;
 
 public interface IEmailSender
 {

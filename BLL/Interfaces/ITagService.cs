@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BusinessObjects.DTOs;
 
-namespace BLL.Services;
+namespace BLL.Interfaces;
 
 public interface ITagService
 {

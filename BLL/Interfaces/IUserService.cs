@@ -1,7 +1,7 @@
-using BLL.DTOs;
+﻿using BusinessObjects.DTOs;
 using DAL.Entities;
 
-namespace BLL.Services;
+namespace BLL.Interfaces;
 
 public interface IUserService
 {
