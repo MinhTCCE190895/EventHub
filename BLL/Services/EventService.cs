@@ -152,13 +152,24 @@ public class EventService : IEventService
     public async Task DeleteEventAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var ev = await _eventRepository.Query()
+            .Include(e => e.Bookings)
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
         if (ev == null)
             throw new KeyNotFoundException("Sự kiện không tồn tại.");
 
-        _eventRepository.Remove(ev);
-        await _context.SaveChangesAsync(cancellationToken);
+        if (ev.Bookings != null && ev.Bookings.Any())
+            throw new InvalidOperationException("Không thể xóa sự kiện này vì đã có sinh viên Đăng ký.");
+
+        try
+        {
+            _eventRepository.Remove(ev);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Không thể xóa sự kiện này vì đã có sinh viên Đăng ký hoặc ràng buộc dữ liệu.");
+        }
     }
 
     public async Task<IEnumerable<User>> GetOrganizersAsync(CancellationToken cancellationToken = default)

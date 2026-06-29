@@ -12,4 +12,5 @@ public interface IUserService
     /// Validate login — trả về User nếu thành công, null nếu sai email/pass hoặc bị khoá.
     /// </summary>
     Task<User?> ValidateLoginAsync(string email, string password);
+    Task DeleteUserAsync(Guid id, bool softDelete = true);
 }

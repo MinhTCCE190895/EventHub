@@ -64,11 +64,23 @@ public class EditModel : PageModel
 
         if (!string.IsNullOrEmpty(SelectedCampus))
         {
-            var suffix = ", " + SelectedCampus;
-            if (!VenueUpdateDTO.Address.EndsWith(suffix))
+            var address = VenueUpdateDTO.Address?.Trim() ?? "";
+            bool removed;
+            do
             {
-                VenueUpdateDTO.Address += suffix;
-            }
+                removed = false;
+                foreach (var campus in Campuses)
+                {
+                    var oldSuffix = ", " + campus.Value;
+                    if (address.EndsWith(oldSuffix))
+                    {
+                        address = address.Substring(0, address.Length - oldSuffix.Length).Trim();
+                        removed = true;
+                    }
+                }
+            } while (removed);
+
+            VenueUpdateDTO.Address = address + ", " + SelectedCampus;
         }
 
         try

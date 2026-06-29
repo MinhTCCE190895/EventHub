@@ -14,6 +14,13 @@
 
     <div class="card border-danger shadow-sm">
         <div class="card-body p-4">
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-x-circle-fill me-2"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
                 <i class="bi bi-exclamation-triangle-fill fs-5"></i>
                 <span>Hành động này <strong>không thể hoàn tác</strong>. Toàn bộ dữ liệu liên quan sẽ bị xóa.</span>

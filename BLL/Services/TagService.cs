@@ -82,6 +82,7 @@ public class TagService : ITagService
     public async Task DeleteTagAsync(int id, CancellationToken cancellationToken = default)
     {
         var tag = await _tagRepository.Query()
+            .Include(t => t.EventTags)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (tag == null)
@@ -89,7 +90,19 @@ public class TagService : ITagService
             throw new KeyNotFoundException("Tag not found.");
         }
 
-        _tagRepository.Remove(tag);
-        await _context.SaveChangesAsync(cancellationToken);
+        if (tag.EventTags != null && tag.EventTags.Any())
+        {
+            throw new InvalidOperationException("Không thể xóa thẻ này vì đang có Sự kiện gắn với thẻ này.");
+        }
+
+        try
+        {
+            _tagRepository.Remove(tag);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Không thể xóa thẻ này vì đang có Sự kiện gắn với thẻ này.");
+        }
     }
 }

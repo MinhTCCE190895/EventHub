@@ -82,6 +82,7 @@ public class CategoryService : ICategoryService
     public async Task DeleteCategoryAsync(int id, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.Query()
+            .Include(c => c.EventCategories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (category == null)
@@ -89,7 +90,19 @@ public class CategoryService : ICategoryService
             throw new KeyNotFoundException("Category not found.");
         }
 
-        _categoryRepository.Remove(category);
-        await _context.SaveChangesAsync(cancellationToken);
+        if (category.EventCategories != null && category.EventCategories.Any())
+        {
+            throw new InvalidOperationException("Không thể xóa danh mục này vì đang có Sự kiện gắn với danh mục này.");
+        }
+
+        try
+        {
+            _categoryRepository.Remove(category);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Không thể xóa danh mục này vì đang có Sự kiện gắn với danh mục này.");
+        }
     }
 }

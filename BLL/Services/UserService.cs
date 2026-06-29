@@ -2,6 +2,7 @@ using BLL.DTOs;
 using DAL.Data;
 using DAL.Entities;
 using DAL.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BLL.Services;
@@ -92,5 +93,40 @@ public class UserService : IUserService
         }
 
         return user;
+    }
+
+    public async Task DeleteUserAsync(Guid id, bool softDelete = true)
+    {
+        var user = await _userRepo.Query()
+            .Include(u => u.OrganizedEvents)
+            .Include(u => u.Bookings)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user is null)
+            throw new KeyNotFoundException("Tài khoản không tồn tại.");
+
+        if (softDelete)
+        {
+            user.IsActive = false;
+            _userRepo.Update(user);
+            await _context.SaveChangesAsync();
+            return;
+        }
+
+        if (user.Role == "Organizer" && user.OrganizedEvents.Any())
+            throw new InvalidOperationException("Không cho xóa Organizer do đã tạo Sự kiện. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
+
+        if (user.Role == "Student" && user.Bookings.Any())
+            throw new InvalidOperationException("Không cho xóa Student do đang giữ vé đăng ký. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
+
+        try
+        {
+            _userRepo.Remove(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Không thể xóa tài khoản do ràng buộc dữ liệu. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
+        }
     }
 }

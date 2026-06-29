@@ -34,6 +34,11 @@ public class DeleteModel : PageModel
             await _eventService.DeleteEventAsync(id);
             TempData["SuccessMessage"] = "Sự kiện đã được xóa thành công!";
         }
+        catch (System.InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToPage("./Delete", new { id });
+        }
         catch (KeyNotFoundException)
         {
             return NotFound();

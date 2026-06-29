@@ -39,9 +39,9 @@ public class DeleteModel : PageModel
             await _tagService.DeleteTagAsync(id);
             TempData["SuccessMessage"] = "Tag deleted successfully!";
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        catch (System.InvalidOperationException ex)
         {
-            TempData["ErrorMessage"] = "Không thể xóa thẻ này vì đang được sử dụng.";
+            TempData["ErrorMessage"] = ex.Message;
             return RedirectToPage("./Delete", new { id });
         }
         catch (System.Collections.Generic.KeyNotFoundException)

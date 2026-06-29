@@ -81,6 +81,7 @@ public class VenueService : IVenueService
     public async Task DeleteVenueAsync(int id, CancellationToken cancellationToken = default)
     {
         var venue = await _venueRepository.Query()
+            .Include(v => v.Events)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
         if (venue == null)
@@ -88,7 +89,19 @@ public class VenueService : IVenueService
             throw new KeyNotFoundException("Venue not found.");
         }
 
-        _venueRepository.Remove(venue);
-        await _context.SaveChangesAsync(cancellationToken);
+        if (venue.Events != null && venue.Events.Any())
+        {
+            throw new InvalidOperationException("Không thể xóa địa điểm này vì đang có sự kiện được tổ chức tại đây");
+        }
+
+        try
+        {
+            _venueRepository.Remove(venue);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new InvalidOperationException("Không thể xóa địa điểm này vì đang có sự kiện được tổ chức tại đây");
+        }
     }
 }

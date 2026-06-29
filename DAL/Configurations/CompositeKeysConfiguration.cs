@@ -14,11 +14,31 @@ public class CompositeKeysConfiguration :
     public void Configure(EntityTypeBuilder<EventCategory> builder)
     {
         builder.HasKey(ec => new { ec.EventId, ec.CategoryId });
+
+        builder.HasOne(ec => ec.Category)
+            .WithMany(c => c.EventCategories)
+            .HasForeignKey(ec => ec.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(ec => ec.Event)
+            .WithMany(e => e.EventCategories)
+            .HasForeignKey(ec => ec.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public void Configure(EntityTypeBuilder<EventTag> builder)
     {
         builder.HasKey(et => new { et.EventId, et.TagId });
+
+        builder.HasOne(et => et.Tag)
+            .WithMany(t => t.EventTags)
+            .HasForeignKey(et => et.TagId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(et => et.Event)
+            .WithMany(e => e.EventTags)
+            .HasForeignKey(et => et.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public void Configure(EntityTypeBuilder<Bookmark> builder)

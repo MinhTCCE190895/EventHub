@@ -39,9 +39,9 @@ public class DeleteModel : PageModel
             await _venueService.DeleteVenueAsync(id);
             TempData["SuccessMessage"] = "Venue deleted successfully!";
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        catch (System.InvalidOperationException ex)
         {
-            TempData["ErrorMessage"] = "Không thể xóa địa điểm này vì đang có sự kiện sử dụng.";
+            TempData["ErrorMessage"] = ex.Message;
             return RedirectToPage("./Delete", new { id });
         }
         catch (System.Collections.Generic.KeyNotFoundException)
