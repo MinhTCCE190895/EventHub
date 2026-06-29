@@ -1,45 +1,38 @@
-﻿using BLL.Services;
-using BLL.Interfaces;
+using BLL.Services;
 using BusinessObjects.DTOs;
 using DAL.Entities;
-using DAL.Repositories;
-using DAL.Interfaces;
 using DAL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RazorPages.ViewModels;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 namespace RazerPages.Pages;
 
 public class IndexModel : PageModel
 {
-    private readonly ISearchService _searchService;
-    private readonly IRepository<Category> _categoryRepo;
-    private readonly IRepository<Tag> _tagRepo;
-    private readonly IRepository<User> _userRepo;
-    private readonly AppDbContext _context;
+    private readonly IEventService _eventService;
+    private readonly ICategoryService _categoryService;
+    private readonly ITagService _tagService;
+    private readonly AppDbContext _context; // Used only for Bookmark query (no BookmarkService yet)
     private readonly ILogger<IndexModel> _logger;
 
     // Get actual ID instead of hardcoding
-    public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true 
-        ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) 
+    public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true
+        ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
         : null;
 
     public IndexModel(
-        ISearchService searchService,
-        IRepository<Category> categoryRepo,
-        IRepository<Tag> tagRepo,
-        IRepository<User> userRepo,
+        IEventService eventService,
+        ICategoryService categoryService,
+        ITagService tagService,
         AppDbContext context,
         ILogger<IndexModel> logger)
     {
-        _searchService = searchService;
-        _categoryRepo = categoryRepo;
-        _tagRepo = tagRepo;
-        _userRepo = userRepo;
+        _eventService = eventService;
+        _categoryService = categoryService;
+        _tagService = tagService;
         _context = context;
         _logger = logger;
     }
@@ -65,29 +58,29 @@ public class IndexModel : PageModel
 
         try
         {
-            SearchVm.Categories = (await _categoryRepo.GetAllAsync(cancellationToken)).ToList();
-            SearchVm.Tags = (await _tagRepo.GetAllAsync(cancellationToken)).ToList();
+            SearchVm.Categories = (await _categoryService.GetAllCategoriesAsync(cancellationToken)).ToList();
+            SearchVm.Tags = (await _tagService.GetAllTagsAsync(cancellationToken)).ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Không load được danh sách category/tag trên trang chủ");
+            _logger.LogError(ex, "Failed to load category/tag lists on home page");
         }
 
         var searchDto = new EventSearchDTO
         {
-            Keyword = SearchVm.Keyword,
+            Keyword    = SearchVm.Keyword,
             CategoryId = SearchVm.CategoryId,
-            TagIds = SearchVm.TagIds,
+            TagIds     = SearchVm.TagIds,
             TimeFilter = SearchVm.TimeFilter,
-            StartDate = SearchVm.StartDate,
-            EndDate = SearchVm.EndDate,
+            StartDate  = SearchVm.StartDate,
+            EndDate    = SearchVm.EndDate,
             PageNumber = SearchVm.PageNumber,
-            SortBy = SearchVm.SortBy
+            SortBy     = SearchVm.SortBy
         };
 
-        var (items, totalCount) = await _searchService.SearchEventsAsync(searchDto, cancellationToken);
+        var (items, totalCount) = await _eventService.SearchEventsAsync(searchDto, cancellationToken);
 
-        SearchVm.Results = items;
+        SearchVm.Results    = items;
         SearchVm.TotalCount = totalCount;
 
         // Clamp page number to valid range to prevent out of bounds
@@ -95,25 +88,5 @@ public class IndexModel : PageModel
 
         return Page();
     }
-    private async Task EnsureStudentExistsAsync(CancellationToken cancellationToken)
-    {
-        if (!CurrentStudentId.HasValue) return;
-        var exists = await _userRepo.ExistsAsync(u => u.Id == CurrentStudentId.Value, cancellationToken);
-        if (!exists)
-        {
-            // Create a mock student if not exists to ensure db constraints are satisfied
-            var student = new User
-            {
-                Id = CurrentStudentId.Value,
-                FullName = "Demo Student (QuiNC)",
-                Role = "Student",
-                Email = "student.demo@unieventhub.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-            await _userRepo.AddAsync(student, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-    }
 }
+

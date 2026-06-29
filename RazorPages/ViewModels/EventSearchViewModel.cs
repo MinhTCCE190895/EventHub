@@ -1,5 +1,4 @@
 using BusinessObjects.DTOs;
-using DAL.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace RazorPages.ViewModels;
@@ -34,7 +33,8 @@ public class EventSearchViewModel
 
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / EventSearchDTO.PageSize);
 
-    // Used to populate dropdowns and checkboxes on the form
-    public List<Category> Categories { get; set; } = new();
-    public List<Tag> Tags { get; set; } = new();
+    // Used to populate dropdowns and checkboxes on the form — use DTOs, not Entities
+    public List<CategoryDTO> Categories { get; set; } = new();
+    public List<TagDTO> Tags { get; set; } = new();
 }
+

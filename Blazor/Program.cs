@@ -16,11 +16,10 @@ namespace Blazor
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
-            // Register BLL & DAL services (Feature-based Registration)
+            // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddCoreBusinessServices(builder.Configuration);
-            builder.Services.AddLiveInteractiveServices();
-            builder.Services.AddFeedbackManagementServices();
+            builder.Services.AddBusinessLogicLayer(builder.Configuration);
+            builder.Services.AddSignalR(); // SignalR belongs here — Blazor is the only app hosting the Hub
 
             // Register background worker
             builder.Services.AddHostedService<BLL.BackgroundServices.EmailReminderWorker>();

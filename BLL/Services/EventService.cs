@@ -208,11 +208,86 @@ public class EventService : IEventService
         _eventRepository.Update(ev);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Phát tín hiệu SignalR khi duyệt (Publish) sự kiện để đồng bộ Dashboard thời gian thực
+        // Broadcast SignalR when Admin approves (Published) — sync Blazor Dashboard in real time
         if (newStatus == "Published")
         {
             var maxCapacity = ev.Venue?.MaxCapacity ?? 0;
             await _hubContext.Clients.All.SendAsync("ReceiveEventPublished", ev.Id, ev.Title, maxCapacity, cancellationToken);
         }
+    }
+
+    public async Task<(List<EventCardDTO> Items, int TotalCount)> SearchEventsAsync(
+        EventSearchDTO searchDto,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _eventRepository.BuildSearchQuery();
+
+        // Only retrieve Published events to prevent students from seeing drafts
+        query = query.Where(e => e.Status == "Published");
+
+        var keyword = searchDto.Keyword?.Trim();
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            // Search Title, Description, and Category.Name for higher recall
+            query = query.Where(e =>
+                e.Title.Contains(keyword) ||
+                e.Description.Contains(keyword) ||
+                e.EventCategories.Any(ec => ec.Category.Name.Contains(keyword)));
+        }
+
+        if (searchDto.CategoryId.HasValue && searchDto.CategoryId > 0)
+        {
+            // Check > 0 because "All Categories" from front-end defaults to 0
+            query = query.Where(e => e.EventCategories.Any(ec => ec.CategoryId == searchDto.CategoryId));
+        }
+
+        if (searchDto.TagIds.Count > 0)
+        {
+            // OR filter: display any event containing at least one selected tag
+            query = query.Where(e => e.EventTags.Any(et => searchDto.TagIds.Contains(et.TagId)));
+        }
+
+        // Use UTC to compare accurately with database values
+        var now = DateTime.UtcNow;
+        query = searchDto.TimeFilter switch
+        {
+            "Upcoming" => query.Where(e => e.StartTime > now),
+            "Ongoing"  => query.Where(e => e.StartTime <= now && e.EndTime >= now),
+            "Past"     => query.Where(e => e.EndTime < now),
+            _          => query // Default: all events, no time filter
+        };
+
+        if (searchDto.StartDate.HasValue)
+            query = query.Where(e => e.StartTime >= searchDto.StartDate.Value);
+
+        if (searchDto.EndDate.HasValue)
+        {
+            // Include up to 23:59:59 of the end date
+            var endOfDay = searchDto.EndDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(e => e.StartTime <= endOfDay);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        query = searchDto.SortBy switch
+        {
+            "DateDesc"   => query.OrderByDescending(e => e.StartTime),
+            "NameAsc"    => query.OrderBy(e => e.Title),
+            "NameDesc"   => query.OrderByDescending(e => e.Title),
+            "Popularity" => query.OrderByDescending(e => e.Bookings.Count),
+            // Default: push past events to bottom, active/upcoming events on top
+            _ => query.OrderBy(e => e.EndTime < now)
+                      .ThenBy(e => e.StartTime > now)
+                      .ThenBy(e => e.StartTime)
+        };
+
+        var skip = (searchDto.PageNumber - 1) * EventSearchDTO.PageSize;
+        var events = await query
+            .Skip(skip)
+            .Take(EventSearchDTO.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = _mapper.Map<List<EventCardDTO>>(events);
+        return (items, totalCount);
     }
 }

@@ -41,27 +41,41 @@ graph TD
 
 ## 2. PENDING MODULES
 - **Blazor (Feedback Analytics - Detail Reports)**: Further custom analytics reports if requested.
-- **Razor Pages - Tối ưu hóa Tìm kiếm (`FE-03`) (QuiNC - Kế hoạch triển khai sau)**:
-  - **Mục tiêu:** Loại bỏ `SearchService` (BLL) độc lập để tối giản hóa kiến trúc.
-  - **Tầng BLL (`EventService.cs`):** 
-    - Chuyển toàn bộ logic dựng LINQ tìm kiếm động (Query Composition) từ `SearchService.SearchEventsAsync()` vào `EventService.SearchEventsAsync(EventSearchDTO Dto)`.
-    - Cải tiến câu query LINQ tìm kiếm từ khóa (`Keyword`) quét đồng thời cả Tiêu đề (`Title`), Mô tả (`Description`) và Tên của Thể loại (`Category.Name`) bằng cách lồng duyệt qua bảng liên kết trung gian `EventCategories` (`.Any(ec => ec.Category.Name.Contains(keyword))`).
-  - **Tầng DI (`DependencyInjection.cs`):**
-    - Mở file `BLL/DependencyInjection.cs`, xóa dòng đăng ký cũ `services.AddScoped<ISearchService, SearchService>();`. Đảm bảo `EventService` đã đăng ký thông qua `services.AddScoped<IEventService, EventService>();`.
-  - **Tầng UI (`Index.cshtml.cs` PageModel):**
-    - Mở file `RazorPages/Pages/Index.cshtml.cs`.
-    - Đổi khai báo trường private `private readonly ISearchService _searchService;` thành `private readonly IEventService _eventService;`.
-    - Sửa Constructor để nhận và gán `IEventService _eventService` thay thế cho `ISearchService`.
-    - Tại phương thức `OnGetAsync`, đổi dòng gọi Service cũ sang `var (items, totalCount) = await _eventService.SearchEventsAsync(searchDto, cancellationToken);`.
 
+---
 
+## 2.5. ⚠️ ARCHITECTURE VIOLATIONS — ACTION REQUIRED BY TEAM
+> Phát hiện ngày 2026-06-29 bởi QuiNC (Antigravity audit). Build vẫn pass, nhưng cần fix trước khi vấn đáp.
+
+### [ARCH-01] `BLL/DTOs/` — DTO duplicate, sai tầng — **TOÀN TEAM**
+File `BLL/DTOs/AuthDtos.cs` và `BLL/DTOs/FeedbackDtos.cs` là bản sao của `BusinessObjects/DTOs/`. 9 file đang `using BLL.DTOs` thay vì `using BusinessObjects.DTOs`:
+- `MVC/Controllers/AccountController.cs` → **LongNH**
+- `BLL/Services/UserService.cs`, `IUserService.cs` → **LongNH**
+- `BLL/Services/FeedbackAnalyticsService.cs`, `IFeedbackAnalyticsService.cs`, `FollowService.cs` → **TriLT**
+- `RazorPages/Pages/Feedback/Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
+- `Blazor/Components/FeedbackAnalytics/FeedbackAnalyticsComponent.razor` → **Khôi**
+
+**Cách fix**: Đổi `using BLL.DTOs;` → `using BusinessObjects.DTOs;` trong các file trên, sau đó xóa folder `BLL/DTOs/`.
+
+### [ARCH-04] `AppDbContext` inject trực tiếp vào Presentation layer — **Toàn team**
+Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
+- `Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
+- `OrganizerDetails.cshtml.cs` → **TriLT**
+- `Blazor/Components/Dashboard/DashboardComponent.razor`, `BookingComponent.razor` → **Khôi**
+- `RazorPages/Pages/Index.cshtml.cs` → **QuiNC** (giữ tạm vì chưa có BookmarkService)
+
+**Trade-off chấp nhận được cho học thuật** — giải thích khi bị hỏi: "Chưa có BookmarkService nên inject DbContext trực tiếp, biết vi phạm Clean Architecture."
+
+### [ARCH-05] `IMapper` inject ở Presentation — **TriLT**
+`RazorPages/Pages/Follow/OrganizerDetails.cshtml.cs` inject `IMapper` trực tiếp — mapping phải thuộc BLL.
 
 ---
 
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
-
+- **2026-06-29 (Antigravity)**:
+  - **QuiNC - Architecture Refactor (ARCH-02, ARCH-03/FE-03, ARCH-06, ARCH-07)**: Removed `AddSignalR()` from `BLL/DependencyInjection.cs` (wrong layer) and moved to `Blazor/Program.cs`. Merged `SearchService.SearchEventsAsync()` into `EventService`, extended keyword search to scan `Category.Name` via `EventCategories.Any(ec => ec.Category.Name.Contains(keyword))`. Added `SearchEventsAsync` signature to `IEventService`. Deleted `ISearchService.cs` and `SearchService.cs`. Refactored `Index.cshtml.cs` to inject `IEventService`, `ICategoryService`, `ITagService` instead of `ISearchService` and raw `IRepository<T>`. Fixed `EventSearchViewModel` to use `CategoryDTO`/`TagDTO` instead of `DAL.Entities`. Build: **0 errors, 2 pre-existing warnings**.
 - **2026-06-24 (Antigravity)**:
   - **QuiNC - Tách cấu trúc Dependency Injection (BLL)**: Tách `AddBusinessLogicLayer` thành các extension method độc lập (`AddCoreBusinessServices`, `AddWeatherServices`, `AddEmailServices`, `AddInfrastructureServices`) để dọn sạch cấu hình DI. Loại bỏ `services.AddSignalR()` khỏi tầng BLL để tránh phụ thuộc ngược vào Presentation Layer, và chuyển cấu hình này trực tiếp vào `Program.cs` của dự án Blazor.
   - **QuiNC - Cập nhật Backlog Guide (FE-03, FE-08)**: Cập nhật tài liệu `quinc-backlog-guide.md` khớp hoàn toàn với mã nguồn thực tế phục vụ ôn tập thi vấn đáp.
@@ -84,55 +98,10 @@ graph TD
     - **FE-12 Event Follows**: Triển khai hoàn chỉnh tính năng theo dõi ban tổ chức dành cho Student. Tạo DTO `OrganizerDto`, Interface `IFollowService` và class `FollowService` tối ưu hóa đếm số lượng followers thông qua truy vấn SQL. Tạo các trang Razor Pages gồm `/Events/Organizers` (danh sách ban tổ chức sắp xếp theo độ phổ biến giảm dần, nút follow/unfollow), `/Events/OrganizerDetails` (chi tiết sự kiện của ban tổ chức), và `/Events/Followed` (ban tổ chức đã theo dõi & các sự kiện mới nhất). Cập nhật điều hướng sidebar của Student.
   - **MinhTC - Tách nghiệp vụ Duyệt Sự Kiện (Admin Approve)**: Bổ sung logic duyệt độc lập `ChangeEventStatusAsync` trong `EventService`, tạo luồng POST API chuyên biệt `?handler=ChangeStatus` trong giao diện List Event `Index.cshtml`. Giới hạn truy cập (RBAC) với `if (!User.IsInRole("Admin"))` để chặn Organizer tự duyệt. Tích hợp trực tiếp các nút Duyệt/Hủy vào Data Grid dành riêng cho role Admin, ngăn chặn triệt để lỗi Over-posting trạng thái từ Form Edit cũ.
 
-  - **MinhTC - Fix Logic Anomalies (FE-05, FE-13)**: Khắc phục các lỗi logic cho phân hệ Event CRUD: Xóa trường `Status` khỏi tính năng Edit Event (Chống Over-posting), xử lý `DbUpdateException` khi xóa `Venue`, `Category`, `Tag` đang được sử dụng (thông báo lỗi thay vì crash), cập nhật `CategoryService` và `TagService` tự động `.Trim()` và kiểm tra trùng lặp tên. Thêm logic xác thực sức chứa (Capacity Limits) khi Cập nhật Địa điểm (Venue) và Cập nhật Sự kiện (Event) để đảm bảo Sức chứa mới không được nhỏ hơn số lượng đã đăng ký hiện tại, hiển thị lỗi qua `ModelState`.
-- **2026-06-22 (Antigravity)**:
-  - **Tài liệu hóa Edge Cases & Phân chia lỗi logic**: Biên soạn tài liệu phân tích chi tiết các kịch bản lỗi logic, UX edge cases và phân chia cụ thể cho các thành viên trong nhóm phục vụ giai đoạn kiểm thử và hoàn thiện.
-  - **QuiNC - Fix Weather & AJAX Search Edge Cases (`FE-08`, `FE-03`)**: Sửa lỗi `NormalizeLocation` tránh crash khi đầu vào địa chỉ thiếu `, [Campus Name]`; giải quyết triệt để Cache Stampede bằng `SemaphoreSlim` (Double-checked locking pattern) trong `WeatherService.cs`; và tích hợp `AbortController` hủy các AJAX request tìm kiếm thừa khi người dùng spam click nhanh trên trang Explore (`Index.cshtml`).
-  - **QuiNC - Tối ưu luồng điều hướng Blazor (`FE-03`)**: Tối ưu hóa trải nghiệm Student bằng cách chuyển hướng tự động trang `/events` bên Blazor (`Home.razor`) và cập nhật liên kết Sidebar (`NavMenu.razor`) trỏ trực tiếp về trang Explore chính của Razor Pages (`http://localhost:5129/`) để tránh trùng lặp giao diện xem danh sách sự kiện.
-  - **QuiNC - Explore AutoMapper Conversion (`FE-03`)**: Chuyển đổi thành công phần map dữ liệu thủ công (`.Select` tay) trong BLL `SearchService.cs` sang sử dụng **AutoMapper** tự động. Cập nhật cấu hình map tương ứng trong `EventProfile.cs` (gồm lấy VenueName, OrganizerName, danh sách TagNames từ bảng liên kết, số lượng vé đã đặt `BookedCount` và sức chứa tối đa `MaxCapacity`).
-  - **Đồng bộ múi giờ Việt Nam (UTC+7)**: Cấu hình AutoMapper trong `EventProfile.cs` tự động cộng thêm 7 tiếng khi chuyển đổi từ Entity lên DTO (`EventDTO`, `EventCardDTO`, `EventUpdateDTO`), và tự động trừ đi 7 tiếng khi map từ DTO tạo mới/cập nhật xuống Database để dữ liệu lưu trữ vẫn chuẩn UTC nhưng giao diện hiển thị đúng giờ Việt Nam.
-  - **Cấu hình Connection String**: Chuyển đổi chuỗi kết nối `"EventHub"` trong cả 3 dự án (`MVC`, `RazorPages`, `Blazor`) từ LocalDB/Server cũ sang Server SQL Developer local mặc định (`Server=.`) theo yêu cầu của anh QuiNC để chạy mượt mà trên máy của anh.
-  - **Tối ưu hóa launchBrowser**: Cập nhật file `launchSettings.json` của 3 dự án, tắt tự động mở trình duyệt ở RazorPages và Blazor (đặt thành `false`), chỉ để `true` ở dự án MVC để khi khởi động chỉ mở duy nhất tab đăng nhập của MVC, hạn chế rác tab trình duyệt.
-  - **Đồng nhất Giao diện & Layout**: Loại bỏ các thẻ bao bọc `.app-container` và `.app-content` dư thừa trong `Home.razor` và `BookingComponent.razor` để giao diện Blazor tích hợp đồng nhất với thanh điều hướng (sidebar) toàn hệ thống giống như bên RazorPages/MVC.
-- **2026-06-21 (Antigravity)**:
-  - **TriLT - Feedback (`FE-07`) & Email Worker (`FE-06`)**:
-    - Created detailed feedback modal in Blazor `FeedbackAnalyticsComponent.razor`.
-    - Created student's read-only feedback history `MyFeedbacks` page in Razor Pages.
-    - Optimized feedback average calculations using PLINQ `.AsParallel()` in `FeedbackAnalyticsService`.
-    - Upgraded `EventReminderService` (BLL) to dispatch emails concurrently using TPL `Parallel.ForEachAsync`.
-    - Fixed LINQ translation issue in `EventReminderRepository` (DAL) by utilizing SQL-translatable time filter. Added `IsCanReminder` tracking flag in DB.
-  - **MinhTC - Event CRUD (`FE-02`)**:
-    - Removed CRUD Organizer (deleted folder `/Pages/Organizers`, services, and DTOs).
-    - Built Razor Pages Event CRUD with dynamic checkboxes for Category & Tag updates (Many-to-Many). Protected queries using `EventCreateDTO` and `EventUpdateDTO`.
-  - **Access Control & Logouts**:
-    - Unified Sidebar Layout across MVC, RazorPages, and Blazor to restrict Student role permissions.
-    - Created local RazorPages `Logout.cshtml` page to support local cookie invalidation.
-
-- **2026-06-20 (Antigravity / MinhTC)**:
-  - Reconfigured Blazor routing: Live Dashboard to `/` (default) and event bookings to `/events`.
-  - **MinhTC - CRUD Category, Tag, Venue (`FE-05`)**:
-    - Created CRUD Razor Pages and DTOs (`CategoryDTO`, `TagDTO`, `VenueDTO`).
-    - Appended chosen Campus to Venue Address suffix in `VenueCreateDTO`/`VenueUpdateDTO` for weather lookup.
-
-- **2026-06-17 (Antigravity)**:
-  - Resolved Blazor Server WebSocket disconnection issue by downgrading `Microsoft.AspNetCore.SignalR.Client` from 9.0 to 8.0.* to match SDK .NET 8.
-  - Added test automation script `test.js` using Puppeteer.
-  - Designed premium Dark Mode Deep Tech layout for Live Dashboard, featuring SVG Area Chart.
-  - Rewrote `BookingComponent.razor` using Cascading Authentication State for real claims.
-
-- **2026-06-17 (quinc)**:
-  - Removed Bookmark UI and deleted `BookmarkService.cs` DI configurations to match backlog.
-
-- **2026-06-16 (Antigravity / LongNH)**:
-  - **LongNH - Identity & SSO (`FE-01`)**:
-    - Configured Cookie Authentication, AccountController, and BCrypt password hashing.
-    - Set up shared EF Core Data Protection keys in BLL/MVC to enable SSO.
-  - Integrated wttr.in weather API with 30-min `IMemoryCache` for Weather Widget.
-
-- **2026-06-14 (Antigravity / MinhTC / QuiNC)**:
-  - Setup core PRN222 architectural rules (3-Layer structure, connection safety, async/await).
-  - **MinhTC**: Created Organizer CRUD Razor Pages.
-  - **QuiNC**: Added status dots and urgencies to Explore list UI (`FE-03`).
+### 3.2. Architectural & DI Conventions
+- **Xem xét Tiêm Phụ thuộc (Option 1)**: Đang nghiên cứu chuyển đổi toàn bộ dịch vụ BLL đăng ký trực tiếp và hiển thị tường minh trong `Program.cs` của từng ứng dụng Web (RazorPages, MVC, Blazor) thay vì giấu trong hàm `AddBusinessLogicLayer` của BLL.
+- **Vị trí của DTO**: Tất cả DTO (Data Transfer Objects) phải được khai báo tập trung trong dự án **BusinessObjects**, tuyệt đối không nằm ở tầng **BLL**.
+- **Quy tắc Mapping**: Toàn bộ việc ánh xạ dữ liệu (Object Mapping) giữa Entity và DTO bắt buộc phải sử dụng **AutoMapper** trong tầng **BLL**, nghiêm cấm việc gán thủ công (manual mapping) trong các phương thức của Service.
 
 ### 3.3. Team Branch Status
 - **`feature/trilt-email-worker`**: Local development for email background worker.
