@@ -16,9 +16,11 @@ namespace Blazor
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
-            // Register BLL & DAL services
+            // Register BLL & DAL services (Feature-based Registration)
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddBusinessLogicLayer(builder.Configuration);
+            builder.Services.AddCoreBusinessServices(builder.Configuration);
+            builder.Services.AddLiveInteractiveServices();
+            builder.Services.AddFeedbackManagementServices();
 
             // Register background worker
             builder.Services.AddHostedService<BLL.BackgroundServices.EmailReminderWorker>();

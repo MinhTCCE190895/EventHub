@@ -1,9 +1,8 @@
-﻿using BLL.Services;
+using BLL.Services;
 using BLL.Interfaces;
 using BLL.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
 
 namespace BLL;
 
@@ -11,35 +10,59 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddCoreBusinessServices(configuration);
+        services.AddUserManagementServices();
+        services.AddEventManagementServices();
+        services.AddFeedbackManagementServices();
+        services.AddLiveInteractiveServices();
 
-        services.AddScoped<ISearchService, SearchService>();
-        services.AddScoped<IBookingService, BookingService>();
-        services.AddSignalR();
-        services.AddScoped<IEventService, EventService>();
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<ICategoryService, CategoryService>();
-        services.AddScoped<ITagService, TagService>();
-        services.AddScoped<IVenueService, VenueService>();
+        return services;
+    }
 
+    public static IServiceCollection AddCoreBusinessServices(this IServiceCollection services, IConfiguration configuration)
+    {
         services.AddAutoMapper(config => 
         {
             config.AddMaps(typeof(DependencyInjection).Assembly);
         });
 
-        // Đăng ký dịch vụ thời tiết với HttpClient
-        services.AddHttpClient<IWeatherService, WeatherService>();
-        
-        // Đăng ký MemoryCache để phục vụ lưu trữ đệm 30 phút theo yêu cầu
         services.AddMemoryCache();
-
-        // Bind EmailSettings từ appsettings.json
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-
-        // Đăng ký các Interface/Service của tầng BLL tại đây
         services.AddScoped<IEmailSender, EmailSender>();
-        services.AddScoped<IEventReminderService, EventReminderService>();
-        services.AddScoped<IFeedbackAnalyticsService, FeedbackAnalyticsService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddUserManagementServices(this IServiceCollection services)
+    {
+        services.AddScoped<IUserService, UserService>();
+        return services;
+    }
+
+    public static IServiceCollection AddEventManagementServices(this IServiceCollection services)
+    {
+        services.AddScoped<IEventService, EventService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<ITagService, TagService>();
+        services.AddScoped<IVenueService, VenueService>();
+        services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IFollowService, FollowService>();
+        services.AddHttpClient<IWeatherService, WeatherService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddFeedbackManagementServices(this IServiceCollection services)
+    {
+        services.AddScoped<IFeedbackAnalyticsService, FeedbackAnalyticsService>();
+        return services;
+    }
+
+    public static IServiceCollection AddLiveInteractiveServices(this IServiceCollection services)
+    {
+        services.AddSignalR();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IEventReminderService, EventReminderService>();
 
         return services;
     }
