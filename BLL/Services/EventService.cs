@@ -1,4 +1,4 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using AutoMapper;
 using BusinessObjects.DTOs;
 using DAL.Data;
@@ -53,6 +53,9 @@ public class EventService : IEventService
 
     public async Task<EventDTO> CreateEventAsync(EventCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        if (dto.StartTime >= dto.EndTime)
+            throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+
         var newEvent = _mapper.Map<Event>(dto);
         newEvent.Id = Guid.NewGuid();
         newEvent.CreatedAt = DateTime.UtcNow;
@@ -90,6 +93,9 @@ public class EventService : IEventService
 
     public async Task UpdateEventAsync(EventUpdateDTO dto, CancellationToken cancellationToken = default)
     {
+        if (dto.StartTime >= dto.EndTime)
+            throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+
         var ev = await _eventRepository.Query()
             .Include(e => e.EventCategories)
             .Include(e => e.EventTags)

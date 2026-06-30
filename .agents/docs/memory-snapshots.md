@@ -54,11 +54,24 @@ graph TD
     - Quy tụ toàn bộ DTO về `BusinessObjects/DTOs`, xóa các DTO bị trùng lặp (`AuthDtos.cs`, `FeedbackDtos.cs` trong `BLL/DTOs`).
     - Sử dụng `git mv` di chuyển 12 file interface dịch vụ sang `BLL/Interfaces` (namespace `BLL.Interfaces`) và 5 file interface repository sang `DAL/Interfaces` (namespace `DAL.Interfaces`) giúp bảo toàn trọn vẹn lịch sử Git commit.
     - Cập nhật toàn bộ DI Container (`DependencyInjection.cs`), các tầng dịch vụ và presentation layers (`RazorPages`, `MVC`, `Blazor`) sử dụng namespace mới. Kiểm chứng build và startup runtime 100% thành công.
+- **2026-07-01 (Antigravity / MinhTC)**:
+  - **MinhTC - Triển khai Quản lý & Duyệt Ý tưởng Sự kiện (`FE-13` - Event Requests)**:
+    - Tạo tập DTO `EventRequestDTO`, `EventRequestCreateDTO`, `EventRequestProcessDTO` trong `BusinessObjects/DTOs/EventRequestDTOs.cs` với ràng buộc validation đầy đủ, sử dụng `[BindProperty]` chống Over-posting.
+    - Tạo cấu hình AutoMapper `EventRequestProfile.cs` (quy đổi múi giờ UTC+7 cho thời gian gửi).
+    - Xây dựng giao tiếp tầng nghiệp vụ `IEventRequestService` và `EventRequestService` trong BLL, tích hợp vào DI Container (`AddEventManagementServices`).
+    - Triển khai nhóm Razor Pages `Pages/Requests/`:
+      - `Index.cshtml`: Hiển thị danh sách ý tưởng theo phân quyền (Student xem đề xuất cá nhân, Admin/Organizer xem toàn bộ kèm bộ lọc trạng thái Pending/Approved/Rejected).
+      - `Create.cshtml`: Trang cho sinh viên gửi ý tưởng mới (quyền `Student`).
+      - `Process.cshtml`: Trang xử lý phê duyệt ý tưởng cho ban tổ chức (quyền `Admin,Organizer`).
+    - Cập nhật Sidebar navigation (`_Layout.cshtml`) hiển thị liên kết "Ý tưởng sự kiện" / "Duyệt ý tưởng sự kiện" tương ứng theo role. Kiểm chứng build thành công 100%.
+
 - **2026-06-30 (Antigravity)**:
   - **Chuẩn hóa cấu trúc Solution (`EventHub.sln`)**: Gỡ bỏ các thư mục ảo trung gian (`NestedProjects` và Solution Folders cũ), đưa cấu trúc cây project về dạng danh sách phẳng ngang hàng (`DAL`, `BLL`, `MVC`, `RazorPages`, `Blazor`) rõ ràng và trực quan trên Solution Explorer.
   - **Tái cấu trúc Modular DI (Feature-based Registration)**:
     - Chẻ nhỏ phương thức đăng ký DI `AddBusinessLogicLayer` trong `BLL/DependencyInjection.cs` thành các phương thức mở rộng cụm nghiệp vụ độc lập: `AddCoreBusinessServices`, `AddUserManagementServices`, `AddEventManagementServices`, `AddFeedbackManagementServices`, `AddLiveInteractiveServices`.
     - Cập nhật tường minh `Program.cs` tại 3 ứng dụng giao diện (`MVC`, `RazorPages`, `Blazor`) chỉ đăng ký chính xác những cụm dịch vụ BLL mà giao diện đó khai thác, phân định ranh giới nghiệp vụ rõ ràng và tối ưu hóa bộ nhớ container. Kiểm chứng build thành công 100%.
+  - **Khắc phục lỗi DI cho `EventService` (RazorPages / BLL DI)**: Bổ sung `services.AddSignalR()` vào `AddEventManagementServices` trong `BLL/DependencyInjection.cs` để giải quyết dependency `IHubContext<EventHub>` cho `EventService` khi chạy RazorPages.
+  - **Khắc phục lỗi xác thực thời gian sự kiện (`FE-02` - MinhTC)**: Bổ sung xác thực `StartTime < EndTime` cho `EventCreateDTO` và `EventUpdateDTO` (`IValidatableObject`), ném ngoại lệ `ArgumentException` tại tầng `EventService` và xử lý hiển thị lỗi trên form tại các PageModel `Events/Create` và `Events/Edit`.
   - **MinhTC & LongNH - Chuẩn hóa Cascade Restrict & Xử lý Exception (`FE-05`, `FE-02`, `FE-09`)**:
     - Cấu hình chuẩn `DeleteBehavior.Restrict` trong `CompositeKeysConfiguration.cs` cho `EventCategory` và `EventTag` từ `Category` và `Tag`.
     - Cập nhật `VenueService.cs`, `EventService.cs`, `CategoryService.cs`, `TagService.cs` kiểm tra trước dữ liệu liên quan và bắt `DbUpdateException` trả về `InvalidOperationException` kèm thông báo tiếng Việt rõ ràng.

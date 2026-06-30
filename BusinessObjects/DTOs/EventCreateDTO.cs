@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects.DTOs;
 
-public class EventCreateDTO
+public class EventCreateDTO : IValidatableObject
 {
     [Required(ErrorMessage = "Tiêu đề không được để trống.")]
     [MaxLength(200)]
@@ -30,4 +30,12 @@ public class EventCreateDTO
 
     public List<int> CategoryIds { get; set; } = new();
     public List<int> TagIds { get; set; } = new();
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (StartTime >= EndTime)
+        {
+            yield return new ValidationResult("Ngày kết thúc phải sau ngày bắt đầu.", new[] { nameof(EndTime) });
+        }
+    }
 }

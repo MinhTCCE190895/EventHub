@@ -41,12 +41,14 @@ public static class DependencyInjection
 
     public static IServiceCollection AddEventManagementServices(this IServiceCollection services)
     {
+        services.AddSignalR();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IVenueService, VenueService>();
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IFollowService, FollowService>();
+        services.AddScoped<IEventRequestService, EventRequestService>();
         services.AddHttpClient<IWeatherService, WeatherService>();
 
         return services;

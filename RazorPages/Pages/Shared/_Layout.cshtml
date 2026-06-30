@@ -52,6 +52,9 @@
                     <a class="sidebar-link @(currentPage?.StartsWith("/Venues") == true ? "active" : "")" asp-page="/Venues/Index">
                         <i class="bi bi-building"></i> Quản lý địa điểm
                     </a>
+                    <a class="sidebar-link @(currentPage?.StartsWith("/Requests") == true ? "active" : "")" asp-page="/Requests/Index">
+                        <i class="bi bi-lightbulb-fill"></i> Duyệt ý tưởng sự kiện
+                    </a>
                     <a class="sidebar-link" href="http://localhost:5210/feedback-analytics">
                         <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
                     </a>
@@ -61,6 +64,9 @@
                 {
                     <!-- Student-only tabs -->
 
+                    <a class="sidebar-link @(currentPage?.StartsWith("/Requests") == true ? "active" : "")" asp-page="/Requests/Index">
+                        <i class="bi bi-lightbulb-fill"></i> Ý tưởng sự kiện
+                    </a>
                     <a class="sidebar-link @(currentPage == "/Feedback/MyFeedbacks" ? "active" : "")" asp-page="/Feedback/MyFeedbacks">
                         <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi
                     </a>
