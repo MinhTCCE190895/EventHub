@@ -48,6 +48,15 @@ graph TD
 
 ### 3.1. Detailed Changes Log
 
+- **2026-07-01 (Antigravity / MinhTC)**:
+  - **Tách triệt để nghiệp vụ khỏi tầng FE (Event CRUD - `FE-02`)**:
+    - Loại bỏ logic kiểm tra thời gian sự kiện (`StartTime >= EndTime`) bị lặp lại ở tầng giao diện (`Create.cshtml.cs` và `Edit.cshtml.cs`).
+    - Gỡ bỏ việc tiêm trực tiếp `AppDbContext` và logic truy vấn dữ liệu/tính toán ranh giới thời tiết tại trang chi tiết (`Detail.cshtml.cs`).
+    - Tối giản hóa xử lý lỗi (`try-catch`) trong `Create.cshtml.cs` và `Edit.cshtml.cs`: loại bỏ việc tầng FE phải tự phân loại từng exception (`ArgumentException`, `InvalidOperationException`) để ánh xạ vào từng field cụ thể, thay bằng bắt lỗi chung (`catch (Exception)`) và hiển thị qua `ModelState summary`. Ràng buộc dữ liệu field-level hoàn toàn do `IValidatableObject` đảm nhiệm trước khi gọi BLL.
+    - Bổ sung `GetEventEntityByIdAsync` vào `IEventService`/`EventService` và `.ThenInclude(ec => ec.Category)` vào `EventRepository`, đảm bảo toàn bộ nghiệp vụ được tập trung duy nhất tại tầng dịch vụ (BLL), tuân thủ tuyệt đối Clean Architecture.
+    - Triệt tiêu hoàn toàn các khối kiểm tra `if` mang tính logic khỏi `Detail.cshtml.cs` và `Detail.cshtml`: chuyển logic kiểm tra rỗng địa điểm cho `WeatherService`, chuyển logic bóc tách user claim cho `FeedbackAnalyticsService`, đồng thời đóng gói toàn bộ trạng thái hiển thị (`StatusText`, `StatusClass`, `RemainingSeats`, `FillRate`) thành getter property trong `DetailModel`. Giao diện FE không còn bất kỳ phép tính toán nghiệp vụ nào.
+    - Quét và dọn sạch toàn bộ các trang CRUD Events (`Index`, `Create`, `Edit`, `Detail`, `Delete`): bổ sung các computed properties (`StatusDisplayName`, `StatusBadgeClass`) trực tiếp vào `EventDTO`, triệt tiêu hoàn toàn các khối `switch/case` phân loại màu sắc và tên trạng thái khỏi `Index.cshtml` và `Delete.cshtml`. Chuẩn hóa cơ chế bắt lỗi chung `catch (Exception)` trong `Delete.cshtml.cs` để bảo đảm mọi ngoại lệ nghiệp vụ từ BLL (`EventService`) đều được chuyển tải nguyên vẹn lên UI.
+
 - **2026-06-29 (Antigravity / LongNH)**:
   - **Tái cấu trúc toàn diện kiến trúc 3 tầng (3-Layer Architecture Refactoring)**:
     - Xóa các file rác và template thừa (`BLL/Class1.cs`, `DAL/Class1.cs`, thư mục rỗng `DAL/Models/`, thư mục test `CascadeTest/`).

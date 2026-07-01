@@ -1,4 +1,4 @@
-﻿using BusinessObjects.DTOs;
+using BusinessObjects.DTOs;
 
 namespace BLL.Interfaces;
 
@@ -6,6 +6,7 @@ public interface IFeedbackAnalyticsService
 {
     /// Kiểm tra xem sinh viên có thể đánh giá sự kiện hay không (chỉ cho phép khi có vé "Confirmed").
     Task<bool> CanSubmitFeedbackAsync(Guid eventId, Guid studentId);
+    Task<bool> CanSubmitFeedbackAsync(Guid eventId, System.Security.Claims.ClaimsPrincipal? user);
 
     /// Lưu đánh giá mới của sinh viên.
     Task SubmitFeedbackAsync(FeedbackSubmissionDto dto);

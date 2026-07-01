@@ -2,24 +2,6 @@
 @model RazorPages.Pages.Events.DetailModel
 @{
     ViewData["Title"] = Model.EventItem.Title;
-    var maxCapacity = Model.EventItem.Venue?.MaxCapacity ?? 0;
-    var bookedCount = Model.EventItem.RegisteredCount;
-    var remaining = maxCapacity - bookedCount;
-    var now = DateTime.UtcNow.AddHours(7); // Synchronized to VN time for comparison
-    
-    // Calculate event status
-    string statusText = "Đang diễn ra";
-    string statusClass = "status-ongoing";
-    if (Model.EventItem.StartTime.AddHours(7) > now)
-    {
-        statusText = "Sắp diễn ra";
-        statusClass = "status-upcoming";
-    }
-    else if (Model.EventItem.EndTime.AddHours(7) < now)
-    {
-        statusText = "Đã kết thúc";
-        statusClass = "status-past";
-    }
 }
 
 <div class="container py-4">
@@ -60,7 +42,7 @@
                 <!-- Header của Whitepaper -->
                 <div class="whitepaper-header">
                     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-2">
-                        <span class="card-badge-overlay @statusClass" style="position: static; font-size: 0.72rem; padding: 0.35rem 0.75rem;">@statusText</span>
+                        <span class="card-badge-overlay @Model.StatusClass" style="position: static; font-size: 0.72rem; padding: 0.35rem 0.75rem;">@Model.StatusText</span>
                     </div>
                     
                     <h1 class="whitepaper-title">@Model.EventItem.Title</h1>
@@ -153,21 +135,21 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-1.5">
                             <span class="text-slate-600 small">Tổng chỗ ngồi:</span>
-                            <strong class="text-slate-800">@maxCapacity</strong>
+                            <strong class="text-slate-800">@Model.MaxCapacity</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-1.5">
                             <span class="text-slate-600 small">Đã đăng ký:</span>
-                            <strong class="text-slate-800">@bookedCount</strong>
+                            <strong class="text-slate-800">@Model.BookedCount</strong>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                             <span class="text-slate-700 fw-semibold">Tình trạng vé:</span>
-                            @if (remaining <= 0)
+                            @if (Model.IsSoldOut)
                             {
                                 <span class="badge bg-danger px-2 py-1 rounded-3">Hết vé</span>
                             }
                             else
                             {
-                                <span class="badge bg-success px-2 py-1 rounded-3">Còn @remaining vé</span>
+                                <span class="badge bg-success px-2 py-1 rounded-3">Còn @Model.RemainingSeats vé</span>
                             }
                         </div>
                     </div>
@@ -175,30 +157,26 @@
                     <!-- Progress bar lấp đầy chỗ -->
                     <div class="mb-4">
                         <small class="text-muted d-block mb-1.5">Tỷ lệ đăng ký hiện tại</small>
-                        @{
-                            double fillRate = maxCapacity > 0 ? ((double)bookedCount / maxCapacity) * 100 : 0;
-                            string progressColor = fillRate >= 100 ? "bg-danger" : (fillRate >= 90 ? "bg-warning" : "bg-primary");
-                        }
                         <div class="progress rounded-pill" style="height: 8px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated @progressColor" 
-                                 role="progressbar" style="width: @fillRate%" aria-valuenow="@fillRate" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @Model.ProgressColor" 
+                                 role="progressbar" style="width: @Model.FillRate%" aria-valuenow="@Model.FillRate" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                         <div class="d-flex justify-content-between mt-1 fs-7 text-muted">
                             <span>0%</span>
-                            <span>@fillRate.ToString("0.0")%</span>
+                            <span>@Model.FillRate.ToString("0.0")%</span>
                             <span>100%</span>
                         </div>
                     </div>
 
                     <!-- Nút hành động chính -->
                     <div class="d-grid gap-2 mb-4">
-                        @if (Model.EventItem.EndTime.AddHours(7) < now)
+                        @if (Model.IsPastEvent)
                         {
                             <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
                                 <i class="bi bi-calendar-x-fill me-1"></i> Sự kiện đã kết thúc
                             </button>
                         }
-                        else if (remaining <= 0)
+                        else if (Model.IsSoldOut)
                         {
                             <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
                                 <i class="bi bi-x-circle-fill me-1"></i> Đã hết chỗ ngồi

@@ -61,11 +61,6 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (Input != null && Input.StartTime >= Input.EndTime)
-        {
-            ModelState.AddModelError("Input.EndTime", "Ngày kết thúc phải sau ngày bắt đầu.");
-        }
-
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();
@@ -82,15 +77,9 @@ public class EditModel : PageModel
         {
             return NotFound();
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            ModelState.AddModelError("Input.EndTime", ex.Message);
-            await LoadDropdownsAsync();
-            return Page();
-        }
-        catch (InvalidOperationException ex)
-        {
-            ModelState.AddModelError("Input.VenueId", ex.Message);
+            ModelState.AddModelError(string.Empty, ex.Message);
             await LoadDropdownsAsync();
             return Page();
         }

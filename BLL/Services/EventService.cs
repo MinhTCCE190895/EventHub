@@ -51,6 +51,12 @@ public class EventService : IEventService
         return ev == null ? null : _mapper.Map<EventDTO>(ev);
     }
 
+    public async Task<Event?> GetEventEntityByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _eventRepository.BuildSearchQuery()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
+
     public async Task<EventDTO> CreateEventAsync(EventCreateDTO dto, CancellationToken cancellationToken = default)
     {
         if (dto.StartTime >= dto.EndTime)

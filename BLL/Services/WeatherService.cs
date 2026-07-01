@@ -1,4 +1,4 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using System.Text.Json;
 using System.Threading; // Added to use SemaphoreSlim to prevent Cache Stampede
 using BusinessObjects.DTOs;
@@ -17,8 +17,9 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
     private static readonly SemaphoreSlim _weatherSemaphore = new(1, 1);
 
 
-    public async Task<WeatherDTO?> GetWeatherAsync(string location)
+    public async Task<WeatherDTO?> GetWeatherAsync(string? location)
     {
+        if (string.IsNullOrWhiteSpace(location)) return null;
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_{normalized.ToLower().Replace(" ", "_")}";
 
@@ -88,8 +89,9 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return fallbackWeather;
     }
 
-    public async Task<WeatherDTO?> GetWeatherForecastAsync(string location, DateTime targetDate)
+    public async Task<WeatherDTO?> GetWeatherForecastAsync(string? location, DateTime targetDate)
     {
+        if (string.IsNullOrWhiteSpace(location)) return null;
         // Add 7 hours to align with Vietnam timezone when calculating date difference
         var today = DateTime.UtcNow.AddHours(7).Date;
         var targetDateLocal = targetDate.Date;

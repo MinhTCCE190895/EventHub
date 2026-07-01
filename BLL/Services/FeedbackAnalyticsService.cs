@@ -1,4 +1,4 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using BusinessObjects.DTOs;
 using DAL.Data;
 using DAL.Entities;
@@ -42,6 +42,14 @@ public class FeedbackAnalyticsService : IFeedbackAnalyticsService
         
         // Nếu đã có đánh giá rồi thì không cho phép đánh giá tiếp
         return booking.Feedback == null;
+    }
+
+    public async Task<bool> CanSubmitFeedbackAsync(Guid eventId, System.Security.Claims.ClaimsPrincipal? user)
+    {
+        var studentIdString = user?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(studentIdString) || !Guid.TryParse(studentIdString, out var studentId))
+            return false;
+        return await CanSubmitFeedbackAsync(eventId, studentId);
     }
 
 

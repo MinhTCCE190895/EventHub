@@ -9,6 +9,22 @@ public class EventDTO
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public string Status { get; set; } = string.Empty;
+
+    public string StatusDisplayName => Status switch
+    {
+        "Draft" => "Bản nháp",
+        "Published" => "Đã xuất bản",
+        "Cancelled" => "Đã hủy",
+        _ => Status
+    };
+
+    public string StatusBadgeClass => Status switch
+    {
+        "Draft" => "bg-secondary",
+        "Published" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-light text-dark"
+    };
     public int RegisteredCount { get; set; }
     public Guid OrganizerId { get; set; }
     public string OrganizerName { get; set; } = string.Empty;

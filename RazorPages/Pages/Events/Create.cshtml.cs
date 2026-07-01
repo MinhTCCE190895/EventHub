@@ -50,11 +50,6 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (Input != null && Input.StartTime >= Input.EndTime)
-        {
-            ModelState.AddModelError("Input.EndTime", "Ngày kết thúc phải sau ngày bắt đầu.");
-        }
-
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();
@@ -67,9 +62,9 @@ public class CreateModel : PageModel
             TempData["SuccessMessage"] = "Sự kiện đã được tạo thành công!";
             return RedirectToPage("./Index");
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            ModelState.AddModelError("Input.EndTime", ex.Message);
+            ModelState.AddModelError(string.Empty, ex.Message);
             await LoadDropdownsAsync();
             return Page();
         }

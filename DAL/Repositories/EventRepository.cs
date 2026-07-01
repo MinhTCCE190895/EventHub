@@ -1,4 +1,4 @@
-﻿using DAL.Interfaces;
+using DAL.Interfaces;
 using DAL.Data;
 using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +19,7 @@ public class EventRepository : BaseRepository<Event>, IEventRepository
             .Include(e => e.Bookings)
             .Include(e => e.EventTags)
                 .ThenInclude(et => et.Tag)
-            .Include(e => e.EventCategories);
+            .Include(e => e.EventCategories)
+                .ThenInclude(ec => ec.Category);
     }
 }

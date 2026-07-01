@@ -40,18 +40,7 @@
                 <dd class="col-sm-8">@Model.EventItem.StartTime.ToString("dd/MM/yyyy HH:mm") → @Model.EventItem.EndTime.ToString("dd/MM/yyyy HH:mm")</dd>
 
                 <dt class="col-sm-4 text-muted">Trạng thái</dt>
-                <dd class="col-sm-8">
-                    @{
-                        var statusText = Model.EventItem.Status switch
-                        {
-                            "Draft"     => "Bản nháp",
-                            "Published" => "Đã xuất bản",
-                            "Cancelled" => "Đã hủy",
-                            _           => Model.EventItem.Status
-                        };
-                    }
-                    @statusText
-                </dd>
+                <dd class="col-sm-8">@Model.EventItem.StatusDisplayName</dd>
 
                 <dt class="col-sm-4 text-muted">Đã đăng ký</dt>
                 <dd class="col-sm-8">@Model.EventItem.RegisteredCount người</dd>

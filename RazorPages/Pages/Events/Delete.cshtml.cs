@@ -1,4 +1,4 @@
-﻿using BLL.Services;
+using BLL.Services;
 using BLL.Interfaces;
 using BusinessObjects.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -35,14 +35,14 @@ public class DeleteModel : PageModel
             await _eventService.DeleteEventAsync(id);
             TempData["SuccessMessage"] = "Sự kiện đã được xóa thành công!";
         }
-        catch (System.InvalidOperationException ex)
-        {
-            TempData["ErrorMessage"] = ex.Message;
-            return RedirectToPage("./Delete", new { id });
-        }
         catch (KeyNotFoundException)
         {
             return NotFound();
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToPage("./Delete", new { id });
         }
 
         return RedirectToPage("./Index");
