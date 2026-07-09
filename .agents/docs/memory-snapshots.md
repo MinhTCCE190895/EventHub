@@ -27,8 +27,8 @@ graph TD
 
 ### 1.2. Razor Pages (Explore, Bookmarks & Event CRUD)
 - **Explore & Search (`Pages/Index.cshtml` / `FE-03`)**: Form search (.search-card-minimal) with time filters (All, Upcoming, Ongoing, Past). Dynamic LED status dots, seats capacity urgency warnings, grayscale for past events, skeleton loader, and AJAX pagination.
-- **Bookmarks (`FE-11`)**: Floating bookmark button (`.btn-bookmark-floating`) on events card (disabled for current sprint).
-- **Weather Widget (`FE-08`)**: Integrated wttr.in weather lookup with 30-minute `IMemoryCache`. `NormalizeLocation` automatically extracts the campus city name from Venue address.
+- **Bookmarks (`FE-11`)**: `IBookmarkService` + `BookmarkService` (via `IRepository<Bookmark>`). Toggle AJAX bookmark on Index cards. Dedicated `/Bookmarks/Index` page (Student-only, Auth from Claims). Sidebar link added.
+- **Weather Widget (`FE-08`)**: Integrated wttr.in weather lookup with 30-minute `IMemoryCache` + `SemaphoreSlim` (double-checked locking, Cache Stampede prevention). `NormalizeLocation` automatically extracts campus city from Venue address.
 - **Event CRUD (`FE-02`)**: Complete Event CRUD. Uses DTOs (`EventCreateDTO`, `EventUpdateDTO`) to prevent over-posting. Categories and Tags assigned via checkboxes (Many-to-Many). Serviced via `IEventRepository.BuildSearchQuery()` with eager loading to prevent N+1 queries.
 - **My Feedbacks (`/Events/MyFeedbacks`)**: Read-only dashboard for students to review submitted feedbacks.
 
@@ -62,9 +62,7 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 - `Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
 - `OrganizerDetails.cshtml.cs` → **TriLT**
 - `Blazor/Components/Dashboard/DashboardComponent.razor`, `BookingComponent.razor` → **Khôi**
-- `RazorPages/Pages/Index.cshtml.cs` → **QuiNC** (giữ tạm vì chưa có BookmarkService)
-
-**Trade-off chấp nhận được cho học thuật** — giải thích khi bị hỏi: "Chưa có BookmarkService nên inject DbContext trực tiếp, biết vi phạm Clean Architecture."
+- ~~`RazorPages/Pages/Index.cshtml.cs` → **QuiNC**~~ ✅ **Fixed** (2026-07-09): đã thay bằng `IBookmarkService`.
 
 ### [ARCH-05] `IMapper` inject ở Presentation — **TriLT**
 `RazorPages/Pages/Follow/OrganizerDetails.cshtml.cs` inject `IMapper` trực tiếp — mapping phải thuộc BLL.
@@ -74,6 +72,8 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-09 (Antigravity / QuiNC)**:
+  - **FE-11 Bookmark/Wishlist + Fix ARCH-04**: Tạo `IBookmarkService` / `BookmarkService` (dùng `IRepository<Bookmark>` đúng pattern). Xóa `AppDbContext` khỏi `Index.cshtml.cs` — fix ARCH-04. Thêm AJAX toggle bookmark trên Grid & List card. Khôi phục trang `/Bookmarks/Index` với Auth thực từ Claims (`[Authorize(Roles="Student")]`). Thêm sidebar link Student. Fix CSS Safari compat (`-webkit-user-select`, `-webkit-backdrop-filter`, `line-clamp`). Fix `DependencyInjection.cs` dùng `AddBusinessLogicLayer` thay các method cũ bị xóa. Build: **0 errors**.
 - **2026-06-29 (Antigravity)**:
   - **QuiNC - Architecture Refactor (ARCH-02, ARCH-03/FE-03, ARCH-06, ARCH-07)**: Removed `AddSignalR()` from `BLL/DependencyInjection.cs` (wrong layer) and moved to `Blazor/Program.cs`. Merged `SearchService.SearchEventsAsync()` into `EventService`, extended keyword search to scan `Category.Name` via `EventCategories.Any(ec => ec.Category.Name.Contains(keyword))`. Added `SearchEventsAsync` signature to `IEventService`. Deleted `ISearchService.cs` and `SearchService.cs`. Refactored `Index.cshtml.cs` to inject `IEventService`, `ICategoryService`, `ITagService` instead of `ISearchService` and raw `IRepository<T>`. Fixed `EventSearchViewModel` to use `CategoryDTO`/`TagDTO` instead of `DAL.Entities`. Build: **0 errors, 2 pre-existing warnings**.
 - **2026-06-24 (Antigravity)**:
