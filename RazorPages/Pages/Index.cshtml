@@ -196,7 +196,17 @@
                                     }
                                 </div>
                             </div>
-                            <div class="flex-shrink-0 text-end">
+                            <div class="flex-shrink-0 text-end d-flex align-items-center gap-2">
+                                @if (User.IsInRole("Student"))
+                                {
+                                    var isBookmarkedList = Model.BookmarkedEventIds.Contains(card.Id);
+                                    <button type="button"
+                                            class="btn btn-sm btn-bookmark @(isBookmarkedList ? "bookmarked" : "")"
+                                            onclick="toggleBookmark(this, '@card.Id')"
+                                            title="@(isBookmarkedList ? "Bỏ lưu" : "Lưu sự kiện")">
+                                        <i class="bi @(isBookmarkedList ? "bi-bookmark-fill" : "bi-bookmark")"></i>
+                                    </button>
+                                }
                                 <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
                                     Chi tiết <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
@@ -278,9 +288,21 @@
                                             }
                                         }
                                     </div>
-                                    <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
-                                        Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (User.IsInRole("Student"))
+                                        {
+                                            var isBookmarked = Model.BookmarkedEventIds.Contains(card.Id);
+                                            <button type="button"
+                                                    class="btn btn-sm btn-bookmark @(isBookmarked ? "bookmarked" : "")"
+                                                    onclick="toggleBookmark(this, '@card.Id')"
+                                                    title="@(isBookmarked ? "Bỏ lưu" : "Lưu sự kiện")">
+                                                <i class="bi @(isBookmarked ? "bi-bookmark-fill" : "bi-bookmark")"></i>
+                                            </button>
+                                        }
+                                        <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
+                                            Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -507,5 +529,36 @@
         document.addEventListener('DOMContentLoaded', function() {
             bindPaginationLinks();
         });
+
+        // Toggle bookmark via AJAX POST — no page reload
+        async function toggleBookmark(btn, eventId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const icon = btn.querySelector('i');
+                if (data.bookmarked) {
+                    btn.classList.add('bookmarked');
+                    icon.className = 'bi bi-bookmark-fill';
+                    btn.title = 'Bỏ lưu';
+                } else {
+                    btn.classList.remove('bookmarked');
+                    icon.className = 'bi bi-bookmark';
+                    btn.title = 'Lưu sự kiện';
+                }
+            } catch (e) {
+                console.error('Bookmark error:', e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
     </script>
 }

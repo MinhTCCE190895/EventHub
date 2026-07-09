@@ -1,3 +1,4 @@
+using BLL.Interfaces;
 using BLL.Services;
 using BLL.Settings;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +13,7 @@ public static class DependencyInjection
     {
 
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();

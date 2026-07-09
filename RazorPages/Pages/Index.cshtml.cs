@@ -1,8 +1,5 @@
-using BLL.Services;
+using BLL.Interfaces;
 using BusinessObjects.DTOs;
-using DAL.Entities;
-using DAL.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RazorPages.ViewModels;
@@ -15,10 +12,10 @@ public class IndexModel : PageModel
     private readonly IEventService _eventService;
     private readonly ICategoryService _categoryService;
     private readonly ITagService _tagService;
-    private readonly AppDbContext _context; // Used only for Bookmark query (no BookmarkService yet)
+    private readonly IBookmarkService _bookmarkService;
     private readonly ILogger<IndexModel> _logger;
 
-    // Get actual ID instead of hardcoding
+    // Get actual user ID from claims instead of hardcoding
     public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true
         ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
         : null;
@@ -27,14 +24,14 @@ public class IndexModel : PageModel
         IEventService eventService,
         ICategoryService categoryService,
         ITagService tagService,
-        AppDbContext context,
+        IBookmarkService bookmarkService,
         ILogger<IndexModel> logger)
     {
-        _eventService = eventService;
+        _eventService    = eventService;
         _categoryService = categoryService;
-        _tagService = tagService;
-        _context = context;
-        _logger = logger;
+        _tagService      = tagService;
+        _bookmarkService = bookmarkService;
+        _logger          = logger;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -47,19 +44,16 @@ public class IndexModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        // Retrieve bookmarks if user is authenticated and is a student
+        // Retrieve bookmarks via BLL service — no direct DbContext at Presentation layer (ARCH-04 fix)
         if (CurrentStudentId.HasValue && User.IsInRole("Student"))
         {
-            BookmarkedEventIds = await _context.Bookmarks
-                .Where(b => b.StudentId == CurrentStudentId.Value)
-                .Select(b => b.EventId)
-                .ToListAsync(cancellationToken);
+            BookmarkedEventIds = await _bookmarkService.GetBookmarkedEventIdsAsync(CurrentStudentId.Value, cancellationToken);
         }
 
         try
         {
             SearchVm.Categories = (await _categoryService.GetAllCategoriesAsync(cancellationToken)).ToList();
-            SearchVm.Tags = (await _tagService.GetAllTagsAsync(cancellationToken)).ToList();
+            SearchVm.Tags       = (await _tagService.GetAllTagsAsync(cancellationToken)).ToList();
         }
         catch (Exception ex)
         {
@@ -88,5 +82,14 @@ public class IndexModel : PageModel
 
         return Page();
     }
-}
 
+    // Toggle bookmark via AJAX POST — returns JSON {bookmarked: true/false}
+    public async Task<IActionResult> OnPostToggleBookmarkAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        if (!CurrentStudentId.HasValue || !User.IsInRole("Student"))
+            return Unauthorized();
+
+        var isBookmarked = await _bookmarkService.ToggleBookmarkAsync(CurrentStudentId.Value, eventId, cancellationToken);
+        return new JsonResult(new { bookmarked = isBookmarked });
+    }
+}

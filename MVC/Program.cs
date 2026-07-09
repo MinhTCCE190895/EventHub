@@ -17,10 +17,9 @@ namespace MVC
             builder.Services.AddCustomAuthentication();
             builder.Services.AddCustomDataProtection();
             
-            // Register BLL & DAL services (Feature-based Registration)
+            // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddCoreBusinessServices(builder.Configuration);
-            builder.Services.AddUserManagementServices();
+            builder.Services.AddBusinessLogicLayer(builder.Configuration);
 
             var app = builder.Build();
 

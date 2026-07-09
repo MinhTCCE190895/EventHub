@@ -16,12 +16,10 @@ namespace RazerPages
             builder.Services.AddCustomAuthentication();
             builder.Services.AddCustomDataProtection();
 
-            // Register BLL & DAL services (Feature-based Registration)
+            // Register BLL & DAL services
             builder.Services.AddDataAccessLayer(builder.Configuration);
-            builder.Services.AddCoreBusinessServices(builder.Configuration);
-            builder.Services.AddUserManagementServices();
-            builder.Services.AddEventManagementServices();
-            builder.Services.AddFeedbackManagementServices();
+            builder.Services.AddBusinessLogicLayer(builder.Configuration);
+            builder.Services.AddSignalR();
 
 
             var app = builder.Build();

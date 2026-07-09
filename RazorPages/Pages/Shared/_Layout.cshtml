@@ -64,8 +64,11 @@
                 {
                     <!-- Student-only tabs -->
 
-                    <a class="sidebar-link @(currentPage?.StartsWith("/Requests") == true ? "active" : "")" asp-page="/Requests/Index">
+                    <a class="sidebar-link @(currentPage == "/Requests/Index" ? "active" : "")" asp-page="/Requests/Index">
                         <i class="bi bi-lightbulb-fill"></i> Ý tưởng sự kiện
+                    </a>
+                    <a class="sidebar-link @(currentPage == "/Bookmarks/Index" ? "active" : "")" asp-page="/Bookmarks/Index">
+                        <i class="bi bi-bookmark-heart-fill"></i> Sự kiện đã lưu
                     </a>
                     <a class="sidebar-link @(currentPage == "/Feedback/MyFeedbacks" ? "active" : "")" asp-page="/Feedback/MyFeedbacks">
                         <i class="bi bi-chat-left-heart-fill"></i> Đánh giá của tôi

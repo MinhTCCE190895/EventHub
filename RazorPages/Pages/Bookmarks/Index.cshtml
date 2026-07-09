@@ -1,0 +1,138 @@
+@page
+@model RazorPages.Pages.Bookmarks.IndexModel
+@{
+    ViewData["Title"] = "Sự kiện đã lưu - UniEvent Hub";
+}
+
+<div class="page-header-minimal">
+    <span class="page-badge-minimal">My Wishlist</span>
+    <h1 class="display-6 fw-bold mb-2">Sự kiện đã lưu</h1>
+    <p class="text-muted">Xem và quản lý các sự kiện bạn đã đánh dấu quan tâm.</p>
+</div>
+
+@Html.AntiForgeryToken()
+
+<div id="bookmarksWrapper">
+    @if (Model.BookmarkedEvents == null || Model.BookmarkedEvents.Count == 0)
+    {
+        <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
+            <div class="display-1 text-muted mb-3"><i class="bi bi-bookmark-dash"></i></div>
+            <h5 class="fw-bold text-slate-700">Chưa lưu sự kiện nào</h5>
+            <p class="text-muted mb-3">Tìm kiếm và lưu những sự kiện bạn yêu thích tại trang Khám phá.</p>
+            <a asp-page="/Index" class="btn btn-primary-minimal px-4">
+                Khám phá ngay <i class="bi bi-compass ms-1"></i>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+            @foreach (var card in Model.BookmarkedEvents)
+            {
+                var now = DateTime.UtcNow.AddHours(7);
+                string statusText = "Đang diễn ra";
+                string statusClass = "status-ongoing";
+                if (card.StartTime > now)
+                {
+                    statusText = "Sắp diễn ra";
+                    statusClass = "status-upcoming";
+                }
+                else if (card.EndTime < now)
+                {
+                    statusText = "Đã kết thúc";
+                    statusClass = "status-past";
+                }
+
+                var remaining = card.MaxCapacity - card.BookedCount;
+                string seatsClass = card.MaxCapacity > 0 ? (remaining <= 0 ? "seats-urgency-soldout" : (remaining <= 10 ? "seats-urgency-low" : "")) : "";
+
+                <div class="col" id="card_@card.Id">
+                    <div class="card-minimal @(card.EndTime < now ? "is-past" : "")">
+                        <div class="card-minimal-img-wrapper">
+                            <span class="card-badge-overlay @statusClass">@statusText</span>
+
+                            <!-- Nút bỏ lưu nổi trên ảnh -->
+                            <button type="button" onclick="toggleBookmark('@card.Id')"
+                                    class="btn-bookmark-floating" title="Bỏ lưu sự kiện">
+                                <i class="bi bi-bookmark-fill text-warning"></i>
+                            </button>
+
+                            <img src="@(string.IsNullOrEmpty(card.BannerUrl) ? "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=800&auto=format&fit=crop" : card.BannerUrl)"
+                                 class="card-minimal-img" alt="@card.Title" />
+                        </div>
+                        <div class="card-minimal-body">
+                            <h5 class="card-minimal-title" title="@card.Title">@card.Title</h5>
+
+                            <div class="card-group-minimal mt-auto">
+                                <span class="card-minimal-meta">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span>@card.StartTime.ToString("dd/MM/yyyy HH:mm")</span>
+                                </span>
+                                <span class="card-minimal-meta">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span class="text-truncate" style="max-width: 150px;">@card.VenueName</span>
+                                </span>
+                            </div>
+
+                            <div class="card-group-minimal mt-2">
+                                <span class="card-minimal-meta @seatsClass">
+                                    <i class="bi bi-people"></i>
+                                    <span>@(card.MaxCapacity > 0 ? (remaining <= 0 ? "Hết chỗ" : $"Còn {remaining} chỗ") : "Chỗ ngồi tự do")</span>
+                                </span>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-1 mt-3">
+                                @if (card.TagNames != null)
+                                {
+                                    @foreach (var tag in card.TagNames)
+                                    {
+                                        <span class="badge-tag-premium">#@tag</span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="card-minimal-footer">
+                            <a asp-page="/Events/Detail" asp-route-id="@card.Id" class="btn-outline-minimal">
+                                Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function toggleBookmark(eventId) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) return;
+
+            try {
+                const res = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token }
+                });
+                const data = await res.json();
+
+                if (data.success && !data.isBookmarked) {
+                    // Bỏ lưu thành công → ẩn card với animation mượt
+                    const cardEl = document.getElementById(`card_${eventId}`);
+                    if (cardEl) {
+                        cardEl.style.transition = 'all 0.35s ease';
+                        cardEl.style.opacity = '0';
+                        cardEl.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            cardEl.remove();
+                            // Nếu không còn card nào thì reload để hiện empty state
+                            if (!document.querySelector('.card-minimal')) location.reload();
+                        }, 350);
+                    }
+                }
+            } catch (e) {
+                console.error('Bookmark toggle error:', e);
+            }
+        }
+    </script>
+}
