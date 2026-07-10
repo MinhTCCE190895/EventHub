@@ -47,15 +47,6 @@ graph TD
 ## 2.5. ⚠️ ARCHITECTURE VIOLATIONS — ACTION REQUIRED BY TEAM
 > Phát hiện ngày 2026-06-29 bởi QuiNC (Antigravity audit). Build vẫn pass, nhưng cần fix trước khi vấn đáp.
 
-### [ARCH-01] `BLL/DTOs/` — DTO duplicate, sai tầng — **TOÀN TEAM**
-File `BLL/DTOs/AuthDtos.cs` và `BLL/DTOs/FeedbackDtos.cs` là bản sao của `BusinessObjects/DTOs/`. 9 file đang `using BLL.DTOs` thay vì `using BusinessObjects.DTOs`:
-- `MVC/Controllers/AccountController.cs` → **LongNH**
-- `BLL/Services/UserService.cs`, `IUserService.cs` → **LongNH**
-- `BLL/Services/FeedbackAnalyticsService.cs`, `IFeedbackAnalyticsService.cs`, `FollowService.cs` → **TriLT**
-- `RazorPages/Pages/Feedback/Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
-- `Blazor/Components/FeedbackAnalytics/FeedbackAnalyticsComponent.razor` → **Khôi**
-
-**Cách fix**: Đổi `using BLL.DTOs;` → `using BusinessObjects.DTOs;` trong các file trên, sau đó xóa folder `BLL/DTOs/`.
 
 ### [ARCH-04] `AppDbContext` inject trực tiếp vào Presentation layer — **Toàn team**
 Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
