@@ -62,7 +62,6 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 - `Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
 - `OrganizerDetails.cshtml.cs` → **TriLT**
 - `Blazor/Components/Dashboard/DashboardComponent.razor`, `BookingComponent.razor` → **Khôi**
-- ~~`RazorPages/Pages/Index.cshtml.cs` → **QuiNC**~~ ✅ **Fixed** (2026-07-09): đã thay bằng `IBookmarkService`.
 
 ### [ARCH-05] `IMapper` inject ở Presentation — **TriLT**
 `RazorPages/Pages/Follow/OrganizerDetails.cshtml.cs` inject `IMapper` trực tiếp — mapping phải thuộc BLL.
