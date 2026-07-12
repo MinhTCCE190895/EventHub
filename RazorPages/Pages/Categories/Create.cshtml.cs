@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using BLL.Services;
 using BLL.Interfaces;
 using BusinessObjects.DTOs;
@@ -39,7 +39,7 @@ public class CreateModel : PageModel
             TempData["SuccessMessage"] = "Category created successfully!";
             return RedirectToPage("./Index");
         }
-        catch (System.InvalidOperationException ex)
+        catch (System.Exception ex)
         {
             ModelState.AddModelError("CategoryCreateDTO.Name", ex.Message);
             return Page();

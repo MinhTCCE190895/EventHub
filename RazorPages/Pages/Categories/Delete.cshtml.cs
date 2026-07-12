@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using BLL.Services;
 using BLL.Interfaces;
 using BusinessObjects.DTOs;
@@ -40,14 +40,14 @@ public class DeleteModel : PageModel
             await _categoryService.DeleteCategoryAsync(id);
             TempData["SuccessMessage"] = "Category deleted successfully!";
         }
-        catch (System.InvalidOperationException ex)
-        {
-            TempData["ErrorMessage"] = ex.Message;
-            return RedirectToPage("./Delete", new { id });
-        }
         catch (System.Collections.Generic.KeyNotFoundException)
         {
             return NotFound();
+        }
+        catch (System.Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToPage("./Delete", new { id });
         }
 
         return RedirectToPage("./Index");

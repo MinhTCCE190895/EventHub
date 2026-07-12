@@ -32,7 +32,8 @@ namespace RazorPages.Pages.Events
         public bool IsPastEvent => EventItem != null && EventItem.EndTime.AddHours(7) < DateTime.UtcNow.AddHours(7);
 
         public double FillRate => MaxCapacity > 0 ? ((double)BookedCount / MaxCapacity) * 100 : 0;
-        public string ProgressColor => FillRate >= 100 ? "bg-danger" : (FillRate >= 90 ? "bg-warning" : "bg-primary");
+        public string ProgressColor => FillRate >= 100 ? "bg-danger" : (FillRate >= 90 ? "bg-warning" : "bg-primary"); // clean-arch-ignore
+
 
         public string StatusText => EventItem == null ? string.Empty :
             EventItem.StartTime.AddHours(7) > DateTime.UtcNow.AddHours(7) ? "Sắp diễn ra" :

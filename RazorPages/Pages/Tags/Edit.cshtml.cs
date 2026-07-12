@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using BLL.Services;
 using BLL.Interfaces;
 using BusinessObjects.DTOs;
@@ -51,14 +51,14 @@ public class EditModel : PageModel
             await _tagService.UpdateTagAsync(TagUpdateDTO);
             TempData["SuccessMessage"] = "Tag updated successfully!";
         }
-        catch (System.InvalidOperationException ex)
-        {
-            ModelState.AddModelError("TagUpdateDTO.Name", ex.Message);
-            return Page();
-        }
         catch (System.Collections.Generic.KeyNotFoundException)
         {
             return NotFound();
+        }
+        catch (System.Exception ex)
+        {
+            ModelState.AddModelError("TagUpdateDTO.Name", ex.Message);
+            return Page();
         }
 
         return RedirectToPage("./Index");

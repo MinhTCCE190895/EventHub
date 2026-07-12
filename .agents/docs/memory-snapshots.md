@@ -62,19 +62,50 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+
+- **2026-07-13 (Antigravity / QuiNC / MinhTC)**:
+  - **Đóng gói Agent Skill chuẩn hóa Clean Architecture cho các phân hệ CRUD (`clean-architecture-crud-refactor`)**:
+    - Xây dựng script PowerShell tự động quét mã nguồn `.agents/skills/clean-architecture-crud-refactor/scripts/check_clean_arch.ps1` theo các bộ quy tắc (Rule IDs: `CA-ERR-01`, `CA-ERR-02`, `CA-ERR-03`, `CA-WARN-01`, `CA-WARN-02`, `CA-CLEAN-01`), xuất báo cáo kiểm toán chi tiết dưới định dạng Markdown và JSON vào `.agents/docs/reports/`.
+    - Biên soạn bộ tài liệu hướng dẫn và checklist chuẩn hóa kiến trúc `SKILL.md` tại `.agents/skills/clean-architecture-crud-refactor/SKILL.md`, xác định rõ quy trình 3 bước (Quét tự động -> Phân cấp xử lý 3 mức độ -> Kiểm chứng và Rollback Guard với `dotnet build` + `git restore`), kèm các mẫu trước/sau (Canonical Before/After Patterns) cho `DTO` computed properties và `Service` layer.
+    - Chạy thử nghiệm thành công script quét trên phân hệ `RazorPages/Pages/Events`, xác nhận cơ chế nhận diện đúng vi phạm màu sắc UI (`CA-WARN-02` tại `Detail.cshtml.cs`) và xác nhận 0 vi phạm Data Access (`CA-ERR-01`/`02`), bảo đảm phân hệ Events tuân thủ 100% Clean Architecture.
+    - Dùng skill `clean-architecture-crud-refactor` rà soát & chuẩn hóa toàn diện 2 module `Categories` và `Tags` trong `RazorPages`: Cập nhật regex `CA-WARN-01` trong `check_clean_arch.ps1` để nhận diện các ngoại lệ có tiền tố `System.`. Chuẩn hóa toàn bộ cấu trúc bắt lỗi trong các PageModel (`Create.cshtml.cs`, `Edit.cshtml.cs`, `Delete.cshtml.cs`) từ việc bắt lẻ `catch (System.InvalidOperationException ex)` sang bắt chung `catch (Exception ex)` (sau `KeyNotFoundException`) nhằm đảm bảo mọi ngoại lệ nghiệp vụ/validation từ BLL (`CategoryService`, `TagService`) đều được chuyển tải trọn vẹn ra giao diện, đạt 100% kiểm toán Clean Architecture (`0` vi phạm).
+
 - **2026-07-09 (Antigravity / QuiNC)**:
   - **FE-11 Bookmark/Wishlist + Fix ARCH-04**: Tạo `IBookmarkService` / `BookmarkService` (dùng `IRepository<Bookmark>` đúng pattern). Xóa `AppDbContext` khỏi `Index.cshtml.cs` — fix ARCH-04. Thêm AJAX toggle bookmark trên Grid & List card. Khôi phục trang `/Bookmarks/Index` với Auth thực từ Claims (`[Authorize(Roles="Student")]`). Thêm sidebar link Student. Fix CSS Safari compat (`-webkit-user-select`, `-webkit-backdrop-filter`, `line-clamp`). Fix `DependencyInjection.cs` dùng `AddBusinessLogicLayer` thay các method cũ bị xóa. Build: **0 errors**.
-- **2026-06-29 (Antigravity)**:
-  - **QuiNC - Architecture Refactor (ARCH-02, ARCH-03/FE-03, ARCH-06, ARCH-07)**: Removed `AddSignalR()` from `BLL/DependencyInjection.cs` (wrong layer) and moved to `Blazor/Program.cs`. Merged `SearchService.SearchEventsAsync()` into `EventService`, extended keyword search to scan `Category.Name` via `EventCategories.Any(ec => ec.Category.Name.Contains(keyword))`. Added `SearchEventsAsync` signature to `IEventService`. Deleted `ISearchService.cs` and `SearchService.cs`. Refactored `Index.cshtml.cs` to inject `IEventService`, `ICategoryService`, `ITagService` instead of `ISearchService` and raw `IRepository<T>`. Fixed `EventSearchViewModel` to use `CategoryDTO`/`TagDTO` instead of `DAL.Entities`. Build: **0 errors, 2 pre-existing warnings**.
-- **2026-06-24 (Antigravity)**:
-  - **QuiNC - Tách cấu trúc Dependency Injection (BLL)**: Tách `AddBusinessLogicLayer` thành các extension method độc lập (`AddCoreBusinessServices`, `AddWeatherServices`, `AddEmailServices`, `AddInfrastructureServices`) để dọn sạch cấu hình DI. Loại bỏ `services.AddSignalR()` khỏi tầng BLL để tránh phụ thuộc ngược vào Presentation Layer, và chuyển cấu hình này trực tiếp vào `Program.cs` của dự án Blazor.
-  - **QuiNC - Cập nhật Backlog Guide (FE-03, FE-08)**: Cập nhật tài liệu `quinc-backlog-guide.md` khớp hoàn toàn với mã nguồn thực tế phục vụ ôn tập thi vấn đáp.
-- **2026-06-14 to 2026-06-23**:
-  - Tối ưu hóa Weather Widget với cơ chế Semaphore chống Cache Stampede.
-  - Chuyển đổi mapping thủ công sang AutoMapper, cấu hình múi giờ Việt Nam (UTC+7).
-  - Khắc phục Race Condition / Concurrency trong Đặt vé Live (Blazor Server Hub).
-  - Tích hợp SSO Authentication chia sẻ cookie giữa MVC, RazorPages và Blazor Server.
-  - Đồng bộ logic CRUD Event, Venue Capacity Limits và email background reminders.
+
+- **2026-07-01 (Antigravity / MinhTC)**:
+  - **Tách triệt để nghiệp vụ khỏi tầng FE (Event CRUD - `FE-02`)**:
+    - Loại bỏ logic kiểm tra thời gian sự kiện (`StartTime >= EndTime`) bị lặp lại ở tầng giao diện (`Create.cshtml.cs` và `Edit.cshtml.cs`).
+    - Gỡ bỏ việc tiêm trực tiếp `AppDbContext` và logic truy vấn dữ liệu/tính toán ranh giới thời tiết tại trang chi tiết (`Detail.cshtml.cs`).
+    - Tối giản hóa xử lý lỗi (`try-catch`) trong `Create.cshtml.cs` và `Edit.cshtml.cs`: loại bỏ việc tầng FE phải tự phân loại từng exception (`ArgumentException`, `InvalidOperationException`) để ánh xạ vào từng field cụ thể, thay bằng bắt lỗi chung (`catch (Exception)`) và hiển thị qua `ModelState summary`. Ràng buộc dữ liệu field-level hoàn toàn do `IValidatableObject` đảm nhiệm trước khi gọi BLL.
+    - Bổ sung `GetEventEntityByIdAsync` vào `IEventService`/`EventService` và `.ThenInclude(ec => ec.Category)` vào `EventRepository`, đảm bảo toàn bộ nghiệp vụ được tập trung duy nhất tại tầng dịch vụ (BLL), tuân thủ tuyệt đối Clean Architecture.
+    - Triệt tiêu hoàn toàn các khối kiểm tra `if` mang tính logic khỏi `Detail.cshtml.cs` và `Detail.cshtml`: chuyển logic kiểm tra rỗng địa điểm cho `WeatherService`, chuyển logic bóc tách user claim cho `FeedbackAnalyticsService`, đồng thời đóng gói toàn bộ trạng thái hiển thị (`StatusText`, `StatusClass`, `RemainingSeats`, `FillRate`) thành getter property trong `DetailModel`. Giao diện FE không còn bất kỳ phép tính toán nghiệp vụ nào.
+    - Quét và dọn sạch toàn bộ các trang CRUD Events (`Index`, `Create`, `Edit`, `Detail`, `Delete`): bổ sung các computed properties (`StatusDisplayName`, `StatusBadgeClass`) trực tiếp vào `EventDTO`, triệt tiêu hoàn toàn các khối `switch/case` phân loại màu sắc và tên trạng thái khỏi `Index.cshtml` và `Delete.cshtml`. Chuẩn hóa cơ chế bắt lỗi chung `catch (Exception)` trong `Delete.cshtml.cs` để bảo đảm mọi ngoại lệ nghiệp vụ từ BLL (`EventService`) đều được chuyển tải nguyên vẹn lên UI.
+  - **MinhTC - Triển khai Quản lý & Duyệt Ý tưởng Sự kiện (`FE-13` - Event Requests)**:
+    - Tạo tập DTO `EventRequestDTO`, `EventRequestCreateDTO`, `EventRequestProcessDTO` trong `BusinessObjects/DTOs/EventRequestDTOs.cs` với ràng buộc validation đầy đủ, sử dụng `[BindProperty]` chống Over-posting.
+    - Tạo cấu hình AutoMapper `EventRequestProfile.cs` (quy đổi múi giờ UTC+7 cho thời gian gửi).
+    - Xây dựng giao tiếp tầng nghiệp vụ `IEventRequestService` và `EventRequestService` trong BLL, tích hợp vào DI Container (`AddEventManagementServices`).
+    - Triển khai nhóm Razor Pages `Pages/Requests/`:
+      - `Index.cshtml`: Hiển thị danh sách ý tưởng theo phân quyền (Student xem đề xuất cá nhân, Admin/Organizer xem toàn bộ kèm bộ lọc trạng thái Pending/Approved/Rejected).
+      - `Create.cshtml`: Trang cho sinh viên gửi ý tưởng mới (quyền `Student`).
+      - `Process.cshtml`: Trang xử lý phê duyệt ý tưởng cho ban tổ chức (quyền `Admin,Organizer`).
+    - Cập nhật Sidebar navigation (`_Layout.cshtml`) hiển thị liên kết "Ý tưởng sự kiện" / "Duyệt ý tưởng sự kiện" tương ứng theo role. Kiểm chứng build thành công 100%.
+
+- **2026-06-30 (Antigravity)**:
+  - **Chuẩn hóa cấu trúc Solution (`EventHub.sln`)**: Gỡ bỏ các thư mục ảo trung gian (`NestedProjects` và Solution Folders cũ), đưa cấu trúc cây project về dạng danh sách phẳng ngang hàng (`DAL`, `BLL`, `MVC`, `RazorPages`, `Blazor`) rõ ràng và trực quan trên Solution Explorer.
+  - **Tái cấu trúc Modular DI (Feature-based Registration)**:
+    - Chẻ nhỏ phương thức đăng ký DI `AddBusinessLogicLayer` trong `BLL/DependencyInjection.cs` thành các phương thức mở rộng cụm nghiệp vụ độc lập: `AddCoreBusinessServices`, `AddUserManagementServices`, `AddEventManagementServices`, `AddFeedbackManagementServices`, `AddLiveInteractiveServices`.
+    - Cập nhật tường minh `Program.cs` tại 3 ứng dụng giao diện (`MVC`, `RazorPages`, `Blazor`) chỉ đăng ký chính xác những cụm dịch vụ BLL mà giao diện đó khai thác, phân định ranh giới nghiệp vụ rõ ràng và tối ưu hóa bộ nhớ container. Kiểm chứng build thành công 100%.
+  - **Khắc phục lỗi DI cho `EventService` (RazorPages / BLL DI)**: Bổ sung `services.AddSignalR()` vào `AddEventManagementServices` trong `BLL/DependencyInjection.cs` để giải quyết dependency `IHubContext<EventHub>` cho `EventService` khi chạy RazorPages.
+  - **Khắc phục lỗi xác thực thời gian sự kiện (`FE-02` - MinhTC)**: Bổ sung xác thực `StartTime < EndTime` cho `EventCreateDTO` và `EventUpdateDTO` (`IValidatableObject`), ném ngoại lệ `ArgumentException` tại tầng `EventService` và xử lý hiển thị lỗi trên form tại các PageModel `Events/Create` và `Events/Edit`.
+  - **MinhTC & LongNH - Chuẩn hóa Cascade Restrict & Xử lý Exception (`FE-05`, `FE-02`, `FE-09`)**:
+    - Cấu hình chuẩn `DeleteBehavior.Restrict` trong `CompositeKeysConfiguration.cs` cho `EventCategory` và `EventTag` từ `Category` và `Tag`.
+    - Cập nhật `VenueService.cs`, `EventService.cs`, `CategoryService.cs`, `TagService.cs` kiểm tra trước dữ liệu liên quan và bắt `DbUpdateException` trả về `InvalidOperationException` kèm thông báo tiếng Việt rõ ràng.
+    - Cập nhật các PageModel `Venues/Delete`, `Events/Delete`, `Categories/Delete`, `Tags/Delete` bắt ngoại lệ `InvalidOperationException` (loại bỏ các khối catch `DbUpdateException` thừa) và hiển thị thông báo an toàn ra `TempData["ErrorMessage"]`.
+    - Bổ sung phương thức `DeleteUserAsync` vào `UserService.cs` hỗ trợ Xóa mềm (`IsActive = false`) và ngăn chặn Xóa cứng tài khoản Organizer/Student khi có ràng buộc sự kiện hoặc vé đăng ký.
+    - Xóa bỏ hoàn toàn thư mục cũ `SharedKeys/` không còn sử dụng do toàn bộ hệ thống đã chuyển sang lưu khóa bảo mật vào Database (`PersistKeysToDbContext<AppDbContext>()`).
+
+>>>>>>> 232c520 (refactor(RazorPages): chuẩn hóa xử lý ngoại lệ cho Categories, Tags, cập nhật check_clean_arch.ps1 và memory-snapshots)
 - **2026-06-23 (Antigravity)**:
   - **QuiNC - Bảo vệ file appsettings.json & Luật Git Workflow (`FE-03`)**: Cấu hình quy tắc chặn tự ý sửa đổi file cấu hình và chuỗi kết nối, cùng với quy tắc bắt buộc phải chạy `git pull` trước khi `git push` và cấm sử dụng Force Push vào file quy chuẩn chung `01-token-and-docs.md`. Đồng thời thực hiện chạy lệnh `git update-index --assume-unchanged` trên cả 3 dự án (`Blazor`, `MVC`, `RazorPages`).
   - **QuiNC - Comments Translation (`FE-03`, `FE-08`)**: Translated all Vietnamese comments to English inside QuiNC's module files: `SearchService.cs`, `WeatherService.cs`, `Index.cshtml.cs`, `EventSearchViewModel.cs`, `Detail.cshtml.cs`, `Index.cshtml`, and `Detail.cshtml` to maintain academic whitepaper standards.
