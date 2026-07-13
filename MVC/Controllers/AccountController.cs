@@ -35,12 +35,14 @@ public class AccountController : Controller
     // POST /Account/Login
     [HttpPost]
     [AllowAnonymous]
-    [ValidateAntiForgeryToken]
+    [ValidateAntiForgeryToken] // Chống tấn công CSRF (Cross-Site Request Forgery) bằng cách yêu cầu token hợp lệ ẩn trong form đăng nhập.
     public async Task<IActionResult> Login(LoginViewModel model)
     {
+        // 1. Kiểm tra tính hợp lệ của ViewModel (Data Annotations) để lọc sớm dữ liệu sai định dạng.
         if (!ModelState.IsValid)
             return View(model);
 
+        // 2. Gọi logic BLL để xác thực tài khoản và kiểm tra mật khẩu đã mã hóa.
         var user = await _userService.ValidateLoginAsync(model.Email, model.Password);
 
         if (user is null)
@@ -49,6 +51,7 @@ public class AccountController : Controller
             return View(model);
         }
 
+        // 3. Khởi tạo danh sách Claims để cấp phát cho Cookie, chứa thông tin định danh và phân quyền.
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -57,6 +60,7 @@ public class AccountController : Controller
             new(ClaimTypes.Role, user.Role)
         };
 
+        // 4. Thiết lập AuthenticationCookie và thời gian sống (Session vs Persistent tùy thuộc vào RememberMe)
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
         var authProps = new AuthenticationProperties
@@ -67,6 +71,7 @@ public class AccountController : Controller
                 : DateTimeOffset.UtcNow.AddHours(8)
         };
 
+        // 5. SignIn vào Context để sinh Cookie auth gửi về client
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
@@ -84,7 +89,8 @@ public class AccountController : Controller
         return user.Role switch
         {
             "Organizer" => Redirect("http://localhost:5129/Events"),
-            "Admin" or "Student" => Redirect("http://localhost:5129/"),
+            "Admin" => RedirectToAction("Index", "Admin"),
+            "Student" => Redirect("http://localhost:5129/"),
             _ => RedirectToAction("Index", "Home")
         };
     }
@@ -103,19 +109,21 @@ public class AccountController : Controller
     // POST /Account/Register
     [HttpPost]
     [AllowAnonymous]
-    [ValidateAntiForgeryToken]
+    [ValidateAntiForgeryToken] // Yêu cầu ValidateAntiForgeryToken để tránh việc submit form giả mạo từ trang khác.
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        // 1. Kiểm tra nhanh định dạng dữ liệu đầu vào (độ dài, ký tự hợp lệ).
         if (!ModelState.IsValid)
             return View(model);
 
-        // Chặn tiêm quyền Admin qua form đăng ký công khai.
+        // 2. Chặn tiêm quyền Admin qua form đăng ký công khai (đây là lỗ hổng bảo mật nếu bỏ sót).
         if (model.Role == "Admin")
         {
             ModelState.AddModelError("Role", "Không thể đăng ký tài khoản Admin.");
             return View(model);
         }
 
+        // 3. Xác minh không bị trùng lặp tài khoản (Business logic validator).
         if (await _userService.EmailExistsAsync(model.Email))
         {
             ModelState.AddModelError("Email", "Email này đã được sử dụng.");

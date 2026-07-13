@@ -64,8 +64,11 @@
 
                 @if (isAuthenticated && userRole == "Admin")
                 {
-                    <a class="sidebar-link @(currentController == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">
+                    <a class="sidebar-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" asp-controller="Admin" asp-action="Index">
                         <i class="bi bi-speedometer2"></i> Admin Panel
+                    </a>
+                    <a class="sidebar-link @(currentController == "Admin" && currentAction == "Users" ? "active" : "")" asp-controller="Admin" asp-action="Users">
+                        <i class="bi bi-people-fill"></i> Quản lý User
                     </a>
                 }
             </nav>

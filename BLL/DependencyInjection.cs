@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IVenueService, VenueService>();

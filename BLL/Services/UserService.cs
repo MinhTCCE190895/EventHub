@@ -24,11 +24,13 @@ public class UserService : IUserService
 
     public async Task<User?> GetByEmailAsync(string email)
     {
+        // Sử dụng SingleOrDefaultAsync thay vì FirstOrDefaultAsync để đảm bảo tính toàn vẹn dữ liệu (chỉ có duy nhất 1 bản ghi email trong DB).
         return await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<bool> EmailExistsAsync(string email)
     {
+        // Tối ưu tốc độ kiểm tra trùng lặp email ở DB bằng ExistsAsync (chỉ sinh câu lệnh IF EXISTS trong SQL) thay vì load toàn bộ Entity.
         return await _userRepo.ExistsAsync(u => u.Email == email);
     }
 
@@ -36,6 +38,7 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Registering new user {Email} with role {Role}", dto.Email, dto.Role);
 
+        // Khởi tạo Entity với các thông tin mặc định. Quản lý ID từ phía Application thay vì phó mặc cho DB để tiện lợi hơn cho CQRS/Event Sourcing.
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -43,11 +46,13 @@ public class UserService : IUserService
             Email = dto.Email,
             StudentCode = dto.StudentCode,
             Role = dto.Role,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password), // Tham số work factor của bcrypt mặc định là 11
+            // Hash mật khẩu 1 chiều bằng BCrypt. Tham số work factor của bcrypt mặc định là 11 (cân bằng giữa bảo mật và hiệu suất).
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
+        // Lưu entity vào DB thông qua Repository Pattern và commit bằng DbContext
         await _userRepo.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -59,6 +64,7 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Login attempt for {Email}", email);
 
+        // Bước 1: Tra cứu User trong hệ thống dựa trên email
         var user = await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
@@ -67,6 +73,7 @@ public class UserService : IUserService
             return null;
         }
 
+        // Bước 2: Chặn đăng nhập nếu tài khoản đã bị vô hiệu hóa (IsActive = false)
         if (!user.IsActive)
         {
             _logger.LogWarning("Login failed — account {Email} is locked", email);
@@ -75,6 +82,7 @@ public class UserService : IUserService
 
         try
         {
+            // Bước 3: Xác thực tính nguyên vẹn của Hash trước khi Verify
             // Ngăn BCrypt.Verify throw SaltParseException khi gặp hash cũ hoặc sai định dạng.
             if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
             {
@@ -82,6 +90,7 @@ public class UserService : IUserService
                 return null;
             }
 
+            // Bước 4: So khớp mật khẩu bản rõ với Hash trong cơ sở dữ liệu
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 _logger.LogWarning("Login failed — wrong password for {Email}", email);
@@ -90,6 +99,7 @@ public class UserService : IUserService
         }
         catch (Exception ex)
         {
+            // Ghi log lỗi hệ thống khi Verify thất bại (do lỗi thuật toán/lib) thay vì throw Exception ra controller
             _logger.LogError(ex, "Login failed — error verifying password for {Email}", email);
             return null;
         }
