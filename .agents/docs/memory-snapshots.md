@@ -88,7 +88,7 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
     - Triển khai phân làn trực quan (Visual Swimlanes) tách biệt ranh giới xử lý giữa Client (User/Student/Admin) và Backend (System/Worker/External API).
     - Đồng bộ hóa logic nghiệp vụ đăng nhập thực tế của hệ thống (Validate -> Find User -> User Exists? -> Verify Password -> Check Active -> Issue Cookie -> Redirect).
   - **Biên soạn tài liệu yêu cầu phi chức năng (NFR Specification)**:
-    - Xây dựng tài liệu đặc tả NFR chuẩn IEEE 830 / ISO 25010 cho EventHub, đặc tả chi tiết hiệu năng PLINQ, bộ nhớ đệm wttr.in API (double-check lock), cơ chế đặt vé Serializable Transaction, Single Sign-On Cookie và bảo mật thông tin tài khoản.
+    - Xây dựng tài liệu đặc tả NFR chuẩn IEEE 830 / ISO 25010 cho EventHub theo đúng biểu mẫu bảng phân loại các chức năng ngầm không có giao diện (Non-UI features: PasswordHashing, Shared Cookie SSO, Active Session Guard, Background Email worker, Weather Cache Stampede double-check lock, Serializable Booking Service, SignalR Hub, v.v.).
 
 - **2026-07-13 (Antigravity / QuiNC / MinhTC)**:
   - **Đóng gói Agent Skill chuẩn hóa Clean Architecture cho các phân hệ CRUD (`clean-architecture-crud-refactor`)**:
