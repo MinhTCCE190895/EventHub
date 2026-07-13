@@ -82,6 +82,14 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
       - Bổ sung cấu trúc try-catch 2 tầng chuẩn mực vào `Create.cshtml.cs` và `Process.cshtml.cs` để bảo vệ các thao tác gửi ý tưởng và phê duyệt ý tưởng.
     - Kiểm chứng `dotnet build` thành công `0 Error(s)` và chạy kiểm toán tĩnh `check_clean_arch.ps1` trên cả `RazorPages/Pages/Venues` lẫn `RazorPages/Pages/Requests` đạt `0` vi phạm (`0 Violations Found`).
 
+- **2026-07-14 (Antigravity / Khôi)**:
+  - **Thiết kế & Tối ưu hóa Sơ đồ Hoạt động (UC-01 đến UC-21)**:
+    - Cấu trúc lại toàn bộ 21 sơ đồ hoạt động (UML Activity Diagrams) tương thích định dạng draw.io XML (`UniEventHub_Activity_Diagrams.drawio`).
+    - Triển khai phân làn trực quan (Visual Swimlanes) tách biệt ranh giới xử lý giữa Client (User/Student/Admin) và Backend (System/Worker/External API).
+    - Đồng bộ hóa logic nghiệp vụ đăng nhập thực tế của hệ thống (Validate -> Find User -> User Exists? -> Verify Password -> Check Active -> Issue Cookie -> Redirect).
+  - **Biên soạn tài liệu yêu cầu phi chức năng (NFR Specification)**:
+    - Xây dựng tài liệu đặc tả NFR chuẩn IEEE 830 / ISO 25010 cho EventHub, đặc tả chi tiết hiệu năng PLINQ, bộ nhớ đệm wttr.in API (double-check lock), cơ chế đặt vé Serializable Transaction, Single Sign-On Cookie và bảo mật thông tin tài khoản.
+
 - **2026-07-13 (Antigravity / QuiNC / MinhTC)**:
   - **Đóng gói Agent Skill chuẩn hóa Clean Architecture cho các phân hệ CRUD (`clean-architecture-crud-refactor`)**:
     - Xây dựng script PowerShell tự động quét mã nguồn `.agents/skills/clean-architecture-crud-refactor/scripts/check_clean_arch.ps1` theo các bộ quy tắc (Rule IDs: `CA-ERR-01`, `CA-ERR-02`, `CA-ERR-03`, `CA-WARN-01`, `CA-WARN-02`, `CA-CLEAN-01`), xuất báo cáo kiểm toán chi tiết dưới định dạng Markdown và JSON vào `.agents/docs/reports/`.
