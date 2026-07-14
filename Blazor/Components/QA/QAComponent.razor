@@ -1,0 +1,278 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Authorization
+@using BLL.Interfaces
+@using BusinessObjects.DTOs
+@inject ICommentService CommentService
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<div class="card-glass qa-card-container mt-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-10">
+        <h5 class="fw-bold mb-0 text-slate-800 d-flex align-items-center gap-2">
+            <i class="bi bi-chat-left-text-fill text-primary"></i> Live Q&A Hub
+        </h5>
+        <span class="badge bg-primary bg-opacity-10 text-primary px-2.5 py-1 text-xs fw-semibold">
+            @Comments.Count bình luận
+        </span>
+    </div>
+
+    <!-- Danh sách bình luận -->
+    <div class="comments-scroll-area mb-3" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
+        @if (!Comments.Any())
+        {
+            <div class="text-center my-4 py-3 text-muted">
+                <i class="bi bi-chat-quote display-6 d-block mb-2 text-slate-300"></i>
+                <p class="small mb-0">Chưa có câu hỏi hay bình luận nào. Hãy là người đầu tiên đặt câu hỏi!</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var c in Comments)
+            {
+                <div class="comment-bubble-wrapper mb-3 p-3 rounded-3 bg-white border border-light shadow-3xs hover-scale">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-placeholder rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                @GetInitials(c.UserFullName)
+                            </div>
+                            <div>
+                                <strong class="text-slate-800 text-sm">@c.UserFullName</strong>
+                                <span class="badge bg-slate-100 text-slate-600 border text-3xs ms-1">Thành viên</span>
+                            </div>
+                        </div>
+                        <small class="text-muted text-xs">@c.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
+                    </div>
+                    <div class="comment-content text-slate-700 text-sm ps-4 ms-2">
+                        @c.Content
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Nhập bình luận mới -->
+    @if (CurrentUserId == null)
+    {
+        <div class="alert alert-warning text-center small mb-0 rounded-3 border-0">
+            Bạn cần <a href="@GetLoginUrl()" class="fw-bold text-decoration-none">đăng nhập</a> để tham gia hỏi đáp trực tiếp.
+        </div>
+    }
+    else
+    {
+        <div class="input-group">
+            <textarea class="form-control form-control-minimal" 
+                      rows="2" 
+                      placeholder="Nhập câu hỏi hoặc ý kiến của bạn..." 
+                      @bind="NewCommentText" 
+                      disabled="@IsSending"
+                      @onkeydown="HandleKeyDown">
+            </textarea>
+            <button class="btn btn-primary px-4 fw-bold text-white d-flex align-items-center justify-content-center" 
+                    type="button" 
+                    @onclick="SendCommentAsync" 
+                    disabled="@(IsSending || string.IsNullOrWhiteSpace(NewCommentText))">
+                @if (IsSending)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <i class="bi bi-send-fill"></i>
+                }
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger py-1.5 px-3 mt-2 text-xs fw-semibold mb-0 rounded-3 border-0">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> @ErrorMessage
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .qa-card-container {
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.7);
+    }
+    .text-sm {
+        font-size: 0.88rem !important;
+    }
+    .text-xs {
+        font-size: 0.78rem !important;
+    }
+    .text-3xs {
+        font-size: 0.65rem !important;
+    }
+    .shadow-3xs {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .avatar-placeholder {
+        user-select: none;
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    private List<CommentDTO> Comments = new();
+    private string NewCommentText = "";
+    private bool IsSending = false;
+    private string ErrorMessage = "";
+
+    private HubConnection? hubConnection;
+    private Guid? CurrentUserId;
+    private string? CurrentUserFullName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Phân tích thông tin đăng nhập của user từ Cookie SSO qua Cascading Parameter
+        if (AuthState != null)
+        {
+            var authState = await AuthState;
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(nameIdentifier, out var userId))
+                {
+                    CurrentUserId = userId;
+                    CurrentUserFullName = user.Identity.Name;
+                }
+            }
+        }
+
+        // 2. Tải lịch sử bình luận
+        try
+        {
+            var list = await CommentService.GetCommentsForEventAsync(EventId);
+            Comments = list.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi tải lịch sử bình luận Q&A: " + ex.Message);
+        }
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    hubConnection = new HubConnectionBuilder()
+                        .WithUrl(Navigation.ToAbsoluteUri("/eventhub"), options =>
+                        {
+                            options.HttpMessageHandlerFactory = (message) =>
+                            {
+                                if (message is HttpClientHandler clientHandler)
+                                    clientHandler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslErrors) => true;
+                                return message;
+                            };
+                        })
+                        .WithAutomaticReconnect()
+                        .Build();
+
+                    hubConnection.On<Guid, string, string, string>("ReceiveComment", (id, author, content, time) =>
+                    {
+                        if (id == EventId)
+                        {
+                            Comments.Add(new CommentDTO
+                            {
+                                Id = Guid.NewGuid(),
+                                EventId = id,
+                                UserFullName = author,
+                                Content = content,
+                                CreatedAt = DateTime.UtcNow
+                            });
+                            InvokeAsync(StateHasChanged);
+                        }
+                    });
+
+                    await hubConnection.StartAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Lỗi kết nối SignalR (Comments): " + ex.Message);
+                }
+            });
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task SendCommentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewCommentText) || CurrentUserId == null || IsSending) return;
+
+        IsSending = true;
+        ErrorMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
+            {
+                // Gọi qua SignalR Hub để vừa lưu DB vừa broadcast
+                await hubConnection.SendAsync("SendComment", EventId, CurrentUserId.Value, NewCommentText.Trim());
+                NewCommentText = "";
+            }
+            else
+            {
+                ErrorMessage = "Mất kết nối với máy chủ thời gian thực. Đang thử gửi trực tiếp...";
+                // Fallback gửi trực tiếp qua service nếu SignalR lỗi
+                var saved = await CommentService.AddCommentAsync(EventId, CurrentUserId.Value, NewCommentText.Trim());
+                Comments.Add(saved);
+                NewCommentText = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsSending = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendCommentAsync();
+        }
+    }
+
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "U";
+        var parts = fullName.Trim().Split(' ');
+        if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        return (parts[0][0].ToString() + parts[parts.Length - 1][0].ToString()).ToUpper();
+    }
+
+    private string GetLoginUrl()
+    {
+        var isHttps = Navigation.Uri.StartsWith("https");
+        var baseLoginUrl = isHttps ? "https://localhost:7298/Account/Login" : "http://localhost:5259/Account/Login";
+        return $"{baseLoginUrl}?returnUrl={Uri.EscapeDataString(Navigation.Uri)}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

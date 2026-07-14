@@ -1,4 +1,4 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using BLL.SignalR;
 using DAL.Data;
 using DAL.Entities;
@@ -6,6 +6,8 @@ using DAL.Repositories;
 using DAL.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using BusinessObjects.DTOs;
 
 namespace BLL.Services;
 
@@ -15,17 +17,20 @@ public class BookingService : IBookingService
     private readonly IEventRepository _eventRepo;
     private readonly AppDbContext _context;
     private readonly IHubContext<EventHub> _hubContext;
+    private readonly IMapper _mapper;
 
     public BookingService(
         IBookingRepository bookingRepo,
         IEventRepository eventRepo,
         AppDbContext context,
-        IHubContext<EventHub> hubContext)
+        IHubContext<EventHub> hubContext,
+        IMapper mapper)
     {
         _bookingRepo = bookingRepo;
         _eventRepo = eventRepo;
         _context = context;
         _hubContext = hubContext;
+        _mapper = mapper;
     }
 
     public async Task<string> BookTicketAsync(Guid eventId, Guid studentId)
@@ -106,5 +111,30 @@ public class BookingService : IBookingService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<IEnumerable<BookingDTO>> GetRecentBookingsAsync(int count, CancellationToken cancellationToken = default)
+    {
+        var bookings = await _bookingRepo.Query()
+            .Where(b => b.Status == "Confirmed")
+            .Include(b => b.Student)
+            .Include(b => b.Event)
+            .OrderByDescending(b => b.BookingTime)
+            .Take(count)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IEnumerable<BookingDTO>>(bookings);
+    }
+
+    public async Task<BookingDTO?> GetRecentBookingForEventAsync(Guid eventId, CancellationToken cancellationToken = default)
+    {
+        var booking = await _bookingRepo.Query()
+            .Where(b => b.EventId == eventId && b.Status == "Confirmed")
+            .Include(b => b.Student)
+            .Include(b => b.Event)
+            .OrderByDescending(b => b.BookingTime)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return booking == null ? null : _mapper.Map<BookingDTO>(booking);
     }
 }

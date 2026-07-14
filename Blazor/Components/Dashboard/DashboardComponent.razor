@@ -3,12 +3,12 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
-@using DAL.Data
-@using DAL.Entities
-@using Microsoft.EntityFrameworkCore
+@using BLL.Interfaces
+@using BusinessObjects.DTOs
 @attribute [Authorize]
-@inject AppDbContext DbContext
 @inject NavigationManager Navigation
+@inject IEventService EventService
+@inject IBookingService BookingService
 @implements IAsyncDisposable
 
 <div class="dashboard-container">
@@ -280,30 +280,20 @@
             LiveLogs.Add(new() { Message = "Đang lắng nghe kết nối thời gian thực qua SignalR...", EventTitle = "SignalR", Timestamp = DateTime.Now.AddMilliseconds(-200), StatusClass = "badge-warning", StatusText = "ĐANG NGHE" });
 
             // 1. Tải danh sách các sự kiện đang Published và chưa kết thúc từ database
-            var now = DateTime.UtcNow;
-            Events = await DbContext.Events
-                .Where(e => e.Status == "Published" && e.EndTime > now)
-                .Select(e => new DashboardEventDto
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    MaxCapacity = e.Venue.MaxCapacity,
-                    RegisteredCount = e.RegisteredCount
-                })
-                .OrderBy(e => e.Title)
-                .ToListAsync();
+            var activeEvents = await EventService.GetActivePublishedEventsAsync();
+            Events = activeEvents.Select(e => new DashboardEventDto
+            {
+                Id = e.Id,
+                Title = e.Title,
+                MaxCapacity = e.VenueMaxCapacity,
+                RegisteredCount = e.RegisteredCount
+            }).ToList();
 
             // Tính toán chỉ số KPI ban đầu từ dữ liệu vừa tải
             CalculateKpis();
 
-            // 2. Tải 10 confirmed bookings gần đây nhất kèm thông tin SV và Tên sự kiện làm điểm đồ thị ban đầu
-            var recentBookings = await DbContext.Bookings
-                .Where(b => b.Status == "Confirmed")
-                .Include(b => b.Student)
-                .Include(b => b.Event)
-                .OrderByDescending(b => b.BookingTime)
-                .Take(10)
-                .ToListAsync();
+            // 2. Tải 10 confirmed bookings gần đây nhất làm điểm đồ thị ban đầu
+            var recentBookings = (await BookingService.GetRecentBookingsAsync(10)).ToList();
             recentBookings.Reverse(); // Đảo lại theo thứ tự thời gian tăng dần để vẽ đồ thị từ trái qua phải
 
             // Tạo các mốc điểm ban đầu trên biểu đồ SVG (lùi dần từ tổng số vé hiện tại)
@@ -318,7 +308,7 @@
                 if (bookingIndex >= 0 && bookingIndex < recentBookings.Count)
                 {
                     var b = recentBookings[bookingIndex];
-                    tooltip = $"Mới đặt - Học sinh: {b.Student?.FullName ?? "N/A"} | Sự kiện: {b.Event?.Title ?? "N/A"} ({b.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
+                    tooltip = $"Mới đặt - Học sinh: {b.StudentName} | Sự kiện: {b.EventTitle} ({b.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
                 }
 
                 ChartData.Add(new ChartPointDto
@@ -340,7 +330,7 @@
     }
 
     // Vòng đời sau khi render giao diện: Thiết lập kết nối SignalR thời gian thực để lắng nghe thay đổi
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
@@ -392,6 +382,7 @@
                 }
             });
         }
+        return Task.CompletedTask;
     }
 
     // Tính toán lại các KPI chỉ số tổng quan trên Dashboard
@@ -434,16 +425,11 @@
                 {
                     try
                     {
-                        var newBooking = await DbContext.Bookings
-                            .Where(b => b.EventId == eventId && b.Status == "Confirmed")
-                            .Include(b => b.Student)
-                            .Include(b => b.Event)
-                            .OrderByDescending(b => b.BookingTime)
-                            .FirstOrDefaultAsync();
+                        var newBooking = await BookingService.GetRecentBookingForEventAsync(eventId);
 
                         if (newBooking != null)
                         {
-                            tooltip = $"Mới đặt - Học sinh: {newBooking.Student?.FullName ?? "N/A"} | Sự kiện: {newBooking.Event?.Title ?? "N/A"} ({newBooking.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
+                            tooltip = $"Mới đặt - Học sinh: {newBooking.StudentName} | Sự kiện: {newBooking.EventTitle} ({newBooking.BookingTime.ToLocalTime().ToString("HH:mm:ss")})";
                         }
                     }
                     catch (Exception ex)

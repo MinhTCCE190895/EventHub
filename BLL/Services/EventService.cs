@@ -216,6 +216,17 @@ public class EventService : IEventService
         }
     }
 
+    public async Task<IEnumerable<EventDTO>> GetActivePublishedEventsAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var events = await _eventRepository.BuildSearchQuery()
+            .Where(e => e.Status == "Published" && e.EndTime > now)
+            .OrderBy(e => e.Title)
+            .ToListAsync(cancellationToken);
+
+        return _mapper.Map<IEnumerable<EventDTO>>(events);
+    }
+
     public async Task<(List<EventCardDTO> Items, int TotalCount)> SearchEventsAsync(
         EventSearchDTO searchDto,
         CancellationToken cancellationToken = default)

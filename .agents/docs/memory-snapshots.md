@@ -52,7 +52,6 @@ graph TD
 Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 - `Feedback.cshtml.cs`, `MyFeedbacks.cshtml.cs` → **MinhTC**
 - `OrganizerDetails.cshtml.cs` → **TriLT**
-- `Blazor/Components/Dashboard/DashboardComponent.razor`, `BookingComponent.razor` → **Khôi**
 
 ### [ARCH-05] `IMapper` inject ở Presentation — **TriLT**
 `RazorPages/Pages/Follow/OrganizerDetails.cshtml.cs` inject `IMapper` trực tiếp — mapping phải thuộc BLL.
@@ -83,6 +82,13 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
     - Kiểm chứng `dotnet build` thành công `0 Error(s)` và chạy kiểm toán tĩnh `check_clean_arch.ps1` trên cả `RazorPages/Pages/Venues` lẫn `RazorPages/Pages/Requests` đạt `0` vi phạm (`0 Violations Found`).
 
 - **2026-07-14 (Antigravity / Khôi)**:
+  - **Hoàn thiện phân hệ Q&A thời gian thực (FE-15) & Giải quyết lỗi kiến trúc (ARCH-04)**:
+    - Tạo `CommentDTO` và `BookingDTO` cùng AutoMapper profiles tương ứng (`CommentProfile`, `BookingProfile`).
+    - Triển khai `ICommentService` & `CommentService` cho các hoạt động nghiệp vụ bình luận, sửa `BookingService` để hỗ trợ dashboard methods và sử dụng AutoMapper.
+    - Cập nhật SignalR `EventHub` để lưu bình luận vào database trước khi broadcast.
+    - Loại bỏ hoàn toàn sự phụ thuộc trực tiếp vào `AppDbContext` (vi phạm `[ARCH-04]`) trong `BookingComponent.razor` và `DashboardComponent.razor` bằng cách sử dụng `IEventService` và `IBookingService`.
+    - Thiết kế và triển khai `QAComponent.razor` dưới dạng Blazor Component hỗ trợ real-time comments và tích hợp trực tiếp vào trang Đặt vé (`BookingComponent.razor`).
+    - Đăng ký các dịch vụ còn thiếu `ICommentService` và `IEventRequestService` vào BLL DI Container.
   - **Thiết kế & Tối ưu hóa Sơ đồ Hoạt động (UC-01 đến UC-21)**:
     - Cấu trúc lại toàn bộ 21 sơ đồ hoạt động (UML Activity Diagrams) tương thích định dạng draw.io XML (`UniEventHub_Activity_Diagrams.drawio`).
     - Triển khai phân làn trực quan (Visual Swimlanes) tách biệt ranh giới xử lý giữa Client (User/Student/Admin) và Backend (System/Worker/External API).

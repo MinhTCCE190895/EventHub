@@ -1,17 +1,23 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using BLL.Interfaces;
 
 namespace BLL.SignalR;
 
 public class EventHub : Hub
 {
+    private readonly ICommentService _commentService;
+
     // Dictionary tĩnh để lưu vết thời gian gửi tin nhắn cuối cùng của mỗi ConnectionId nhằm chống spam comment (Rate Limit)
     private static readonly ConcurrentDictionary<string, DateTime> _lastCommentTimes = new();
 
-    // Client sẽ lắng nghe sự kiện "ReceiveTicketUpdate" để cập nhật số lượng chỗ trống theo thời gian thực
+    public EventHub(ICommentService commentService)
+    {
+        _commentService = commentService;
+    }
 
     // Phương thức gửi bình luận thời gian thực có cơ chế chặn spam (Rate Limiting 2 giây)
-    public async Task SendComment(Guid eventId, string userName, string commentText)
+    public async Task SendComment(Guid eventId, Guid userId, string commentText)
     {
         var connectionId = Context.ConnectionId;
         var now = DateTime.UtcNow;
@@ -29,8 +35,11 @@ public class EventHub : Hub
         // Cập nhật mốc thời gian gửi comment mới nhất
         _lastCommentTimes[connectionId] = now;
 
+        // Lưu comment vào database qua Service
+        var comment = await _commentService.AddCommentAsync(eventId, userId, commentText);
+
         // Broadcast bình luận mới đến tất cả các client đang kết nối
-        await Clients.All.SendAsync("ReceiveComment", eventId, userName, commentText, now.ToLocalTime().ToString("HH:mm:ss"));
+        await Clients.All.SendAsync("ReceiveComment", eventId, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"));
     }
 
     // Tự động dọn dẹp bộ nhớ cache connectionId khi client ngắt kết nối

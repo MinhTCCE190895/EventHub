@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IVenueService, VenueService>();
+        services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<IEventRequestService, EventRequestService>();
 
         services.AddAutoMapper(config => 

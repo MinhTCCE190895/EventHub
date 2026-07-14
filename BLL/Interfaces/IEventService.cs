@@ -13,6 +13,7 @@ public interface IEventService
     Task DeleteEventAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<User>> GetOrganizersAsync(CancellationToken cancellationToken = default);
     Task ChangeEventStatusAsync(Guid id, string newStatus, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EventDTO>> GetActivePublishedEventsAsync(CancellationToken cancellationToken = default);
     Task<(List<EventCardDTO> Items, int TotalCount)> SearchEventsAsync(
         EventSearchDTO searchDto,
         CancellationToken cancellationToken = default);

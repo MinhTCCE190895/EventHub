@@ -1,16 +1,13 @@
-﻿@page "/events/{EventId:guid}/book"
+@page "/events/{EventId:guid}/book"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
-@using DAL.Data
-@using DAL.Entities
-@using Microsoft.EntityFrameworkCore
 @using BLL.Services
 @using BLL.Interfaces
 @attribute [Authorize(Roles = "Student")]
-@inject AppDbContext DbContext
 @inject NavigationManager Navigation
 @inject IBookingService BookingService
+@inject IEventService EventService
 @implements IAsyncDisposable
 
 <div class="page-header-minimal text-center mb-4">
@@ -19,7 +16,7 @@
     <p class="text-muted">Cập nhật chỗ trống theo thời gian thực (SignalR)</p>
 </div>
 
-<div class="d-flex justify-content-center">
+<div class="d-flex flex-column align-items-center justify-content-center">
     @if (EventItem == null)
     {
         <div class="alert alert-info">Đang tải thông tin sự kiện...</div>
@@ -29,7 +26,7 @@
         var remaining = EventItem.MaxCapacity - EventItem.RegisteredCount;
         var progressPercentage = EventItem.MaxCapacity > 0 ? (EventItem.RegisteredCount * 100 / EventItem.MaxCapacity) : 0;
         var isSoldOut = remaining <= 0;
-        var hasEnded = EventItem.EndTime < DateTime.UtcNow;
+        var hasEnded = EventItem.EndTime < DateTime.Now;
 
         <div class="card-minimal" style="max-width: 500px; width: 100%;">
             @if (isSoldOut)
@@ -141,6 +138,10 @@
                 </a>
             </div>
         </div>
+
+        <div style="max-width: 500px; width: 100%;">
+            <Blazor.Components.QA.QAComponent EventId="EventId" />
+        </div>
     }
 </div>
 
@@ -210,10 +211,7 @@
         // 2. Tải thông tin chi tiết sự kiện (bao gồm sức chứa địa điểm và số người đã đăng ký)
         try
         {
-            var ev = await DbContext.Events
-                .Include(e => e.Venue)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Id == EventId);
+            var ev = await EventService.GetEventByIdAsync(EventId);
 
             if (ev != null)
             {
@@ -221,8 +219,8 @@
                 {
                     Id = ev.Id,
                     Title = ev.Title,
-                    VenueName = ev.Venue.Name,
-                    MaxCapacity = ev.Venue.MaxCapacity,
+                    VenueName = ev.VenueName,
+                    MaxCapacity = ev.VenueMaxCapacity,
                     RegisteredCount = ev.RegisteredCount,
                     EndTime = ev.EndTime
                 };
@@ -235,7 +233,7 @@
     }
 
     // Vòng đời chạy sau khi component đã render giao diện: Thiết lập kết nối SignalR thời gian thực
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && EventItem != null)
         {
@@ -311,6 +309,7 @@
                 }
             });
         }
+        return Task.CompletedTask;
     }
 
     // Nghiệp vụ Đặt Vé: Gọi Service ở tầng BLL thực thi logic nghiệp vụ (với transaction Serializable chống race condition)
