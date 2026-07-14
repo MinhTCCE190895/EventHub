@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-07-14T00:00:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="arch-class-diagram" name="EventHub Architecture Class Diagram">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- ========================================================== -->
+        <!-- PRESENTATION LAYER -->
+        <!-- ========================================================== -->
+        
+        <!-- MVC Controller -->
+        <mxCell id="pres_account_ctrl" value="&lt;b&gt;AccountController&lt;/b&gt;&lt;hr/&gt;- _userService: IUserService&lt;hr/&gt;+ Login(model: LoginVM): Task&amp;lt;IActionResult&amp;gt;&lt;br/&gt;+ Register(model: RegisterVM): Task&amp;lt;IActionResult&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="240" height="110" as="geometry" />
+        </mxCell>
+        
+        <!-- Razor Pages PageModels -->
+        <mxCell id="pres_explore_model" value="&lt;b&gt;ExploreModel&lt;/b&gt;&lt;hr/&gt;- _eventService: IEventService&lt;br/&gt;- _weatherService: IWeatherService&lt;hr/&gt;+ OnGetAsync(): Task&amp;lt;IActionResult&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="80" width="240" height="110" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pres_request_model" value="&lt;b&gt;EventRequestModel&lt;/b&gt;&lt;hr/&gt;- _requestService: IEventRequestService&lt;hr/&gt;+ OnPostCreateAsync(): Task&amp;lt;IActionResult&amp;gt;&lt;br/&gt;+ OnPostProcessAsync(): Task&amp;lt;IActionResult&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="610" y="80" width="240" height="110" as="geometry" />
+        </mxCell>
+        
+        <!-- Blazor Component -->
+        <mxCell id="pres_booking_comp" value="&lt;b&gt;BookingComponent&lt;/b&gt;&lt;hr/&gt;- _bookingService: IBookingService&lt;br/&gt;- _hubContext: IHubContext&lt;hr/&gt;+ BookSeatAsync(seat: string): Task&lt;br/&gt;# OnInitializedAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="880" y="80" width="240" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- BUSINESS LOGIC LAYER (BLL SERVICES) -->
+        <!-- ========================================================== -->
+        
+        <!-- IUserService & UserService -->
+        <mxCell id="bll_iuser_svc" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IUserService&lt;/b&gt;&lt;hr/&gt;+ AuthenticateAsync(): Task&amp;lt;User&amp;gt;&lt;br/&gt;+ RegisterUserAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="60" y="280" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bll_user_svc" value="&lt;b&gt;UserService&lt;/b&gt;&lt;hr/&gt;- _userRepo: IRepository&amp;lt;User&amp;gt;&lt;hr/&gt;+ AuthenticateAsync(): Task&amp;lt;User&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="60" y="420" width="240" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- IEventService & EventService -->
+        <mxCell id="bll_ievent_svc" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IEventService&lt;/b&gt;&lt;hr/&gt;+ GetEventsAsync(): Task&amp;lt;IEnumerable&amp;lt;EventDTO&amp;gt;&amp;gt;&lt;br/&gt;+ CreateEventAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="280" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bll_event_svc" value="&lt;b&gt;EventService&lt;/b&gt;&lt;hr/&gt;- _eventRepo: IEventRepository&lt;br/&gt;- _mapper: IMapper&lt;hr/&gt;+ GetEventsAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="420" width="240" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- IEventRequestService & EventRequestService -->
+        <mxCell id="bll_irequest_svc" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IEventRequestService&lt;/b&gt;&lt;hr/&gt;+ CreateRequestAsync(): Task&lt;br/&gt;+ ProcessRequestAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="610" y="280" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bll_request_svc" value="&lt;b&gt;EventRequestService&lt;/b&gt;&lt;hr/&gt;- _requestRepo: IRepository&amp;lt;EventRequest&amp;gt;&lt;hr/&gt;+ CreateRequestAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="610" y="420" width="240" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- IBookingService & BookingService -->
+        <mxCell id="bll_ibooking_svc" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IBookingService&lt;/b&gt;&lt;hr/&gt;+ BookTicketAsync(): Task&lt;br/&gt;+ CancelTicketAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="880" y="280" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bll_booking_svc" value="&lt;b&gt;BookingService&lt;/b&gt;&lt;hr/&gt;- _bookingRepo: IRepository&amp;lt;Booking&amp;gt;&lt;hr/&gt;+ BookTicketAsync(): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="880" y="420" width="240" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- DATA ACCESS LAYER (DAL REPOSITORIES & DBCONTEXT) -->
+        <!-- ========================================================== -->
+        
+        <!-- Generic Repository -->
+        <mxCell id="dal_irepo" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IRepository&amp;lt;T&amp;gt;&lt;/b&gt;&lt;hr/&gt;+ GetAllAsync(): Task&amp;lt;IEnumerable&amp;lt;T&amp;gt;&amp;gt;&lt;br/&gt;+ GetByIdAsync(id: object): Task&amp;lt;T&amp;gt;&lt;br/&gt;+ AddAsync(entity: T): Task" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="60" y="580" width="240" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="dal_repo" value="&lt;b&gt;Repository&amp;lt;T&amp;gt;&lt;/b&gt;&lt;hr/&gt;# _context: AppDbContext&lt;br/&gt;# _dbSet: DbSet&amp;lt;T&amp;gt;&lt;hr/&gt;+ GetAllAsync(): Task&amp;lt;IEnumerable&amp;lt;T&amp;gt;&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="60" y="740" width="240" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Custom Repository -->
+        <mxCell id="dal_ievent_repo" value="&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br/&gt;&lt;b&gt;IEventRepository&lt;/b&gt;&lt;hr/&gt;+ BuildSearchQuery(): IQueryable&amp;lt;Event&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e3a8a;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="580" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dal_event_repo" value="&lt;b&gt;EventRepository&lt;/b&gt;&lt;hr/&gt;+ BuildSearchQuery(): IQueryable&amp;lt;Event&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="340" y="740" width="240" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- DB Context -->
+        <mxCell id="dal_context" value="&lt;b&gt;AppDbContext&lt;/b&gt;&lt;hr/&gt;+ Users: DbSet&amp;lt;User&amp;gt;&lt;br/&gt;+ Events: DbSet&amp;lt;Event&amp;gt;&lt;br/&gt;+ Bookings: DbSet&amp;lt;Booking&amp;gt;&lt;br/&gt;+ EventRequests: DbSet&amp;lt;EventRequest&amp;gt;" style="rect;html=1;whiteSpace=wrap;align=left;verticalAlign=top;margin=10;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;rounded=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="750" y="660" width="270" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- CONNECTIONS -->
+        <!-- ========================================================== -->
+        
+        <!-- Presentation -> BLL Interfaces (Usage/Dependency) -->
+        <mxCell id="conn_pres_user" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="pres_account_ctrl" target="bll_iuser_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_pres_event" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="pres_explore_model" target="bll_ievent_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_pres_req" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="pres_request_model" target="bll_irequest_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_pres_booking" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="pres_booking_comp" target="bll_ibooking_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- BLL Implementations implement BLL Interfaces -->
+        <mxCell id="conn_impl_user" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="bll_user_svc" target="bll_iuser_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_impl_event" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="bll_event_svc" target="bll_ievent_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_impl_req" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="bll_request_svc" target="bll_irequest_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_impl_booking" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="bll_booking_svc" target="bll_ibooking_svc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- BLL Services use DAL Repositories (Usage) -->
+        <mxCell id="conn_svc_repo_u" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="bll_user_svc" target="dal_irepo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_svc_repo_ev" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="bll_event_svc" target="dal_ievent_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_svc_repo_req" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="bll_request_svc" target="dal_irepo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_svc_repo_bk" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="bll_booking_svc" target="dal_irepo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Repository Implementations implement Repository Interfaces -->
+        <mxCell id="conn_impl_repo" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="dal_repo" target="dal_irepo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn_impl_event_repo" style="endArrow=block;endSize=16;endFill=0;dashed=1;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="dal_event_repo" target="dal_ievent_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Custom Repository Interface inherits Generic Repository Interface -->
+        <mxCell id="conn_repo_inherit" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="dal_ievent_repo" target="dal_irepo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Custom Repository Implementation inherits Generic Repository Implementation -->
+        <mxCell id="conn_repo_impl_inherit" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="dal_event_repo" target="dal_repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Repository uses AppDbContext (Dependency) -->
+        <mxCell id="conn_repo_context" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="dal_repo" target="dal_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

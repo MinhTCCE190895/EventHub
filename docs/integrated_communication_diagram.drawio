@@ -1,0 +1,370 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-07-14T00:00:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram id="integrated-comm-diagram" name="EventHub Integrated Communication Diagram">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- ========================================================== -->
+        <!-- ACTORS -->
+        <!-- ========================================================== -->
+        <mxCell id="act_student" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="240" width="30" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="act_organizer" value="Organizer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="30" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="act_admin" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="640" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- BOUNDARY / VIEW LAYER -->
+        <!-- ========================================================== -->
+        <mxCell id="view_login" value="loginView : LoginView" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="80" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_explore" value="exploreView : ExploreView" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="180" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_bookmarks" value="bookmarksView : BookmarksView" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="280" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_event_crud" value="eventCRUDView : EventCRUDView" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="380" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_requests" value="requestsView : EventRequestsView" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="480" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_live_booking" value="bookingComp : LiveBookingComponent" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="580" width="220" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_live_dash" value="dashboardComp : LiveDashboardComponent" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="680" width="240" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="view_feedback" value="feedbackComp : FeedbackAnalyticsComponent" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="780" width="250" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- CONTROL / HUB LAYER -->
+        <!-- ========================================================== -->
+        <mxCell id="ctrl_account" value="accountCtrl : AccountController" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="80" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ctrl_pagemodels" value="pageModels : PageModels" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="330" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ctrl_hub" value="eventHub : EventHub (SignalR)" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="630" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- BUSINESS LOGIC LAYER (SERVICES) -->
+        <!-- ========================================================== -->
+        <mxCell id="svc_user" value="userService : UserService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="80" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_weather" value="weatherService : WeatherService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="160" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_bookmark" value="bookmarkService : BookmarkService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="240" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_follow" value="followService : FollowService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="320" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_event" value="eventService : EventService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="420" width="180" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_booking" value="bookingService : BookingService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="520" width="200" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_request" value="requestService : EventRequestService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="620" width="220" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_feedback" value="feedbackSvc : FeedbackAnalyticsService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="720" width="240" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="svc_reminder" value="reminderWorker : EventReminderService" style="rect;html=1;whiteSpace=wrap;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="820" width="240" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- DATABASE -->
+        <!-- ========================================================== -->
+        <mxCell id="db_context" value="database : AppDbContext" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="400" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ========================================================== -->
+        <!-- LINKS & MESSAGES -->
+        <!-- ========================================================== -->
+        
+        <!-- Actors -> Views -->
+        <mxCell id="link_act_login" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="act_student" target="view_login">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_login" value="Login / Register â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_login">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_explore" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_student" target="view_explore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_explore" value="Search Events / View Weather â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_explore">
+          <mxGeometry x="-0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_bookmark" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_student" target="view_bookmarks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_bookmark" value="View Bookmarks â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_bookmark">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_crud" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_organizer" target="view_event_crud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_crud" value="Manage / Approve Event â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_crud">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_req" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_student" target="view_requests">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_req" value="Submit Event Request â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_req">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_booking" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_student" target="view_live_booking">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_booking" value="Book Seat Live â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_booking">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_dash" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="act_organizer" target="view_live_dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_dash" value="View Ticket Status â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_dash">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_act_feedback" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="act_admin" target="view_feedback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_act_feedback" value="View Feedback Analytics â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_act_feedback">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Views -> Controllers/Hubs -->
+        <mxCell id="link_v_login_ctrl" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="view_login" target="ctrl_account">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_login_ctrl" value="Authenticate â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_login_ctrl">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_v_explore_pm" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="view_explore" target="ctrl_pagemodels">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_explore_pm" value="Load Model â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_explore_pm">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_v_bookmark_pm" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="view_bookmarks" target="ctrl_pagemodels">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_bookmark_pm" value="Load Bookmarks â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_bookmark_pm">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_v_crud_pm" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="view_event_crud" target="ctrl_pagemodels">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_crud_pm" value="Process Request â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_crud_pm">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_v_req_pm" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="view_requests" target="ctrl_pagemodels">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_req_pm" value="Submit Request / Save Feedback â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_req_pm">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_v_booking_hub" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="view_live_booking" target="ctrl_hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_v_booking_hub" value="Connect SignalR Hub â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_v_booking_hub">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_hub_dash" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="ctrl_hub" target="view_live_dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_hub_dash" value="â—„ Push Live Update" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_hub_dash">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Controllers/Hubs -> Services -->
+        <mxCell id="link_account_user" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="ctrl_account" target="svc_user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_account_user" value="Validate User â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_account_user">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_pm_weather" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ctrl_pagemodels" target="svc_weather">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_pm_weather" value="Get Forecast (wttr.in) â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_pm_weather">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_pm_bookmark" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ctrl_pagemodels" target="svc_bookmark">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_pm_bookmark" value="Toggle Bookmark â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_pm_bookmark">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_pm_follow" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="ctrl_pagemodels" target="svc_follow">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_pm_follow" value="Save Follow â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_pm_follow">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_pm_event" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ctrl_pagemodels" target="svc_event">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_pm_event" value="Create / Approve Event â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_pm_event">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_pm_request" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ctrl_pagemodels" target="svc_request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_pm_request" value="Create / Process Request â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_pm_request">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_booking_svc" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="view_live_booking" target="svc_booking">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_booking_svc" value="Checkout Seat â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_booking_svc">
+          <mxGeometry x="-0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_svc_hub" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="svc_booking" target="ctrl_hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_svc_hub" value="Emit SignalR Seat Update â—„" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_svc_hub">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_event_hub" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_event" target="ctrl_hub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_event_hub" value="Broadcast New Event â—„" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_event_hub">
+          <mxGeometry x="-0.4" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_feedback_svc" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1" source="view_feedback" target="svc_feedback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_feedback_svc" value="PLINQ Aggregate â–º" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_feedback_svc">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services -> DB Context -->
+        <mxCell id="link_user_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_user" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_user_db" value="Query / Update â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_user_db">
+          <mxGeometry x="0.4" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_bookmark_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_bookmark" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_bookmark_db" value="Save Bookmark â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_bookmark_db">
+          <mxGeometry x="0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_follow_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_follow" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_follow_db" value="Save Follow â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_follow_db">
+          <mxGeometry x="0.2" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_event_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_event" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_event_db" value="Save to DB â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_event_db">
+          <mxGeometry x="0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_booking_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_booking" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_booking_db" value="Deduct Seats (Serializable) â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_booking_db">
+          <mxGeometry x="-0.1" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_request_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_request" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_request_db" value="Save Request â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_request_db">
+          <mxGeometry x="-0.3" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_feedback_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_feedback" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_feedback_db" value="Query Feedbacks â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_feedback_db">
+          <mxGeometry x="-0.4" relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Background Worker -> DB & Actor -->
+        <mxCell id="link_reminder_db" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_reminder" target="db_context">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_reminder_db" value="Scan Reminders â–¼" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_reminder_db">
+          <mxGeometry x="-0.5" relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link_reminder_student" style="endArrow=none;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="svc_reminder" target="act_student">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_reminder_student" value="Send Email Reminder â—„" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=bottom;" connectable="0" vertex="1" parent="link_reminder_student">
+          <mxGeometry x="0.7" relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -63,6 +63,12 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ### 3.1. Detailed Changes Log
 
+- **2026-07-14 (Antigravity / TriLT)**:
+  - **Tạo tài liệu thiết kế hệ thống (Class Diagram & Integrated Communication Diagram)**:
+    - Phát triển script PowerShell tự động sinh file `.drawio` cho Class Diagram phần mềm (`class_diagram.drawio`) bao gồm đầy đủ cấu trúc 3 tầng (Presentation, BLL, DAL) với liên kết kế thừa/hiện thực hóa chuẩn UML.
+    - Phát triển script PowerShell tự động sinh file `.drawio` cho Sơ đồ truyền thông tích hợp (`integrated_communication_diagram.drawio`) biểu diễn sự tương tác của toàn bộ phân hệ (Auth, Booking, Event Management, Feedback) mà không dùng sequence numbers theo đúng chuẩn thiết kế COMET.
+    - Đã kiểm chứng khả năng tương thích và hiển thị trực quan thành công trên draw.io.
+
 - **2026-07-13 (Antigravity / QuiNC / MinhTC)**:
   - **Đóng gói Agent Skill chuẩn hóa Clean Architecture cho các phân hệ CRUD (`clean-architecture-crud-refactor`)**:
     - Xây dựng script PowerShell tự động quét mã nguồn `.agents/skills/clean-architecture-crud-refactor/scripts/check_clean_arch.ps1` theo các bộ quy tắc (Rule IDs: `CA-ERR-01`, `CA-ERR-02`, `CA-ERR-03`, `CA-WARN-01`, `CA-WARN-02`, `CA-CLEAN-01`), xuất báo cáo kiểm toán chi tiết dưới định dạng Markdown và JSON vào `.agents/docs/reports/`.
