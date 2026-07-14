@@ -1,0 +1,83 @@
+@startuml UC15_MaintainEvent_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "EditEventView" as Client
+participant "EditEventModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Events/Edit?handler=Update (EventUpdateDTO Input)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid update inputs)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid event update)
+    Controller -> Service : UpdateEventAsync(Input, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().Include(e => e.EventTags).Include(e => e.Bookings).FirstOrDefaultAsync(e => e.Id == dto.Id)
+    activate Repo
+    Repo -> DbContext : Events.Include(...).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN EventTags... LEFT JOIN Bookings... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return existing Event entity with tags & bookings
+    deactivate DB
+    DbContext --> Repo : Return Event entity
+    deactivate DbContext
+    Repo --> Service : Return Event entity
+    deactivate Repo
+
+    Service -> Service : Check Title duplication (ExistsAsync where Title == dto.Title && Id != dto.Id)
+    activate Service
+    deactivate Service
+
+    Service -> Service : Map updated properties from dto to existing entity via AutoMapper & update ModifiedAt
+    activate Service
+    deactivate Service
+
+    Service -> DbContext : EventTags.RemoveRange(existing.EventTags)
+    activate DbContext
+    deactivate DbContext
+
+    loop for each tagId in dto.TagIds
+        Service -> DbContext : EventTags.Add(new EventTag { EventId = existing.Id, TagId = tagId })
+        activate DbContext
+        deactivate DbContext
+    end
+
+    Service -> Repo : Update(existing)
+    activate Repo
+    deactivate Repo
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: DELETE FROM EventTags WHERE EventId = @id; INSERT INTO EventTags (...); UPDATE Events SET Title = @title, Description = @desc... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Rows affected
+    deactivate DB
+    DbContext --> Service : Saved successfully
+    deactivate DbContext
+
+    Service --> Controller : Completed update
+    deactivate Service
+
+    Controller -> Controller : Set TempData["SuccessMessage"] = "Cập nhật sự kiện thành công!"
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : RedirectToPage("./Detail", new { id = Input.Id })
+end
+
+deactivate Controller
+deactivate Client
+@enduml

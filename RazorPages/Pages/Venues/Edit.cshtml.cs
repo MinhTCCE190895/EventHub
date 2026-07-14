@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BLL.Services;
 using BLL.Interfaces;
@@ -93,9 +93,9 @@ public class EditModel : PageModel
         {
             return NotFound();
         }
-        catch (System.InvalidOperationException ex)
+        catch (System.Exception ex)
         {
-            ModelState.AddModelError("VenueUpdateDTO.MaxCapacity", ex.Message);
+            ModelState.AddModelError("", ex.Message);
             return Page();
         }
 

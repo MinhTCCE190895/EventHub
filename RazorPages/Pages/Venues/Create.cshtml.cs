@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BLL.Services;
 using BLL.Interfaces;
@@ -56,9 +56,16 @@ public class CreateModel : PageModel
             }
         }
 
-        await _venueService.CreateVenueAsync(VenueCreateDTO);
-        TempData["SuccessMessage"] = "Venue created successfully!";
-        
-        return RedirectToPage("./Index");
+        try
+        {
+            await _venueService.CreateVenueAsync(VenueCreateDTO);
+            TempData["SuccessMessage"] = "Venue created successfully!";
+            return RedirectToPage("./Index");
+        }
+        catch (System.Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return Page();
+        }
     }
 }

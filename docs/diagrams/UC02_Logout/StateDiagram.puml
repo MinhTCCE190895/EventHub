@@ -1,0 +1,15 @@
+@startuml UC02_Logout_StateDiagram
+skinparam monochrome true
+skinparam shadowing false
+
+[*] --> Authenticated : User initiates logout
+
+state Authenticated {
+    [*] --> ActiveSession : Cookie present
+    ActiveSession --> ProcessingLogout : POST /Account/Logout
+    ProcessingLogout --> CookieCleared : HttpContext.SignOutAsync
+}
+
+CookieCleared --> Unauthenticated : Set-Cookie: [Expired]
+Unauthenticated --> [*] : Redirect to /Account/Login
+@enduml

@@ -1,0 +1,51 @@
+@startuml UC16_ConfigureVenueLogistics_List_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "VenueIndexView" as Client
+participant "IndexModel" as Controller
+participant "VenueService" as Service
+participant "VenueRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /Venues/Index
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+Controller -> Service : GetAllVenuesAsync(cancellationToken)
+activate Service
+
+Service -> Repo : Query().OrderBy(v => v.Name).ToListAsync(cancellationToken)
+activate Repo
+Repo -> DbContext : Venues.OrderBy(v => v.Name).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Venues ORDER BY Name ASC
+activate DB
+DB --> DbContext : Return list of Venue entities
+deactivate DB
+DbContext --> Repo : Return List<Venue>
+deactivate DbContext
+Repo --> Service : Return List<Venue>
+deactivate Repo
+
+Service -> Service : Map List<Venue> to IEnumerable<VenueDTO> via AutoMapper
+activate Service
+deactivate Service
+
+Service --> Controller : Return IEnumerable<VenueDTO>
+deactivate Service
+
+Controller -> Controller : Assign Venues = result list
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 200 OK (Render Index.cshtml with Venues logistics table)
+deactivate Controller
+deactivate Client
+@enduml

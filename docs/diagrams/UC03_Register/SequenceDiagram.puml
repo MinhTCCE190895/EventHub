@@ -1,0 +1,100 @@
+@startuml UC03_Register_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "RegisterView" as Client
+participant "AccountController" as Controller
+participant "UserService" as Service
+participant "BaseRepository<User>" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Account/Register (RegisterViewModel)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid input)
+    Controller --> Client : Return View(model) with validation errors
+else ModelState == true
+    Controller -> Controller : Check if model.Role == "Admin"
+    activate Controller
+    deactivate Controller
+
+    alt model.Role == "Admin" (Unauthorized role injection)
+        Controller --> Client : Return View(model) with "Cannot register Admin" error
+    else Valid Role
+        Controller -> Service : EmailExistsAsync(model.Email)
+        activate Service
+        
+        Service -> Repo : ExistsAsync(u => u.Email == email)
+        activate Repo
+        
+        Repo -> DbContext : Users.AnyAsync(predicate)
+        activate DbContext
+        
+        DbContext -> DB : SQL Query: SELECT EXISTS (SELECT 1 FROM Users WHERE Email = @Email)
+        activate DB
+        DB --> DbContext : Return boolean result (true / false)
+        deactivate DB
+        
+        DbContext --> Repo : Return boolean result
+        deactivate DbContext
+        
+        Repo --> Service : Return boolean result
+        deactivate Repo
+        
+        Service --> Controller : Return boolean result (emailExists)
+        deactivate Service
+        
+        alt emailExists == true (Duplicate email)
+            Controller --> Client : Return View(model) with "Email already used" error
+        else emailExists == false (Email available)
+            Controller -> Controller : Map RegisterViewModel to RegisterDto
+            activate Controller
+            deactivate Controller
+            
+            Controller -> Service : RegisterAsync(dto)
+            activate Service
+            
+            Service -> Service : Hash password using BCrypt & Create User entity
+            activate Service
+            deactivate Service
+            
+            Service -> Repo : AddAsync(user)
+            activate Repo
+            Repo -> DbContext : Users.AddAsync(user)
+            activate DbContext
+            DbContext --> Repo : Entity tracked in Memory
+            deactivate DbContext
+            Repo --> Service : Task completed
+            deactivate Repo
+            
+            Service -> DbContext : SaveChangesAsync()
+            activate DbContext
+            DbContext -> DB : SQL Query: INSERT INTO Users (...) VALUES (...)
+            activate DB
+            DB --> DbContext : Return affected rows (1)
+            deactivate DB
+            DbContext --> Service : Return affected rows
+            deactivate DbContext
+            
+            Service --> Controller : Return registered User entity
+            deactivate Service
+            
+            Controller -> Controller : Set TempData["SuccessMessage"]
+            activate Controller
+            deactivate Controller
+
+            Controller --> Client : HTTP 302 RedirectToAction("Login")
+        end
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

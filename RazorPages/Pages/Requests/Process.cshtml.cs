@@ -57,5 +57,11 @@ public class ProcessModel : PageModel
         {
             return NotFound();
         }
+        catch (System.Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            RequestDetail = await _requestService.GetRequestByIdAsync(Input.Id);
+            return Page();
+        }
     }
 }

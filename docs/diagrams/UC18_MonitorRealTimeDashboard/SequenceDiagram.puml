@@ -1,0 +1,85 @@
+@startuml UC18_MonitorRealTimeDashboard_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "DashboardComponent" as Client
+participant "AppDbContext" as DbContext
+database "Database" as DB
+participant "HubConnection" as SignalRClient
+
+activate Client
+Client -> Client : OnInitializedAsync() (Set IsLoading = true)
+activate Client
+deactivate Client
+
+Client -> DbContext : Bookings.CountAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT COUNT(*) FROM Bookings
+activate DB
+DB --> DbContext : Return totalBookings
+deactivate DB
+DbContext --> Client : Return totalBookings
+deactivate DbContext
+
+Client -> DbContext : Events.CountAsync(e => e.EndTime >= DateTime.UtcNow)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT COUNT(*) FROM Events WHERE EndTime >= @now
+activate DB
+DB --> DbContext : Return activeEventsCount
+deactivate DB
+DbContext --> Client : Return activeEventsCount
+deactivate DbContext
+
+Client -> DbContext : Venues.CountAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT COUNT(*) FROM Venues
+activate DB
+DB --> DbContext : Return totalVenues
+deactivate DB
+DbContext --> Client : Return totalVenues
+deactivate DbContext
+
+Client -> DbContext : Bookings.Include(b => b.Event).Include(b => b.Student).OrderByDescending(b => b.BookingTime).Take(10).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT TOP(10) * FROM Bookings LEFT JOIN Events... LEFT JOIN Users... ORDER BY BookingTime DESC
+activate DB
+DB --> DbContext : Return recentBookings list
+deactivate DB
+DbContext --> Client : Return recentBookings list
+deactivate DbContext
+
+Client -> DbContext : Events.Include(e => e.Venue).Where(e => e.EndTime >= now).OrderByDescending(e => e.RegisteredCount).Take(6).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT TOP(6) * FROM Events LEFT JOIN Venues... WHERE EndTime >= @now ORDER BY RegisteredCount DESC
+activate DB
+DB --> DbContext : Return popularEvents list
+deactivate DB
+DbContext --> Client : Return popularEvents list
+deactivate DbContext
+
+Client -> Client : Assign KPI properties & set IsLoading = false -> StateHasChanged()
+activate Client
+deactivate Client
+
+Client -> Client : OnAfterRenderAsync(firstRender == true)
+activate Client
+deactivate Client
+
+Client -> SignalRClient : new HubConnectionBuilder().WithUrl("http://localhost:5129/eventHub").Build()
+activate SignalRClient
+deactivate SignalRClient
+
+Client -> SignalRClient : hubConnection.On<Guid, int>("ReceiveTicketUpdate", (eventId, remainingSeats) => { Update LiveCard state & InvokeAsync(StateHasChanged); })
+activate SignalRClient
+deactivate SignalRClient
+
+Client -> SignalRClient : StartAsync()
+activate SignalRClient
+SignalRClient --> Client : WebSocket connection established with EventHub
+deactivate SignalRClient
+
+Note over Client, SignalRClient : When a ticket is booked anywhere on the system, EventHub pushes "ReceiveTicketUpdate" via WebSocket,\nand DashboardComponent automatically triggers InvokeAsync(StateHasChanged) to refresh KPI live without page reload.
+
+deactivate Client
+@enduml

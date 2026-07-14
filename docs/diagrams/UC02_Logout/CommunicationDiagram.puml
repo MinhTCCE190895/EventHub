@@ -1,0 +1,25 @@
+@startuml UC02_Logout_CommunicationDiagram
+allowmixing
+skinparam monochrome true
+skinparam shadowing false
+
+skinparam linetype polyline
+skinparam nodesep 65
+skinparam ranksep 65
+
+together {
+    object ": NavbarView" as View
+}
+
+together {
+    actor "User" as Actor
+    object ": AccountController" as Controller
+}
+
+Actor -[hidden]right- Controller
+
+Actor -up- View : 1: Click Logout button >
+View -down- Controller : 1.1: POST /Account/Logout >
+Controller -down- Controller : 1.1.1: HttpContext.SignOutAsync() >
+
+@enduml

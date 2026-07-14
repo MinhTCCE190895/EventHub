@@ -1,0 +1,51 @@
+@startuml UC07_ManageEventBookmarks_ViewList_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "BookmarksIndexView" as Client
+participant "IndexModel" as Controller
+participant "BookmarkService" as Service
+participant "BookmarkRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /Bookmarks/Index
+activate Controller
+
+Controller -> Controller : Extract CurrentStudentId from ClaimsPrincipal
+activate Controller
+deactivate Controller
+
+Controller -> Service : GetBookmarkedEventsAsync(CurrentStudentId, cancellationToken)
+activate Service
+
+Service -> Repo : Query().Include(b => b.Event).ThenInclude(e => e.Venue)...Where(b => b.StudentId == studentId).OrderByDescending(b => b.SavedAt).ToListAsync()
+activate Repo
+Repo -> DbContext : Bookmarks.Include(b => b.Event)...Where(b => b.StudentId == studentId).OrderByDescending(b => b.SavedAt).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Bookmarks LEFT JOIN Events... LEFT JOIN Venues... WHERE StudentId = @studentId ORDER BY SavedAt DESC
+activate DB
+DB --> DbContext : Return list of Bookmark entities with Event info
+deactivate DB
+DbContext --> Repo : Return List<Bookmark>
+deactivate DbContext
+Repo --> Service : Return List<Bookmark>
+deactivate Repo
+
+Service -> Service : Map List<Bookmark> to List<EventCardDTO> via AutoMapper & set IsBookmarked = true
+activate Service
+deactivate Service
+
+Service --> Controller : Return List<EventCardDTO>
+deactivate Service
+
+Controller -> Controller : Assign BookmarkedEvents = result list
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 200 OK (Render Index.cshtml with Bookmarked Events grid)
+deactivate Controller
+deactivate Client
+@enduml

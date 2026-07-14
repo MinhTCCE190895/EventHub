@@ -1,0 +1,77 @@
+@startuml UC17_ReviewEventProposals_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "ReviewProposalView" as Client
+participant "ReviewProposalModel" as Controller
+participant "EventRequestService" as Service
+participant "EventRequestRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Requests/Process (EventRequestProcessDTO dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid & Verify User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+alt ModelState == false || Role != Admin (Invalid review request)
+    Controller --> Client : Return Page() or AccessDenied
+else ModelState == true && Role == Admin (Valid proposal processing)
+    Controller -> Service : ProcessRequestAsync(dto, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().FirstOrDefaultAsync(r => r.Id == dto.Id, cancellationToken)
+    activate Repo
+    Repo -> DbContext : EventRequests.FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT TOP(1) * FROM EventRequests WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return existing EventRequest entity
+    deactivate DB
+    DbContext --> Repo : Return entity (or null)
+    deactivate DbContext
+    Repo --> Service : Return entity (or null)
+    deactivate Repo
+
+    alt entity == null (Proposal not found)
+        Service --> Controller : Throw KeyNotFoundException("Yêu cầu ý tưởng không tồn tại.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else entity != null (Valid proposal to process)
+        Service -> Service : Update entity.Status = dto.Status ("Approved" / "Rejected") & entity.ResponseMessage = dto.ResponseMessage
+        activate Service
+        deactivate Service
+
+        Service -> Repo : Update(entity)
+        activate Repo
+        deactivate Repo
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: UPDATE EventRequests SET Status = @status, ResponseMessage = @msg WHERE Id = @id
+        activate DB
+        DB --> DbContext : 1 row affected
+        deactivate DB
+        DbContext --> Service : Saved successfully
+        deactivate DbContext
+
+        Service --> Controller : Completed proposal review
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Đã duyệt & phản hồi ý tưởng thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage("./Index")
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

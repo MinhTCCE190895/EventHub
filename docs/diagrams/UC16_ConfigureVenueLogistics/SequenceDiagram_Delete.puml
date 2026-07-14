@@ -1,0 +1,81 @@
+@startuml UC16_ConfigureVenueLogistics_Delete_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "VenueIndexView" as Client
+participant "IndexModel" as Controller
+participant "VenueService" as Service
+participant "VenueRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Venues/Index?handler=Delete (int id)
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+alt Role != Admin (Unauthorized deletion attempt)
+    Controller --> Client : Return Forbid()
+else Role == Admin (Authorized deletion action)
+    Controller -> Service : DeleteVenueAsync(id, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().Include(v => v.Events).FirstOrDefaultAsync(v => v.Id == id)
+    activate Repo
+    Repo -> DbContext : Venues.Include(v => v.Events).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Venues LEFT JOIN Events... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return Venue with related Events
+    deactivate DB
+    DbContext --> Repo : Return Venue entity
+    deactivate DbContext
+    Repo --> Service : Return Venue entity
+    deactivate Repo
+
+    alt venue == null (Venue not found)
+        Service --> Controller : Throw KeyNotFoundException("Venue not found.")
+        Controller -> Controller : Return NotFound()
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return HTTP 404
+    else venue != null (Venue located)
+        alt venue.Events.Any() == true (Constraint: Venue has active/past events)
+            Service --> Controller : Throw InvalidOperationException("Không thể xóa địa điểm này vì đang có sự kiện được tổ chức tại đây")
+            Controller -> Controller : Set TempData["ErrorMessage"] = ex.Message
+            activate Controller
+            deactivate Controller
+            Controller --> Client : RedirectToPage("./Index")
+        else No events associated (Safe to delete)
+            Service -> Repo : Remove(venue)
+            activate Repo
+            deactivate Repo
+
+            Service -> DbContext : SaveChangesAsync(cancellationToken)
+            activate DbContext
+            DbContext -> DB : SQL Query: DELETE FROM Venues WHERE Id = @id
+            activate DB
+            DB --> DbContext : 1 row affected
+            deactivate DB
+            DbContext --> Service : Deleted successfully
+            deactivate DbContext
+
+            Service --> Controller : Completed logistics deletion
+            deactivate Service
+
+            Controller -> Controller : Set TempData["SuccessMessage"] = "Xóa địa điểm thành công!"
+            activate Controller
+            deactivate Controller
+
+            Controller --> Client : RedirectToPage("./Index")
+        end
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

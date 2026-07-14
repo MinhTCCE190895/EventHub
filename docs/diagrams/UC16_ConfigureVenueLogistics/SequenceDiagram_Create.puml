@@ -1,0 +1,64 @@
+@startuml UC16_ConfigureVenueLogistics_Create_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "CreateVenueView" as Client
+participant "CreateModel" as Controller
+participant "VenueService" as Service
+participant "VenueRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Venues/Create (VenueCreateDTO dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid capacity or address input)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid venue input)
+    Controller -> Service : CreateVenueAsync(dto, cancellationToken)
+    activate Service
+
+    Service -> Service : Map dto to Venue entity via AutoMapper
+    activate Service
+    deactivate Service
+
+    Service -> Repo : AddAsync(newVenue, cancellationToken)
+    activate Repo
+    Repo -> DbContext : Venues.AddAsync(newVenue)
+    activate DbContext
+    DbContext --> Repo : Tracked as Added
+    deactivate DbContext
+    deactivate Repo
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO Venues (Name, Address, MaxCapacity) VALUES (...)
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Saved Venue row
+    deactivate DbContext
+
+    Service -> Service : Map newVenue to VenueDTO via AutoMapper
+    activate Service
+    deactivate Service
+
+    Service --> Controller : Return created VenueDTO
+    deactivate Service
+
+    Controller -> Controller : Set TempData["SuccessMessage"] = "Thêm mới địa điểm thành công!"
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : RedirectToPage("./Index")
+end
+
+deactivate Controller
+deactivate Client
+@enduml

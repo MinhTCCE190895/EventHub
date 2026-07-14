@@ -1,0 +1,80 @@
+@startuml UC12_SubmitEventFeedback_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "SubmitFeedbackView" as Client
+participant "SubmitFeedbackModel" as Controller
+participant "FeedbackAnalyticsService" as Service
+participant "BookingRepository" as BookingRepo
+participant "FeedbackRepository" as FeedbackRepo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Feedback/Create (FeedbackSubmissionDto dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid feedback scores or comment)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid feedback form)
+    Controller -> Service : SubmitFeedbackAsync(dto)
+    activate Service
+
+    Service -> BookingRepo : ExistsAsync(b => b.Id == dto.BookingId)
+    activate BookingRepo
+    BookingRepo -> DbContext : Bookings.AnyAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT CASE WHEN EXISTS(...) THEN 1 ELSE 0 END
+    activate DB
+    DB --> DbContext : Return true (Booking valid)
+    deactivate DB
+    DbContext --> BookingRepo : Return true
+    deactivate DbContext
+    BookingRepo --> Service : Return true
+    deactivate BookingRepo
+
+    Service -> Service : Create new Feedback entity (Id = Guid.NewGuid(), BookingId, GeneralComment, SubmittedAt)
+    activate Service
+    deactivate Service
+
+    loop for each detailDto in dto.Details
+        Service -> Service : feedback.FeedbackDetails.Add(new FeedbackDetail { Criteria, Score })
+        activate Service
+        deactivate Service
+    end
+
+    Service -> FeedbackRepo : AddAsync(feedback)
+    activate FeedbackRepo
+    FeedbackRepo -> DbContext : Feedbacks.AddAsync(feedback)
+    activate DbContext
+    DbContext --> FeedbackRepo : Tracked as Added (with FeedbackDetails cascade)
+    deactivate DbContext
+    deactivate FeedbackRepo
+
+    Service -> DbContext : SaveChangesAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO Feedbacks (...); INSERT INTO FeedbackDetails (...)
+    activate DB
+    DB --> DbContext : Rows affected
+    deactivate DB
+    DbContext --> Service : Saved successfully
+    deactivate DbContext
+
+    Service --> Controller : Completed submission
+    deactivate Service
+
+    Controller -> Controller : Set TempData["SuccessMessage"] = "Cảm ơn bạn đã gửi đánh giá!"
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : RedirectToPage("./Index")
+end
+
+deactivate Controller
+deactivate Client
+@enduml

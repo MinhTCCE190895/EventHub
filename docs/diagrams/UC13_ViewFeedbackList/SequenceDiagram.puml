@@ -1,0 +1,55 @@
+@startuml UC13_ViewFeedbackList_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "FeedbackListView" as Client
+participant "FeedbackListModel" as Controller
+participant "FeedbackAnalyticsService" as Service
+participant "FeedbackRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /Feedback/Index
+activate Controller
+
+Controller -> Controller : Extract studentId from ClaimsPrincipal
+activate Controller
+deactivate Controller
+
+Controller -> Service : GetFeedbacksByStudentIdAsync(studentId, cancellationToken)
+activate Service
+
+Service -> Repo : GetFeedbacksByStudentIdAsync(studentId, cancellationToken)
+activate Repo
+Repo -> DbContext : Feedbacks.Include(f => f.Booking).ThenInclude(b => b.Event).Include(f => f.FeedbackDetails).Where(f => f.Booking.StudentId == studentId)...
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Feedbacks LEFT JOIN Bookings... LEFT JOIN Events... WHERE StudentId = @studentId ORDER BY SubmittedAt DESC
+activate DB
+DB --> DbContext : Return list of Feedback entities with details
+deactivate DB
+DbContext --> Repo : Return List<Feedback>
+deactivate DbContext
+Repo --> Service : Return List<Feedback>
+deactivate Repo
+
+Service -> Service : Check if feedbacksList.Any() == false (Return Enumerable.Empty)
+activate Service
+deactivate Service
+
+Service -> Service : PLINQ Parallel Processing: feedbacksList.AsParallel().Select(f => new StudentFeedbackDto { ... AverageScore = f.FeedbackDetails.Average(...) })
+activate Service
+deactivate Service
+
+Service --> Controller : Return List<StudentFeedbackDto>
+deactivate Service
+
+Controller -> Controller : Assign StudentFeedbacks = result list
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 200 OK (Render Index.cshtml with feedback history & multi-criteria average scores)
+deactivate Controller
+deactivate Client
+@enduml

@@ -1,0 +1,114 @@
+@startuml UC04_BrowseAndDiscoverEvents_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "IndexView" as Client
+participant "IndexModel" as Controller
+participant "BookmarkService" as BookmarkSvc
+participant "CategoryService" as CategorySvc
+participant "TagService" as TagSvc
+participant "EventService" as EventSvc
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET / (or /?Keyword=...&CategoryId=...)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid search/filter parameters)
+    Controller --> Client : Return Page() with validation errors
+else ModelState == true (Valid request)
+    
+    alt User is authenticated as Student
+        Controller -> BookmarkSvc : GetBookmarkedEventIdsAsync(studentId)
+        activate BookmarkSvc
+        BookmarkSvc -> DbContext : Bookmarks.Where(b => b.StudentId == studentId).Select(b => b.EventId).ToListAsync()
+        activate DbContext
+        DbContext -> DB : SQL Query: SELECT EventId FROM Bookmarks WHERE StudentId = @studentId
+        activate DB
+        DB --> DbContext : Return bookmarked event IDs list
+        deactivate DB
+        DbContext --> BookmarkSvc : Return List<Guid>
+        deactivate DbContext
+        BookmarkSvc --> Controller : Return BookmarkedEventIds
+        deactivate BookmarkSvc
+    end
+
+    Controller -> CategorySvc : GetAllCategoriesAsync()
+    activate CategorySvc
+    CategorySvc -> DbContext : Categories.ToListAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Categories
+    activate DB
+    DB --> DbContext : Return category rows
+    deactivate DB
+    DbContext --> CategorySvc : Return category list
+    deactivate DbContext
+    CategorySvc --> Controller : Return List<CategoryDTO>
+    deactivate CategorySvc
+
+    Controller -> TagSvc : GetAllTagsAsync()
+    activate TagSvc
+    TagSvc -> DbContext : Tags.ToListAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Tags
+    activate DB
+    DB --> DbContext : Return tag rows
+    deactivate DB
+    DbContext --> TagSvc : Return tag list
+    deactivate DbContext
+    TagSvc --> Controller : Return List<TagDTO>
+    deactivate TagSvc
+
+    Controller -> Controller : Construct EventSearchDTO (Keyword, CategoryId, TagIds, Pagination, SortBy)
+    activate Controller
+    deactivate Controller
+
+    Controller -> EventSvc : SearchEventsAsync(searchDto)
+    activate EventSvc
+
+    EventSvc -> Repo : BuildSearchQuery()
+    activate Repo
+    Repo -> DbContext : Events.AsNoTracking().Include(Venue).Include(Organizer)...
+    activate DbContext
+    DbContext --> Repo : Return base IQueryable<Event>
+    deactivate DbContext
+    Repo --> EventSvc : Return base IQueryable<Event>
+    deactivate Repo
+
+    EventSvc -> EventSvc : Apply dynamic WHERE clauses (Keyword, CategoryId, TagIds, DateRange) & OrderBy(SortBy)
+    activate EventSvc
+    deactivate EventSvc
+
+    EventSvc -> DbContext : Execute CountAsync() & Skip/Take ToListAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT COUNT(*)...; SELECT * FROM Events LEFT JOIN Venues... LIMIT @pageSize OFFSET @skip
+    activate DB
+    DB --> DbContext : Return totalCount & paginated event rows
+    deactivate DB
+    DbContext --> EventSvc : Return (items, totalCount)
+    deactivate DbContext
+
+    EventSvc -> EventSvc : Map Event entities to EventDTO list (via AutoMapper)
+    activate EventSvc
+    deactivate EventSvc
+
+    EventSvc --> Controller : Return (List<EventDTO> items, int totalCount)
+    deactivate EventSvc
+
+    Controller -> Controller : Assign SearchVm.Results = items, SearchVm.TotalCount = totalCount & Calculate TotalPages
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : HTTP 200 OK (Render Index.cshtml with discovered events grid)
+end
+
+deactivate Controller
+deactivate Client
+@enduml

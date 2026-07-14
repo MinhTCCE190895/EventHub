@@ -1,0 +1,70 @@
+@startuml UC09_ParticipateInLiveQA_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "LiveQAComponent" as Client
+participant "EventHub" as SignalRHub
+participant "RateLimiter" as RateLimit
+participant "QAService" as Service
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> SignalRHub : InvokeAsync("SendComment", eventId, message, userName)
+activate SignalRHub
+
+SignalRHub -> SignalRHub : Extract client connectionId & check rate limit window (2 seconds)
+activate SignalRHub
+deactivate SignalRHub
+
+SignalRHub -> RateLimit : TryGetValue(connectionId, out lastCommentTime)
+activate RateLimit
+RateLimit --> SignalRHub : Return lastCommentTime (or null if first request)
+deactivate RateLimit
+
+alt (DateTime.UtcNow - lastCommentTime).TotalSeconds < 2 (Rate limit exceeded)
+    SignalRHub --> Client : Throw HubException("Bạn gửi tin nhắn quá nhanh. Vui lòng đợi 2 giây.")
+else Rate limit allowed (Valid comment submission)
+    SignalRHub -> RateLimit : AddOrUpdate(connectionId, DateTime.UtcNow, ...)
+    activate RateLimit
+    RateLimit --> SignalRHub : Updated timestamp
+    deactivate RateLimit
+
+    SignalRHub -> Service : SaveCommentAsync(eventId, userName, message, cancellationToken)
+    activate Service
+
+    Service -> Service : Create new EventComment entity (Id, EventId, UserName, Content, SentAt = DateTime.UtcNow)
+    activate Service
+    deactivate Service
+
+    Service -> DbContext : EventComments.AddAsync(comment)
+    activate DbContext
+    DbContext --> Service : Tracked as Added
+    deactivate DbContext
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO EventComments (Id, EventId, UserName, Content, SentAt) VALUES (...)
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Saved comment row
+    deactivate DbContext
+
+    Service --> SignalRHub : Return created EventCommentDto
+    deactivate Service
+
+    SignalRHub -> SignalRHub : Build broadcast message payload (commentDto)
+    activate SignalRHub
+    deactivate SignalRHub
+
+    SignalRHub -> Client : Clients.Group(eventId.ToString()).SendAsync("ReceiveComment", commentDto)
+    Note over Client, SignalRHub : Real-time WebSocket broadcast pushes the new Q&A comment to all connected participants in the room
+
+    SignalRHub --> Client : Return success acknowledgment
+end
+
+deactivate SignalRHub
+deactivate Client
+@enduml

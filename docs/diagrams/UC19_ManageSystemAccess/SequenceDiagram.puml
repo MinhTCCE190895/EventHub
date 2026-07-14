@@ -1,0 +1,101 @@
+@startuml UC19_ManageSystemAccess_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "ManageUsersView" as Client
+participant "AdminUsersModel" as Controller
+participant "UserService" as Service
+participant "UserRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Admin/Users/Index?handler=ToggleStatus (userId, softDelete=true)
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+alt Role != Admin (Unauthorized attempt)
+    Controller --> Client : Return AccessDenied page
+else Role == Admin (Authorized system management action)
+    Controller -> Service : DeleteUserAsync(userId, softDelete: true)
+    activate Service
+
+    Service -> Repo : Query().Include(u => u.OrganizedEvents).Include(u => u.Bookings).FirstOrDefaultAsync(u => u.Id == userId)
+    activate Repo
+    Repo -> DbContext : Users.Include(...).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Users LEFT JOIN Events... LEFT JOIN Bookings... WHERE Id = @userId
+    activate DB
+    DB --> DbContext : Return target User entity with relations
+    deactivate DB
+    DbContext --> Repo : Return target User entity
+    deactivate DbContext
+    Repo --> Service : Return target User entity
+    deactivate Repo
+
+    alt user == null (Account not found)
+        Service --> Controller : Throw KeyNotFoundException("Tài khoản không tồn tại.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else user != null (Account located)
+        alt softDelete == true (Lock / Unlock account soft delete)
+            Service -> Service : user.IsActive = !user.IsActive (Toggle account lock state)
+            activate Service
+            deactivate Service
+
+            Service -> Repo : Update(user)
+            activate Repo
+            deactivate Repo
+
+            Service -> DbContext : SaveChangesAsync(cancellationToken)
+            activate DbContext
+            DbContext -> DB : SQL Query: UPDATE Users SET IsActive = @isActive WHERE Id = @userId
+            activate DB
+            DB --> DbContext : 1 row affected
+            deactivate DB
+            DbContext --> Service : Saved status update
+            deactivate DbContext
+
+            Service --> Controller : Completed account status update
+        else softDelete == false (Permanent hard delete attempt)
+            alt user.Role == "Organizer" && user.OrganizedEvents.Any()
+                Service --> Controller : Throw InvalidOperationException("Không cho xóa Organizer do đã tạo Sự kiện. Vui lòng sử dụng Xóa mềm.")
+            else user.Role == "Student" && user.Bookings.Any()
+                Service --> Controller : Throw InvalidOperationException("Không cho xóa Student do đang giữ vé đăng ký. Vui lòng sử dụng Xóa mềm.")
+            else Safe to hard delete
+                Service -> Repo : Remove(user)
+                activate Repo
+                deactivate Repo
+
+                Service -> DbContext : SaveChangesAsync(cancellationToken)
+                activate DbContext
+                DbContext -> DB : SQL Query: DELETE FROM Users WHERE Id = @userId
+                activate DB
+                DB --> DbContext : 1 row affected
+                deactivate DB
+                DbContext --> Service : Hard deleted successfully
+                deactivate DbContext
+
+                Service --> Controller : Completed hard delete
+            end
+        end
+
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Cập nhật quyền truy cập hệ thống thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage("./Index")
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

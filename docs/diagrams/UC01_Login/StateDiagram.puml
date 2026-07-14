@@ -1,0 +1,40 @@
+@startuml UC01_Login_StateDiagram
+skinparam monochrome true
+skinparam shadowing false
+
+[*] --> Anonymous : GET /Account/Login
+
+state Anonymous {
+    [*] --> Unauthenticated
+}
+
+Anonymous --> Authenticating : POST /Account/Login (Submit Form)
+
+state Authenticating {
+    [*] --> CheckModelState
+    CheckModelState --> QueryDatabase : ModelState.IsValid == true
+    CheckModelState --> Failed : ModelState.IsValid == false
+    
+    QueryDatabase --> CheckStatus : User found (!null)
+    QueryDatabase --> Failed : User == null (Not Found)
+    
+    CheckStatus --> VerifyBCrypt : User.IsActive == true
+    CheckStatus --> Failed : User.IsActive == false (Locked)
+    
+    VerifyBCrypt --> Success : BCrypt.Verify == true
+    VerifyBCrypt --> Failed : BCrypt.Verify == false (Wrong Password)
+}
+
+Authenticating --> Anonymous : [Failed] AddModelError & Return View(model)
+Authenticating --> Authenticated : [Success] HttpContext.SignInAsync (Cookie Issued)
+
+state Authenticated {
+    [*] --> ActiveSession
+    ActiveSession : Principal Claims (Id, Email, Role)
+    ActiveSession : AuthCookie Valid (8h / 14 days)
+    ActiveSession : Check OnValidatePrincipal per request
+}
+
+Authenticated --> [*] : Redirect to ReturnUrl / Home
+Authenticated --> Anonymous : SignOutAsync / Cookie Expired / Rejected by DB
+@enduml

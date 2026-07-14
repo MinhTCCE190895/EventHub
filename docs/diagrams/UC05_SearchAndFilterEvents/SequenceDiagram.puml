@@ -1,0 +1,81 @@
+@startuml UC05_SearchAndFilterEvents_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "IndexView" as Client
+participant "IndexModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /?Keyword=...&CategoryId=...&TimeFilter=...&SortBy=...&TagIds=...
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid search/filter parameters)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid filter request)
+    Controller -> Controller : Construct EventSearchDTO from SearchVm inputs
+    activate Controller
+    deactivate Controller
+
+    Controller -> Service : SearchEventsAsync(searchDto, cancellationToken)
+    activate Service
+
+    Service -> Repo : BuildSearchQuery()
+    activate Repo
+    Repo -> DbContext : Events.AsNoTracking().Include(Venue).Include(Organizer)...
+    activate DbContext
+    DbContext --> Repo : Return base IQueryable<Event>
+    deactivate DbContext
+    Repo --> Service : Return base IQueryable<Event>
+    deactivate Repo
+
+    Service -> Service : Apply Keyword filter (WHERE Title.Contains || Description.Contains)
+    activate Service
+    deactivate Service
+
+    Service -> Service : Apply Category & Tag filters (WHERE EventCategories/EventTags match)
+    activate Service
+    deactivate Service
+
+    Service -> Service : Apply TimeFilter & Date Range bounds (Upcoming / Ongoing / Past / Start-End Date)
+    activate Service
+    deactivate Service
+
+    Service -> Service : Apply OrderBy sort criteria (DateAsc / DateDesc / Name / Popularity)
+    activate Service
+    deactivate Service
+
+    Service -> DbContext : Execute CountAsync() & Skip(skip).Take(pageSize).ToListAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT COUNT(*)... WHERE...; SELECT * FROM Events LEFT JOIN... WHERE... ORDER BY... LIMIT @pageSize OFFSET @skip
+    activate DB
+    DB --> DbContext : Return total matching count (totalCount) & filtered event rows
+    deactivate DB
+    DbContext --> Service : Return (items, totalCount)
+    deactivate DbContext
+
+    Service -> Service : Map filtered Event entities to EventDTO list (via AutoMapper)
+    activate Service
+    deactivate Service
+
+    Service --> Controller : Return (List<EventDTO> items, int totalCount)
+    deactivate Service
+
+    Controller -> Controller : Assign SearchVm.Results = items, SearchVm.TotalCount = totalCount & Calculate TotalPages
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : HTTP 200 OK (Render Index.cshtml with filtered events grid/list)
+end
+
+deactivate Controller
+deactivate Client
+@enduml

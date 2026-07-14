@@ -1,0 +1,81 @@
+@startuml UC11_SubmitEventProposals_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "CreateRequestView" as Client
+participant "CreateRequestModel" as Controller
+participant "EventRequestService" as Service
+participant "EventRequestRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Requests/Create (EventRequestCreateDTO dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid proposal input)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid proposal submission)
+    Controller -> Controller : Extract studentId from ClaimsPrincipal
+    activate Controller
+    deactivate Controller
+
+    Controller -> Service : CreateRequestAsync(studentId, dto, cancellationToken)
+    activate Service
+
+    Service -> Service : Map dto to EventRequest entity via AutoMapper & set StudentId, Status = "Pending", SubmittedAt = DateTime.UtcNow
+    activate Service
+    deactivate Service
+
+    Service -> Repo : AddAsync(entity, cancellationToken)
+    activate Repo
+    Repo -> DbContext : EventRequests.AddAsync(entity)
+    activate DbContext
+    DbContext --> Repo : Tracked as Added
+    deactivate DbContext
+    deactivate Repo
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO EventRequests (Title, Description, StudentId, Status, SubmittedAt) VALUES (...)
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Return 1
+    deactivate DbContext
+
+    Service -> Repo : Query().Include(r => r.Student).FirstOrDefaultAsync(r => r.Id == entity.Id)
+    activate Repo
+    Repo -> DbContext : EventRequests.Include(...).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM EventRequests LEFT JOIN Users... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return created EventRequest with Student info
+    deactivate DB
+    DbContext --> Repo : Return entity
+    deactivate DbContext
+    Repo --> Service : Return entity
+    deactivate Repo
+
+    Service -> Service : Map entity to EventRequestDTO via AutoMapper
+    activate Service
+    deactivate Service
+
+    Service --> Controller : Return EventRequestDTO
+    deactivate Service
+
+    Controller -> Controller : Set TempData["SuccessMessage"] = "Gửi đề xuất thành công!"
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : RedirectToPage("./Index")
+end
+
+deactivate Controller
+deactivate Client
+@enduml

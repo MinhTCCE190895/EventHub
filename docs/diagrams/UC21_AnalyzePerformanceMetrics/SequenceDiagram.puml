@@ -1,0 +1,55 @@
+@startuml UC21_AnalyzePerformanceMetrics_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "FeedbackAnalyticsComponent" as Client
+participant "FeedbackAnalyticsService" as Service
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Client : OnInitializedAsync() (Invoke LoadDataAsync)
+activate Client
+deactivate Client
+
+Client -> Service : GetFeedbackMetricsAsync(cancellationToken)
+activate Service
+
+Service -> DbContext : FeedbackDetails.Where(...).GroupBy(fd => new { EventId, Title, Criteria }).Select(... AverageScore).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT EventId, Title, Criteria, AVG(CAST(Score AS FLOAT)) FROM FeedbackDetails... GROUP BY EventId, Title, Criteria
+activate DB
+DB --> DbContext : Return details group summary rows
+deactivate DB
+DbContext --> Service : Return details list
+deactivate DbContext
+
+Service -> DbContext : Feedbacks.Where(...).GroupBy(f => new { EventId, Title }).Select(... TotalFeedbacks = Count(), OverallAverageScore).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT EventId, Title, COUNT(*), AVG(CAST(Score AS FLOAT)) FROM Feedbacks... GROUP BY EventId, Title
+activate DB
+DB --> DbContext : Return counts & overall average summary rows
+deactivate DB
+DbContext --> Service : Return counts list
+deactivate DbContext
+
+Service -> Service : Group details by EventId into Dictionary & map counts into List<EventFeedbackMetricsDto>
+activate Service
+deactivate Service
+
+Service --> Client : Return List<EventFeedbackMetricsDto> metrics
+deactivate Service
+
+Client -> Client : Assign MetricsList & FilteredMetrics = metrics
+activate Client
+deactivate Client
+
+Client -> Client : Calculate KPI stats (TotalReviews, SystemAvgScore, TotalFiveStars) & StateHasChanged()
+activate Client
+deactivate Client
+
+Note over Client : Render interactive multi-criteria feedback dashboard with search, category filtering & ranking cards
+
+deactivate Client
+@enduml

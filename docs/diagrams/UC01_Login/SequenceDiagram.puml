@@ -1,0 +1,82 @@
+@startuml UC01_Login_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "LoginView" as Client
+participant "AccountController" as Controller
+participant "UserService" as Service
+participant "BaseRepository<User>" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Account/Login (LoginViewModel)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid input)
+    Controller --> Client : Return View(model) with validation errors
+else ModelState == true
+    Controller -> Service : ValidateLoginAsync(email, password)
+    activate Service
+    
+    Service -> Repo : SingleOrDefaultAsync(u => u.Email == email)
+    activate Repo
+    Repo -> DbContext : Users.SingleOrDefaultAsync(u => u.Email == email)
+    activate DbContext
+    DbContext -> DB : SQL SELECT * FROM Users WHERE Email = @email
+    activate DB
+    DB --> DbContext : Return SQL result row / null
+    deactivate DB
+    DbContext --> Repo : Return User entity / null
+    deactivate DbContext
+    Repo --> Service : Return User entity / null
+    deactivate Repo
+
+    alt user == null (Account not found)
+        Service --> Controller : return null
+    else !user.IsActive (Account locked)
+        Service --> Controller : return null (Log warning: Locked)
+    else Verify password (BCrypt.Verify)
+        Service -> Service : BCrypt.Verify(password, user.PasswordHash)
+        activate Service
+        deactivate Service
+
+        alt Password verification failed
+            Service --> Controller : return null
+        else Password verification succeeded
+            Service --> Controller : Return valid User entity
+        end
+    end
+    deactivate Service
+
+    alt ValidateLoginAsync == null (Login failed)
+        Controller -> Controller : ModelState.AddModelError("Invalid email or password...")
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : Return View(model) with login error
+    else ValidateLoginAsync == User (Login succeeded)
+        Controller -> Controller : Build ClaimsPrincipal (Id, Email, Name, Role)
+        activate Controller
+        deactivate Controller
+
+        Controller -> Controller : HttpContext.SignInAsync(CookieScheme, principal, authProps)
+        activate Controller
+        deactivate Controller
+        
+        alt IsLocalUrl(ReturnUrl) || IsValidSubdomain(ReturnUrl)
+            Controller --> Client : HTTP 302 Redirect(ReturnUrl)
+        else ReturnUrl null / invalid
+            Controller --> Client : HTTP 302 RedirectToAction("Index", "Home")
+        end
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

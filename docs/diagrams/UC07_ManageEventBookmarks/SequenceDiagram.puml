@@ -1,0 +1,80 @@
+@startuml UC07_ManageEventBookmarks_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "DetailView" as Client
+participant "DetailModel" as Controller
+participant "BookmarkService" as Service
+participant "BookmarkRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Events/Detail?handler=ToggleBookmark (eventId)
+activate Controller
+
+Controller -> Controller : Extract studentId from ClaimsPrincipal (User.FindFirst(NameIdentifier))
+activate Controller
+deactivate Controller
+
+Controller -> Service : ToggleBookmarkAsync(studentId, eventId, cancellationToken)
+activate Service
+
+Service -> Repo : SingleOrDefaultAsync(b => b.StudentId == studentId && b.EventId == eventId)
+activate Repo
+Repo -> DbContext : Bookmarks.FirstOrDefaultAsync(...)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT TOP(1) * FROM Bookmarks WHERE StudentId = @studentId AND EventId = @eventId
+activate DB
+DB --> DbContext : Return existing Bookmark entity (or null)
+deactivate DB
+DbContext --> Repo : Return existing Bookmark entity (or null)
+deactivate DbContext
+Repo --> Service : Return existing Bookmark entity (or null)
+deactivate Repo
+
+alt existing != null (Already bookmarked -> Unbookmark)
+    Service -> Repo : Remove(existing)
+    activate Repo
+    deactivate Repo
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: DELETE FROM Bookmarks WHERE Id = @id
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Return 1
+    deactivate DbContext
+
+    Service --> Controller : Return false (Unbookmarked successfully)
+else existing == null (Not bookmarked -> Add new Bookmark)
+    Service -> Service : Create new Bookmark entity (StudentId, EventId, SavedAt = DateTime.UtcNow)
+    activate Service
+    deactivate Service
+
+    Service -> Repo : AddAsync(newBookmark, cancellationToken)
+    activate Repo
+    Repo -> DbContext : Bookmarks.AddAsync(newBookmark)
+    activate DbContext
+    DbContext --> Repo : Added to tracked entries
+    deactivate DbContext
+    deactivate Repo
+
+    Service -> DbContext : SaveChangesAsync(cancellationToken)
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO Bookmarks (Id, StudentId, EventId, SavedAt) VALUES (...)
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Return 1
+    deactivate DbContext
+
+    Service --> Controller : Return true (Bookmarked successfully)
+end
+
+Controller --> Client : RedirectToPage("Detail", new { id = eventId }) with updated bookmark icon state
+deactivate Controller
+deactivate Client
+@enduml

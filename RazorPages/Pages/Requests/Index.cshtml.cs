@@ -32,16 +32,12 @@ public class IndexModel : PageModel
 
         if (User.IsInRole("Student"))
         {
-            var myRequests = await _requestService.GetRequestsByStudentIdAsync(userId);
+            var myRequests = await _requestService.GetRequestsByStudentIdAsync(userId, StatusFilter);
             Requests = myRequests.ToList();
         }
         else
         {
-            var allRequests = await _requestService.GetAllRequestsAsync();
-            if (!string.IsNullOrEmpty(StatusFilter))
-            {
-                allRequests = allRequests.Where(r => r.Status.Equals(StatusFilter, StringComparison.OrdinalIgnoreCase));
-            }
+            var allRequests = await _requestService.GetAllRequestsAsync(StatusFilter);
             Requests = allRequests.ToList();
         }
 

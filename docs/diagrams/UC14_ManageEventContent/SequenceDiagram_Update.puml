@@ -1,0 +1,126 @@
+@startuml UC14_ManageEventContent_Update_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "EditEventView" as Client
+participant "EditModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Events/Edit (EventUpdateDTO Input)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid update inputs)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid event update)
+    Controller -> Service : UpdateEventAsync(Input, cancellationToken)
+    activate Service
+
+    Service -> Service : Check StartTime >= EndTime
+    activate Service
+    deactivate Service
+
+    alt StartTime >= EndTime (Invalid date range)
+        Service --> Controller : Throw ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else Valid date range
+        Service -> Repo : Query().Include(e => e.EventCategories).Include(e => e.EventTags).Include(e => e.EventReminder).FirstOrDefaultAsync(e => e.Id == dto.Id)
+        activate Repo
+        Repo -> DbContext : Events.Include(...).FirstOrDefaultAsync(...)
+        activate DbContext
+        DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN EventCategories... LEFT JOIN EventTags... LEFT JOIN EventReminders... WHERE Id = @id
+        activate DB
+        DB --> DbContext : Return existing Event entity with tags, categories & reminder
+        deactivate DB
+        DbContext --> Repo : Return Event entity
+        deactivate DbContext
+        Repo --> Service : Return Event entity
+        deactivate Repo
+
+        alt ev == null (Event not found)
+            Service --> Controller : Throw KeyNotFoundException("Sự kiện không tồn tại.")
+            Controller -> Controller : Return NotFound()
+            activate Controller
+            deactivate Controller
+            Controller --> Client : Return HTTP 404
+        else ev != null (Valid event to update)
+            alt ev.VenueId != dto.VenueId (Venue changed)
+                Service -> DbContext : Venues.FirstOrDefaultAsync(v => v.Id == dto.VenueId)
+                activate DbContext
+                DbContext -> DB : SQL Query: SELECT TOP(1) * FROM Venues WHERE Id = @venueId
+                activate DB
+                DB --> DbContext : Return newVenue
+                deactivate DB
+                DbContext --> Service : Return newVenue
+                deactivate DbContext
+
+                alt ev.RegisteredCount > newVenue.MaxCapacity
+                    Service --> Controller : Throw InvalidOperationException("Sự kiện đã có lượt đăng ký vượt quá sức chứa địa điểm mới.")
+                end
+            end
+
+            Service -> Service : Map updated properties from dto to ev via AutoMapper
+            activate Service
+            deactivate Service
+
+            Service -> Service : ev.EventCategories.Clear() & ev.EventTags.Clear()
+            activate Service
+            deactivate Service
+
+            loop for each id in dto.CategoryIds & TagIds
+                Service -> Service : Add new EventCategory and EventTag entries
+                activate Service
+                deactivate Service
+            end
+
+            alt ev.StartTime != oldStartTime (Event time changed -> Update EventReminder)
+                alt ev.EventReminder != null
+                    Service -> Service : ev.EventReminder.ScheduledTime = ev.StartTime.AddDays(-1) & IsEmailSent = false
+                    activate Service
+                    deactivate Service
+                else ev.EventReminder == null
+                    Service -> DbContext : EventReminders.AddAsync(new EventReminder { EventId, ScheduledTime = StartTime.AddDays(-1) })
+                    activate DbContext
+                    deactivate DbContext
+                end
+            end
+
+            Service -> Repo : Update(ev)
+            activate Repo
+            deactivate Repo
+
+            Service -> DbContext : SaveChangesAsync(cancellationToken)
+            activate DbContext
+            DbContext -> DB : SQL Query: DELETE/INSERT EventCategories & EventTags; UPDATE Events & EventReminders... WHERE Id = @id
+            activate DB
+            DB --> DbContext : Rows affected
+            deactivate DB
+            DbContext --> Service : Saved successfully
+            deactivate DbContext
+
+            Service --> Controller : Completed update
+            deactivate Service
+
+            Controller -> Controller : Set TempData["SuccessMessage"] = "Sự kiện đã được cập nhật thành công!"
+            activate Controller
+            deactivate Controller
+
+            Controller --> Client : RedirectToPage("./Index")
+        end
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

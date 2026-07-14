@@ -1,0 +1,81 @@
+@startuml UC16_ConfigureVenueLogistics_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "ConfigureVenueView" as Client
+participant "ConfigureVenueModel" as Controller
+participant "VenueService" as Service
+participant "VenueRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Venues/Edit (VenueUpdateDTO dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid venue capacity or address)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid venue configuration)
+    Controller -> Service : UpdateVenueAsync(dto, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().Include(v => v.Events).FirstOrDefaultAsync(v => v.Id == dto.Id)
+    activate Repo
+    Repo -> DbContext : Venues.Include(v => v.Events).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Venues LEFT JOIN Events... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return Venue with related Events
+    deactivate DB
+    DbContext --> Repo : Return Venue entity
+    deactivate DbContext
+    Repo --> Service : Return Venue entity
+    deactivate Repo
+
+    Service -> Service : Calculate maxRegistered = venue.Events.Max(e => e.RegisteredCount)
+    activate Service
+    deactivate Service
+
+    alt dto.MaxCapacity < maxRegistered (Capacity constraint violation)
+        Service --> Controller : Throw InvalidOperationException("Không thể giảm sức chứa xuống thấp hơn số lượt đã đăng ký")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error message
+    else dto.MaxCapacity >= maxRegistered (Valid capacity setting)
+        Service -> Service : Map dto to venue entity via AutoMapper
+        activate Service
+        deactivate Service
+
+        Service -> Repo : Update(venue)
+        activate Repo
+        deactivate Repo
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: UPDATE Venues SET Name = @name, Address = @addr, MaxCapacity = @cap WHERE Id = @id
+        activate DB
+        DB --> DbContext : 1 row affected
+        deactivate DB
+        DbContext --> Service : Saved successfully
+        deactivate DbContext
+
+        Service --> Controller : Completed logistics update
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Cập nhật địa điểm & sức chứa thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage("./Index")
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

@@ -1,0 +1,112 @@
+@startuml UC14_ManageEventContent_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "CreateEventView" as Client
+participant "CreateEventModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Events/Create (EventCreateDTO Input)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid event form data)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid form submission)
+    Controller -> Controller : Assign Input.OrganizerId = currentUserId & parse BannerUrl
+    activate Controller
+    deactivate Controller
+
+    Controller -> Service : CreateEventAsync(Input, cancellationToken)
+    activate Service
+
+    Service -> Service : Check StartTime >= EndTime
+    activate Service
+    deactivate Service
+
+    alt StartTime >= EndTime (Invalid date range)
+        Service --> Controller : Throw ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else Valid date range
+        Service -> Service : Map dto to Event entity via AutoMapper & set Id = Guid.NewGuid(), CreatedAt = DateTime.UtcNow, RegisteredCount = 0
+        activate Service
+        deactivate Service
+
+        Service -> Repo : AddAsync(entity, cancellationToken)
+        activate Repo
+        Repo -> DbContext : Events.AddAsync(entity)
+        activate DbContext
+        DbContext --> Repo : Tracked as Added
+        deactivate DbContext
+        deactivate Repo
+
+        Service -> DbContext : EventReminders.AddAsync(new EventReminder { EventId, ScheduledTime = StartTime.AddDays(-1) })
+        activate DbContext
+        deactivate DbContext
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: INSERT INTO Events (...); INSERT INTO EventReminders (...)
+        activate DB
+        DB --> DbContext : Rows affected
+        deactivate DB
+        DbContext --> Service : Saved Event & Reminder rows
+        deactivate DbContext
+
+        loop for each tagId in dto.TagIds
+            Service -> DbContext : EventTags.Add(new EventTag { EventId = entity.Id, TagId = tagId })
+            activate DbContext
+            deactivate DbContext
+        end
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: INSERT INTO EventTags (EventId, TagId) VALUES (...)
+        activate DB
+        DB --> DbContext : Rows affected
+        deactivate DB
+        DbContext --> Service : Saved EventTags relations
+        deactivate DbContext
+
+        Service -> Repo : BuildSearchQuery().FirstOrDefaultAsync(e => e.Id == newEvent.Id)
+        activate Repo
+        Repo -> DbContext : Events.Include(...).FirstOrDefaultAsync(...)
+        activate DbContext
+        DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN... WHERE Id = @id
+        activate DB
+        DB --> DbContext : Return reloaded Event
+        deactivate DB
+        DbContext --> Repo : Return Event entity
+        deactivate DbContext
+        Repo --> Service : Return Event entity
+        deactivate Repo
+
+        Service -> Service : Map reloaded entity to EventDTO via AutoMapper
+        activate Service
+        deactivate Service
+
+        Service --> Controller : Return created EventDTO
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Tạo sự kiện mới thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage("./Detail", new { id = result.Id })
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

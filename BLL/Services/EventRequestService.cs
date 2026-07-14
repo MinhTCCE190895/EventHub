@@ -24,21 +24,37 @@ public class EventRequestService : IEventRequestService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<EventRequestDTO>> GetAllRequestsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EventRequestDTO>> GetAllRequestsAsync(string? statusFilter = null, CancellationToken cancellationToken = default)
     {
-        var requests = await _requestRepository.Query()
+        var query = _requestRepository.Query()
             .Include(r => r.Student)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(r => r.Status.ToLower() == statusFilter.Trim().ToLower());
+        }
+
+        var requests = await query
             .OrderByDescending(r => r.SubmittedAt)
             .ToListAsync(cancellationToken);
 
         return _mapper.Map<IEnumerable<EventRequestDTO>>(requests);
     }
 
-    public async Task<IEnumerable<EventRequestDTO>> GetRequestsByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<EventRequestDTO>> GetRequestsByStudentIdAsync(Guid studentId, string? statusFilter = null, CancellationToken cancellationToken = default)
     {
-        var requests = await _requestRepository.Query()
+        var query = _requestRepository.Query()
             .Include(r => r.Student)
             .Where(r => r.StudentId == studentId)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(r => r.Status.ToLower() == statusFilter.Trim().ToLower());
+        }
+
+        var requests = await query
             .OrderByDescending(r => r.SubmittedAt)
             .ToListAsync(cancellationToken);
 

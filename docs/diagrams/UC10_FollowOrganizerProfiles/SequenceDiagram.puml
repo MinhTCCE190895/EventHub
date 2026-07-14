@@ -1,0 +1,90 @@
+@startuml UC10_FollowOrganizerProfiles_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "FollowView" as Client
+participant "FollowModel" as Controller
+participant "FollowService" as Service
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Follow?handler=ToggleFollow (organizerId)
+activate Controller
+
+Controller -> Controller : Extract followerId from ClaimsPrincipal (User.FindFirst(NameIdentifier))
+activate Controller
+deactivate Controller
+
+Controller -> Service : IsFollowingAsync(followerId, organizerId)
+activate Service
+Service -> DbContext : Follows.AnyAsync(f => f.FollowerId == followerId && f.FolloweeId == organizerId)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT CASE WHEN EXISTS(...) THEN 1 ELSE 0 END
+activate DB
+DB --> DbContext : Return boolean (true/false)
+deactivate DB
+DbContext --> Service : Return boolean status
+deactivate DbContext
+Service --> Controller : Return isFollowing
+deactivate Service
+
+alt isFollowing == true (Already following -> UnfollowAsync)
+    Controller -> Service : UnfollowAsync(followerId, organizerId)
+    activate Service
+
+    Service -> DbContext : Follows.FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT TOP(1) * FROM Follows WHERE FollowerId = @followerId AND FolloweeId = @organizerId
+    activate DB
+    DB --> DbContext : Return existing Follow entity
+    deactivate DB
+    DbContext --> Service : Return existing Follow entity
+    deactivate DbContext
+
+    Service -> DbContext : Follows.Remove(follow) & SaveChangesAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: DELETE FROM Follows WHERE FollowerId = @followerId AND FolloweeId = @organizerId
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Return 1
+    deactivate DbContext
+
+    Service --> Controller : Completed unfollow
+    deactivate Service
+else isFollowing == false (Not following -> FollowAsync)
+    Controller -> Service : FollowAsync(followerId, organizerId)
+    activate Service
+
+    Service -> DbContext : Users.AnyAsync(u => u.Id == organizerId && u.Role == "Organizer" && u.IsActive)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT CASE WHEN EXISTS(...) THEN 1 ELSE 0 END
+    activate DB
+    DB --> DbContext : Return true (Is active organizer)
+    deactivate DB
+    DbContext --> Service : Return true
+    deactivate DbContext
+
+    Service -> Service : Create new Follow entity (FollowerId, FolloweeId, FollowedAt = DateTime.UtcNow)
+    activate Service
+    deactivate Service
+
+    Service -> DbContext : Follows.AddAsync(follow) & SaveChangesAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: INSERT INTO Follows (FollowerId, FolloweeId, FollowedAt) VALUES (...)
+    activate DB
+    DB --> DbContext : 1 row affected
+    deactivate DB
+    DbContext --> Service : Return 1
+    deactivate DbContext
+
+    Service --> Controller : Completed follow
+    deactivate Service
+end
+
+Controller --> Client : RedirectToPage("Index") with updated follow state & count
+deactivate Controller
+deactivate Client
+@enduml

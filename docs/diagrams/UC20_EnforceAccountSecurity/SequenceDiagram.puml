@@ -1,0 +1,101 @@
+@startuml UC20_EnforceAccountSecurity_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "SecuritySettingsView" as Client
+participant "SecurityPolicyModel" as Controller
+participant "UserService" as Service
+participant "UserRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Account/Security?handler=EnforcePolicy (ChangePasswordDto dto)
+activate Controller
+
+Controller -> Controller : Check ModelState.IsValid & Extract currentUserId from ClaimsPrincipal
+activate Controller
+deactivate Controller
+
+alt ModelState == false (Invalid security credentials or password format)
+    Controller --> Client : Return Page() with validation error messages
+else ModelState == true (Valid policy enforcement request)
+    Controller -> Service : UpdateSecurityCredentialsAsync(currentUserId, dto.OldPassword, dto.NewPassword)
+    activate Service
+
+    Service -> Repo : SingleOrDefaultAsync(u => u.Id == currentUserId)
+    activate Repo
+    Repo -> DbContext : Users.FirstOrDefaultAsync(u => u.Id == currentUserId)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT TOP(1) * FROM Users WHERE Id = @currentUserId
+    activate DB
+    DB --> DbContext : Return User entity
+    deactivate DB
+    DbContext --> Repo : Return User entity
+    deactivate DbContext
+    Repo --> Service : Return User entity
+    deactivate Repo
+
+    alt user == null || !user.IsActive (Account locked or not found)
+        Service --> Controller : Throw InvalidOperationException("Tài khoản bị khóa hoặc không tồn tại.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else Account active & located
+        Service -> Service : Check BCrypt hash format (user.PasswordHash.StartsWith("$2"))
+        activate Service
+        deactivate Service
+
+        Service -> Service : BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash)
+        activate Service
+        deactivate Service
+
+        alt BCrypt.Verify == false (Incorrect old password)
+            Service --> Controller : Throw UnauthorizedAccessException("Mật khẩu hiện tại không chính xác.")
+            Controller -> Controller : ModelState.AddModelError("OldPassword", ex.Message)
+            activate Controller
+            deactivate Controller
+            Controller --> Client : Return Page() with error
+        else Old password verified
+            Service -> Service : Check password history / reuse rules (NewPassword != OldPassword)
+            activate Service
+            deactivate Service
+
+            Service -> Service : BCrypt.Net.BCrypt.HashPassword(newPassword) (Generate secure $2a$11$ hash)
+            activate Service
+            deactivate Service
+
+            Service -> Service : Assign user.PasswordHash = newHash & update security timestamp
+            activate Service
+            deactivate Service
+
+            Service -> Repo : Update(user)
+            activate Repo
+            deactivate Repo
+
+            Service -> DbContext : SaveChangesAsync(cancellationToken)
+            activate DbContext
+            DbContext -> DB : SQL Query: UPDATE Users SET PasswordHash = @newHash WHERE Id = @currentUserId
+            activate DB
+            DB --> DbContext : 1 row affected
+            deactivate DB
+            DbContext --> Service : Saved credentials update
+            deactivate DbContext
+
+            Service --> Controller : Completed security policy enforcement
+            deactivate Service
+
+            Controller -> Controller : Set TempData["SuccessMessage"] = "Cập nhật mật khẩu & chính sách bảo mật thành công!"
+            activate Controller
+            deactivate Controller
+
+            Controller --> Client : RedirectToPage("./Security")
+        end
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

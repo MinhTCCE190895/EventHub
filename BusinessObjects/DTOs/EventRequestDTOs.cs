@@ -12,6 +12,30 @@ public class EventRequestDTO
     public string Status { get; set; } = "Pending";
     public DateTime SubmittedAt { get; set; }
     public string? ResponseMessage { get; set; }
+
+    public string StatusDisplayName => Status switch
+    {
+        "Approved" => "Đã duyệt",
+        "Rejected" => "Từ chối",
+        "Pending" => "Chờ duyệt",
+        _ => Status ?? "Chờ duyệt"
+    };
+
+    public string StatusBadgeClass => Status switch
+    {
+        "Approved" => "bg-success-subtle text-success border border-success",
+        "Rejected" => "bg-danger-subtle text-danger border border-danger",
+        "Pending" => "bg-warning-subtle text-warning border border-warning",
+        _ => "bg-warning-subtle text-warning border border-warning"
+    };
+
+    public string StatusIconClass => Status switch
+    {
+        "Approved" => "bi-check-circle-fill",
+        "Rejected" => "bi-x-circle-fill",
+        "Pending" => "bi-hourglass-split",
+        _ => "bi-hourglass-split"
+    };
 }
 
 public class EventRequestCreateDTO

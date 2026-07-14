@@ -1,0 +1,86 @@
+@startuml UC14_ManageEventContent_DeleteAndStatus_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "EventIndexView" as Client
+participant "IndexModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+participant "EventHub" as SignalRHub
+
+activate Client
+Client -> Controller : POST /Events/Index?handler=ChangeStatus (id, newStatus)
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+alt Role != Admin (Unauthorized action)
+    Controller --> Client : Return Forbid()
+else Role == Admin (Authorized status change or soft delete)
+    Controller -> Service : ChangeEventStatusAsync(id, newStatus, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == id)
+    activate Repo
+    Repo -> DbContext : Events.Include(e => e.Venue).FirstOrDefaultAsync(...)
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN Venues... WHERE Id = @id
+    activate DB
+    DB --> DbContext : Return Event with Venue info
+    deactivate DB
+    DbContext --> Repo : Return Event entity
+    deactivate DbContext
+    Repo --> Service : Return Event entity
+    deactivate Repo
+
+    alt ev == null (Event not found)
+        Service --> Controller : Throw KeyNotFoundException("Sự kiện không tồn tại.")
+        Controller -> Controller : Return NotFound()
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return HTTP 404
+    else ev != null (Valid event to change status)
+        Service -> Service : ev.Status = newStatus ("Published" / "Draft" / "Cancelled")
+        activate Service
+        deactivate Service
+
+        Service -> Repo : Update(ev)
+        activate Repo
+        deactivate Repo
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: UPDATE Events SET Status = @newStatus WHERE Id = @id
+        activate DB
+        DB --> DbContext : 1 row affected
+        deactivate DB
+        DbContext --> Service : Saved status change
+        deactivate DbContext
+
+        alt newStatus == "Published" (Real-time broadcast to all users)
+            Service -> SignalRHub : Clients.All.SendAsync("ReceiveEventPublished", ev.Id, ev.Title, maxCapacity)
+            activate SignalRHub
+            Note over Client, SignalRHub : SignalR broadcast pushes "ReceiveEventPublished" so all live student dashboards update immediately
+            SignalRHub --> Service : Push completed
+            deactivate SignalRHub
+        end
+
+        Service --> Controller : Completed status transition
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Cập nhật trạng thái sự kiện thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage()
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

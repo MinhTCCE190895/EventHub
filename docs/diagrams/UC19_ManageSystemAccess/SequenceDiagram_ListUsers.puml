@@ -1,0 +1,56 @@
+@startuml UC19_ManageSystemAccess_ListUsers_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "ManageUsersView" as Client
+participant "AdminUsersModel" as Controller
+participant "UserService" as Service
+participant "UserRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /Admin/Users/Index (UserSearchDto filter)
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin")
+activate Controller
+deactivate Controller
+
+alt Role != Admin (Unauthorized view attempt)
+    Controller --> Client : Return Forbid() or AccessDenied
+else Role == Admin (Authorized system user audit)
+    Controller -> Service : GetUsersPagedAsync(filter, cancellationToken)
+    activate Service
+
+    Service -> Repo : Query().Where(filter)...OrderByDescending(u => u.CreatedAt).Skip(offset).Take(pageSize).ToListAsync()
+    activate Repo
+    Repo -> DbContext : Users.Where(...).OrderByDescending(u => u.CreatedAt).ToListAsync()
+    activate DbContext
+    DbContext -> DB : SQL Query: SELECT * FROM Users WHERE ... ORDER BY CreatedAt DESC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY
+    activate DB
+    DB --> DbContext : Return list of User entities
+    deactivate DB
+    DbContext --> Repo : Return List<User>
+    deactivate DbContext
+    Repo --> Service : Return List<User>
+    deactivate Repo
+
+    Service -> Service : Map List<User> to PagedResult<UserDto> via AutoMapper
+    activate Service
+    deactivate Service
+
+    Service --> Controller : Return PagedResult<UserDto>
+    deactivate Service
+
+    Controller -> Controller : Assign UsersList & Pagination metadata
+    activate Controller
+    deactivate Controller
+
+    Controller --> Client : HTTP 200 OK (Render Index.cshtml with System Users management table)
+end
+
+deactivate Controller
+deactivate Client
+@enduml

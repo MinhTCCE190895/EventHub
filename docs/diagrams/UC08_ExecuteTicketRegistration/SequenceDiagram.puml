@@ -1,0 +1,107 @@
+@startuml UC08_ExecuteTicketRegistration_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "BookingComponent" as Client
+participant "BookingService" as Service
+participant "BookingRepository" as BookingRepo
+participant "EventRepository" as EventRepo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+participant "EventHub" as SignalRHub
+
+activate Client
+Client -> Service : BookTicketAsync(eventId, studentId)
+activate Service
+
+Service -> DbContext : Database.BeginTransactionAsync(IsolationLevel.Serializable)
+activate DbContext
+DbContext -> DB : BEGIN TRANSACTION WITH ISOLATION LEVEL SERIALIZABLE
+activate DB
+DB --> DbContext : Transaction started
+deactivate DB
+DbContext --> Service : Return IDbContextTransaction
+deactivate DbContext
+
+Service -> BookingRepo : HasUserBookedEventAsync(eventId, studentId)
+activate BookingRepo
+BookingRepo -> DbContext : Bookings.AnyAsync(b => b.EventId == eventId && b.StudentId == studentId)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT CASE WHEN EXISTS(...) THEN 1 ELSE 0 END
+activate DB
+DB --> DbContext : Return boolean result (false)
+deactivate DB
+DbContext --> BookingRepo : Return false
+deactivate DbContext
+BookingRepo --> Service : Return false
+deactivate BookingRepo
+
+Service -> DbContext : Events.Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == eventId)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN Venues... WHERE Id = @eventId
+activate DB
+DB --> DbContext : Return Event with Venue capacity info
+deactivate DB
+DbContext --> Service : Return Event entity
+deactivate DbContext
+
+Service -> Service : Check EndTime < DateTime.UtcNow & RegisteredCount >= MaxCapacity
+activate Service
+deactivate Service
+
+Service -> Service : Create new Booking entity (TicketCode = "TKT-...", Status = "Confirmed")
+activate Service
+deactivate Service
+
+Service -> BookingRepo : AddAsync(booking)
+activate BookingRepo
+BookingRepo -> DbContext : Bookings.AddAsync(booking)
+activate DbContext
+DbContext --> BookingRepo : Tracked as Added
+deactivate DbContext
+deactivate BookingRepo
+
+Service -> Service : Increment evWithVenue.RegisteredCount += 1
+activate Service
+deactivate Service
+
+Service -> EventRepo : Update(evWithVenue)
+activate EventRepo
+deactivate EventRepo
+
+Service -> DbContext : SaveChangesAsync()
+activate DbContext
+DbContext -> DB : SQL Query: INSERT INTO Bookings (...); UPDATE Events SET RegisteredCount = @cnt WHERE Id = @eventId
+activate DB
+DB --> DbContext : Rows affected
+deactivate DB
+DbContext --> Service : Saved successfully
+deactivate DbContext
+
+Service -> DbContext : transaction.CommitAsync()
+activate DbContext
+DbContext -> DB : COMMIT TRANSACTION
+activate DB
+DB --> DbContext : Committed
+deactivate DB
+DbContext --> Service : Transaction committed
+deactivate DbContext
+
+Service -> Service : Calculate remainingSeats = Venue.MaxCapacity - evWithVenue.RegisteredCount
+activate Service
+deactivate Service
+
+Service -> SignalRHub : Clients.All.SendAsync("ReceiveTicketUpdate", eventId, remainingSeats)
+activate SignalRHub
+SignalRHub --> Client : Real-time WebSocket push: ReceiveTicketUpdate(remainingSeats)
+deactivate SignalRHub
+
+Service --> Client : Return TicketCode string
+deactivate Service
+
+Client -> Client : StateHasChanged() (Render ticket confirmation UI)
+activate Client
+deactivate Client
+deactivate Client
+@enduml

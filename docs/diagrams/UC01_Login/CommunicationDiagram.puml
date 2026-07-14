@@ -1,0 +1,36 @@
+@startuml UC01_Login_CommunicationDiagram
+allowmixing
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype polyline
+skinparam nodesep 65
+skinparam ranksep 65
+
+together {
+    object ": LoginView" as View
+    object ": UserService" as Service
+    object ": BaseRepository<User>" as Repo
+}
+
+together {
+    actor "Guest" as Actor
+    object ": AccountController" as Controller
+    object ": AppDbContext" as DbContext
+    object ": Database" as DB
+}
+
+View -[hidden]right- Service
+Service -[hidden]right- Repo
+
+Actor -[hidden]right- Controller
+Controller -[hidden]right- DbContext
+DbContext -[hidden]right- DB
+
+Actor -up- View : 1: Input email & password >
+View -down- Controller : 1.1: POST /Account/Login >
+Controller -up- Service : 1.1.1: ValidateLoginAsync() >
+Service -right- Repo : 1.1.1.1: SingleOrDefaultAsync() >
+Repo -down- DbContext : 1.1.1.1.1: Users.SingleOrDefaultAsync() >
+DbContext -right- DB : 1.1.1.1.1.1: SQL Query User by Email >
+
+@enduml

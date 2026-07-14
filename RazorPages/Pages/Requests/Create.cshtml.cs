@@ -38,8 +38,16 @@ public class CreateModel : PageModel
             return RedirectToPage("/Logout");
         }
 
-        await _requestService.CreateRequestAsync(userId, Input);
-        TempData["SuccessMessage"] = "Đề xuất ý tưởng sự kiện đã được gửi thành công!";
-        return RedirectToPage("./Index");
+        try
+        {
+            await _requestService.CreateRequestAsync(userId, Input);
+            TempData["SuccessMessage"] = "Đề xuất ý tưởng sự kiện đã được gửi thành công!";
+            return RedirectToPage("./Index");
+        }
+        catch (System.Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return Page();
+        }
     }
 }

@@ -69,6 +69,19 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
     - Phát triển script PowerShell tự động sinh file `.drawio` cho Sơ đồ truyền thông tích hợp (`integrated_communication_diagram.drawio`) biểu diễn sự tương tác của toàn bộ phân hệ (Auth, Booking, Event Management, Feedback) mà không dùng sequence numbers theo đúng chuẩn thiết kế COMET.
     - Đã kiểm chứng khả năng tương thích và hiển thị trực quan thành công trên draw.io.
 
+- **2026-07-14 (Antigravity / MinhTC)**:
+  - **Khắc phục và bổ sung cấu hình DI (`BLL/DependencyInjection.cs`) cho các ứng dụng Presentation (`MVC`, `RazorPages`, `Blazor`)**:
+    - Bổ sung `services.AddSignalR()` trực tiếp vào `AddBusinessLogicLayer` nhằm tự đáp ứng dependency `IHubContext<EventHub>` cho `BookingService` và `EventService`, triệt tiêu ngoại lệ `InvalidOperationException` -> `AggregateException` khi khởi chạy các ứng dụng.
+    - Đăng ký service `services.AddScoped<IEventRequestService, EventRequestService>()` vào `AddBusinessLogicLayer` để giải quyết dependency cho các PageModel của module Ý tưởng sự kiện (`Requests/IndexModel`, `Requests/ProcessModel`, `Requests/CreateModel`).
+  - **Dùng skill `clean-architecture-crud-refactor` kiểm tra & chuẩn hóa trọn vẹn 2 module `Venues` và `Student Idea / Requests` trong `RazorPages`**:
+    - **Module `Venues` (`RazorPages/Pages/Venues`)**:
+      - Chuẩn hóa cấu trúc try-catch 2 tầng tại `Create.cshtml.cs`, `Edit.cshtml.cs`, và `Delete.cshtml.cs`: loại bỏ việc bắt lẻ các ngoại lệ `InvalidOperationException` tại từng tầng UI, thay bằng việc bắt các ngoại lệ HTTP giao thức (`KeyNotFoundException` -> `NotFound()`) ở tầng 1 và bắt chung ngoại lệ nghiệp vụ (`Exception ex`) ở tầng 2 để hiển thị an toàn qua `ModelState` (trên form Create/Edit) hoặc `TempData["ErrorMessage"]` (trên trang Delete). Đảm bảo mọi ngoại lệ validation/nghiệp vụ từ BLL (`VenueService`) đều được phản ánh đầy đủ, tránh sập ứng dụng (HTTP 500) và lộ Stack Trace.
+    - **Module `Student Idea / Requests` (`FE-13`)**:
+      - Loại bỏ vi phạm Data Access (`CA-ERR-02`) tại `Index.cshtml.cs`: dời toàn bộ logic truy vấn và lọc dữ liệu bằng LINQ `.Where(...)` xuống tầng dịch vụ. Bổ sung tham số `string? statusFilter = null` vào chữ ký phương thức `GetAllRequestsAsync` và `GetRequestsByStudentIdAsync` tại `IEventRequestService` và `EventRequestService`, thực thi lọc trực tiếp trên `IQueryable` ở tầng Database trước khi `ToListAsync()`.
+      - Loại bỏ vi phạm UI Logic (`CA-WARN-02`) tại `Index.cshtml`: đóng gói toàn bộ trạng thái hiển thị và màu sắc giao diện (`StatusDisplayName`, `StatusBadgeClass`, `StatusIconClass`) thành computed properties trong `EventRequestDTO` (`BusinessObjects/DTOs/EventRequestDTOs.cs`). Triệt tiêu hoàn toàn khối `if/else` phân định màu badge và icon bên trong View HTML.
+      - Bổ sung cấu trúc try-catch 2 tầng chuẩn mực vào `Create.cshtml.cs` và `Process.cshtml.cs` để bảo vệ các thao tác gửi ý tưởng và phê duyệt ý tưởng.
+    - Kiểm chứng `dotnet build` thành công `0 Error(s)` và chạy kiểm toán tĩnh `check_clean_arch.ps1` trên cả `RazorPages/Pages/Venues` lẫn `RazorPages/Pages/Requests` đạt `0` vi phạm (`0 Violations Found`).
+
 - **2026-07-13 (Antigravity / QuiNC / MinhTC)**:
   - **Đóng gói Agent Skill chuẩn hóa Clean Architecture cho các phân hệ CRUD (`clean-architecture-crud-refactor`)**:
     - Xây dựng script PowerShell tự động quét mã nguồn `.agents/skills/clean-architecture-crud-refactor/scripts/check_clean_arch.ps1` theo các bộ quy tắc (Rule IDs: `CA-ERR-01`, `CA-ERR-02`, `CA-ERR-03`, `CA-WARN-01`, `CA-WARN-02`, `CA-CLEAN-01`), xuất báo cáo kiểm toán chi tiết dưới định dạng Markdown và JSON vào `.agents/docs/reports/`.
@@ -111,7 +124,6 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
     - Bổ sung phương thức `DeleteUserAsync` vào `UserService.cs` hỗ trợ Xóa mềm (`IsActive = false`) và ngăn chặn Xóa cứng tài khoản Organizer/Student khi có ràng buộc sự kiện hoặc vé đăng ký.
     - Xóa bỏ hoàn toàn thư mục cũ `SharedKeys/` không còn sử dụng do toàn bộ hệ thống đã chuyển sang lưu khóa bảo mật vào Database (`PersistKeysToDbContext<AppDbContext>()`).
 
->>>>>>> 232c520 (refactor(RazorPages): chuẩn hóa xử lý ngoại lệ cho Categories, Tags, cập nhật check_clean_arch.ps1 và memory-snapshots)
 - **2026-06-23 (Antigravity)**:
   - **QuiNC - Bảo vệ file appsettings.json & Luật Git Workflow (`FE-03`)**: Cấu hình quy tắc chặn tự ý sửa đổi file cấu hình và chuỗi kết nối, cùng với quy tắc bắt buộc phải chạy `git pull` trước khi `git push` và cấm sử dụng Force Push vào file quy chuẩn chung `01-token-and-docs.md`. Đồng thời thực hiện chạy lệnh `git update-index --assume-unchanged` trên cả 3 dự án (`Blazor`, `MVC`, `RazorPages`).
   - **QuiNC - Comments Translation (`FE-03`, `FE-08`)**: Translated all Vietnamese comments to English inside QuiNC's module files: `SearchService.cs`, `WeatherService.cs`, `Index.cshtml.cs`, `EventSearchViewModel.cs`, `Detail.cshtml.cs`, `Index.cshtml`, and `Detail.cshtml` to maintain academic whitepaper standards.

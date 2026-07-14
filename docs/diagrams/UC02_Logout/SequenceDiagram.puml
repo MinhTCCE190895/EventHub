@@ -1,0 +1,24 @@
+@startuml UC02_Logout_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "NavbarView" as Client
+participant "AccountController" as Controller
+
+activate Client
+Client -> Controller : POST /Account/Logout
+activate Controller
+
+Controller -> Controller : LogInformation("User logged out")
+activate Controller
+deactivate Controller
+
+Controller -> Controller : HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme)
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 302 Redirect (/Account/Login)
+deactivate Controller
+deactivate Client
+@enduml

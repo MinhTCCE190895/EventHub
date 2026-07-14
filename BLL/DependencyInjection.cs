@@ -11,6 +11,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSignalR();
 
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IVenueService, VenueService>();
+        services.AddScoped<IEventRequestService, EventRequestService>();
 
         services.AddAutoMapper(config => 
         {

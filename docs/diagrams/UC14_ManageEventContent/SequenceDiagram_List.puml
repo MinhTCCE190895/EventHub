@@ -1,0 +1,51 @@
+@startuml UC14_ManageEventContent_List_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "EventIndexView" as Client
+participant "IndexModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : GET /Events/Index
+activate Controller
+
+Controller -> Controller : Verify ClaimsPrincipal User.IsInRole("Admin,Organizer")
+activate Controller
+deactivate Controller
+
+Controller -> Service : GetAllEventsAsync(cancellationToken)
+activate Service
+
+Service -> Repo : BuildSearchQuery().OrderByDescending(e => e.StartTime).ToListAsync(cancellationToken)
+activate Repo
+Repo -> DbContext : Events.Include(e => e.Venue).Include(e => e.EventCategories)...OrderByDescending(e => e.StartTime).ToListAsync()
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN Venues... LEFT JOIN EventCategories... ORDER BY StartTime DESC
+activate DB
+DB --> DbContext : Return list of Event entities
+deactivate DB
+DbContext --> Repo : Return List<Event>
+deactivate DbContext
+Repo --> Service : Return List<Event>
+deactivate Repo
+
+Service -> Service : Map List<Event> to IEnumerable<EventDTO> via AutoMapper
+activate Service
+deactivate Service
+
+Service --> Controller : Return IEnumerable<EventDTO>
+deactivate Service
+
+Controller -> Controller : Assign Events = result list
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 200 OK (Render Index.cshtml with Event management data table)
+deactivate Controller
+deactivate Client
+@enduml

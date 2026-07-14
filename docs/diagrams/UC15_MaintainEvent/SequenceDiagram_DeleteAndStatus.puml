@@ -1,0 +1,77 @@
+@startuml UC15_MaintainEvent_DeleteAndStatus_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "EventDetailOrIndexView" as Client
+participant "EventPageModel" as Controller
+participant "EventService" as Service
+participant "EventRepository" as Repo
+participant "AppDbContext" as DbContext
+database "Database" as DB
+
+activate Client
+Client -> Controller : POST /Events/Edit?handler=Delete (Guid id)
+activate Controller
+
+Controller -> Controller : Check ModelState & Verify ClaimsPrincipal User.IsInRole("Admin,Organizer")
+activate Controller
+deactivate Controller
+
+Controller -> Service : DeleteEventAsync(id, cancellationToken)
+activate Service
+
+Service -> Repo : Query().Include(e => e.Bookings).FirstOrDefaultAsync(e => e.Id == id)
+activate Repo
+Repo -> DbContext : Events.Include(e => e.Bookings).FirstOrDefaultAsync(...)
+activate DbContext
+DbContext -> DB : SQL Query: SELECT * FROM Events LEFT JOIN Bookings... WHERE Id = @id
+activate DB
+DB --> DbContext : Return target Event with Bookings
+deactivate DB
+DbContext --> Repo : Return Event entity
+deactivate DbContext
+Repo --> Service : Return Event entity
+deactivate Repo
+
+alt ev == null (Event not found)
+    Service --> Controller : Throw KeyNotFoundException("Sự kiện không tồn tại.")
+    Controller -> Controller : Return NotFound()
+    activate Controller
+    deactivate Controller
+    Controller --> Client : Return HTTP 404
+else ev != null (Valid event to maintain/delete)
+    alt ev.Bookings.Any() == true (Constraint: Students already registered)
+        Service --> Controller : Throw InvalidOperationException("Không thể xóa sự kiện này vì đã có sinh viên Đăng ký.")
+        Controller -> Controller : ModelState.AddModelError("", ex.Message)
+        activate Controller
+        deactivate Controller
+        Controller --> Client : Return Page() with error
+    else No student registrations (Safe to remove)
+        Service -> Repo : Remove(ev)
+        activate Repo
+        deactivate Repo
+
+        Service -> DbContext : SaveChangesAsync(cancellationToken)
+        activate DbContext
+        DbContext -> DB : SQL Query: DELETE FROM Events WHERE Id = @id
+        activate DB
+        DB --> DbContext : 1 row affected
+        deactivate DB
+        DbContext --> Service : Removed event row
+        deactivate DbContext
+
+        Service --> Controller : Completed maintenance deletion
+        deactivate Service
+
+        Controller -> Controller : Set TempData["SuccessMessage"] = "Xóa sự kiện thành công!"
+        activate Controller
+        deactivate Controller
+
+        Controller --> Client : RedirectToPage("./Index")
+    end
+end
+
+deactivate Controller
+deactivate Client
+@enduml

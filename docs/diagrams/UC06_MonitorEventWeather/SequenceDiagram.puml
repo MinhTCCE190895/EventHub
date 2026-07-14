@@ -1,0 +1,65 @@
+@startuml UC06_MonitorEventWeather_SequenceDiagram
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+participant "DetailView" as Client
+participant "DetailModel" as Controller
+participant "WeatherService" as Service
+participant "IMemoryCache" as Cache
+participant "HttpClient" as Http
+
+activate Client
+Client -> Controller : GET /Events/Detail?id={eventId}
+activate Controller
+
+Controller -> Service : GetWeatherForecastAsync(Venue.Address, StartTime)
+activate Service
+
+Service -> Service : NormalizeLocation(location) & build cacheKey
+activate Service
+deactivate Service
+
+Service -> Cache : TryGetValue(cacheKey, out cachedWeather)
+activate Cache
+Cache --> Service : Return cache miss (null)
+deactivate Cache
+
+Service -> Service : await _weatherSemaphore.WaitAsync() (Lock against Cache Stampede)
+activate Service
+deactivate Service
+
+Service -> Cache : TryGetValue(cacheKey, out cachedWeather) (Double-checked locking)
+activate Cache
+Cache --> Service : Return cache miss (null)
+deactivate Cache
+
+Service -> Http : GetAsync("https://wttr.in/{location}?format=j1")
+activate Http
+Http --> Service : Return HTTP 200 OK (JSON string of current condition & forecast)
+deactivate Http
+
+Service -> Service : Parse JsonDocument (temp_C, weatherDesc, windspeedKmph, humidity) & TranslateCondition()
+activate Service
+deactivate Service
+
+Service -> Cache : Set(cacheKey, weatherDto, TimeSpan.FromMinutes(30))
+activate Cache
+Cache --> Service : Cache stored
+deactivate Cache
+
+Service -> Service : _weatherSemaphore.Release()
+activate Service
+deactivate Service
+
+Service --> Controller : Return WeatherDTO (Temperature, Condition, WindSpeed, Humidity, IconClass)
+deactivate Service
+
+Controller -> Controller : Assign EventWeather = weatherDto & IsForecastAvailable = true
+activate Controller
+deactivate Controller
+
+Controller --> Client : HTTP 200 OK (Render Detail.cshtml with live weather widget)
+deactivate Controller
+deactivate Client
+@enduml
