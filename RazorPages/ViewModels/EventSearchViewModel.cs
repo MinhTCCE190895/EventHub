@@ -37,7 +37,7 @@ public class EventSearchViewModel : IValidatableObject
     public List<CategoryDTO> Categories { get; set; } = new();
     public List<TagDTO> Tags { get; set; } = new();
 
-    // Custom Validation (B.E) - Kiểm tra ngày kết thúc không được nhỏ hơn ngày bắt đầu
+    // Custom Validation (B.E) - Check if EndDate is not earlier than StartDate
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)

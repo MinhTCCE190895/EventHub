@@ -1,16 +1,18 @@
 using BLL.Interfaces;
 using BLL.DTOs;
+using DAL.Data;
 using DAL.Entities;
 using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services;
 
-public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkService
+public class BookmarkService(IRepository<Bookmark> bookmarkRepo, AppDbContext context) : IBookmarkService
 {
     private readonly IRepository<Bookmark> _bookmarkRepo = bookmarkRepo;
+    private readonly AppDbContext _context = context;
 
-    // Lấy danh sách ID các sự kiện đã được lưu của sinh viên
+    // Get the list of bookmarked event IDs for a student
     public async Task<List<Guid>> GetBookmarkedEventIdsAsync(Guid studentId, CancellationToken ct = default)
     {
         return await _bookmarkRepo.Query()
@@ -19,7 +21,7 @@ public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkServ
             .ToListAsync(ct);
     }
 
-    // Lấy thông tin chi tiết danh sách sự kiện đã lưu (sử dụng Projection .Select để tối ưu truy vấn)
+    // Fetch detailed info of bookmarked events (using Select projection to optimize query)
     public async Task<List<EventCardDTO>> GetBookmarkedEventsAsync(Guid studentId, CancellationToken cancellationToken = default)
     {
         return await _bookmarkRepo.Query()
@@ -30,7 +32,7 @@ public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkServ
                 Id          = b.Event.Id,
                 Title       = b.Event.Title,
                 BannerUrl   = b.Event.BannerUrl,
-                StartTime   = b.Event.StartTime.AddHours(7), // Đổi sang múi giờ VN (UTC+7)
+                StartTime   = b.Event.StartTime.AddHours(7), // Convert UTC to Vietnam timezone (UTC+7)
                 EndTime     = b.Event.EndTime.AddHours(7),
                 VenueName   = b.Event.Venue != null ? b.Event.Venue.Name : "",
                 TagNames    = b.Event.EventTags.Select(et => et.Tag.Name).ToList(),
@@ -40,7 +42,7 @@ public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkServ
             .ToListAsync(cancellationToken);
     }
 
-    // Kiểm tra xem một sự kiện cụ thể đã được lưu chưa
+    // Check if a specific event has been bookmarked
     public async Task<bool> IsBookmarkedAsync(Guid studentId, Guid eventId, CancellationToken cancellationToken = default)
     {
         return await _bookmarkRepo.ExistsAsync(
@@ -48,7 +50,7 @@ public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkServ
             cancellationToken);
     }
 
-    // Toggle lưu/bỏ lưu sự kiện (nếu đã lưu thì xóa, chưa lưu thì thêm mới)
+    // Toggle bookmark status (remove if exists, add if new)
     public async Task<bool> ToggleBookmarkAsync(Guid studentId, Guid eventId, CancellationToken cancellationToken = default)
     {
         var existing = await _bookmarkRepo.SingleOrDefaultAsync(
@@ -57,18 +59,20 @@ public class BookmarkService(IRepository<Bookmark> bookmarkRepo) : IBookmarkServ
 
         if (existing is not null)
         {
-            // Đã lưu -> Tiến hành xóa lưu (un-bookmark)
+            // Already bookmarked -> Remove it
             _bookmarkRepo.Remove(existing);
+            await _context.SaveChangesAsync(cancellationToken); // Save changes to database
             return false;
         }
 
-        // Chưa lưu -> Tạo mới bookmark
+        // Not bookmarked yet -> Create new bookmark
         await _bookmarkRepo.AddAsync(new Bookmark
         {
             StudentId = studentId,
             EventId   = eventId,
             SavedAt   = DateTime.UtcNow
         }, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken); // Save changes to database
 
         return true;
     }
