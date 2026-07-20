@@ -1,5 +1,5 @@
 using BLL.Interfaces;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -23,7 +23,7 @@ public class IndexModel(IBookmarkService bookmarkService, ILogger<IndexModel> lo
         return Page();
     }
 
-    // AJAX POST — toggle bookmark, nếu bỏ lưu thì card tự ẩn trên UI
+    // AJAX POST — toggle bookmark; if unbookmarked, the card will automatically hide on the UI
     public async Task<IActionResult> OnPostToggleBookmarkAsync(Guid eventId, CancellationToken cancellationToken)
     {
         try

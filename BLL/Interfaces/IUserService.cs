@@ -1,4 +1,4 @@
-﻿using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Entities;
 
 namespace BLL.Interfaces;
@@ -9,7 +9,7 @@ public interface IUserService
     Task<bool> EmailExistsAsync(string email);
     Task<User> RegisterAsync(RegisterDto dto);
     /// <summary>
-    /// Validate login — trả về User nếu thành công, null nếu sai email/pass hoặc bị khoá.
+    /// Validate login � tr? v? User n?u th�nh c�ng, null n?u sai email/pass ho?c b? kho�.
     /// </summary>
     Task<User?> ValidateLoginAsync(string email, string password);
     Task DeleteUserAsync(Guid id, bool softDelete = true);

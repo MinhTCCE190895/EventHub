@@ -1,33 +1,33 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 
 namespace BLL.Interfaces;
 
 public interface IFollowService
 {
-    // Lấy danh sách tất cả các đơn vị tổ chức kèm số lượng người theo dõi.
-    // Nhận vào mã người dùng hiện tại để đánh dấu trạng thái đã theo dõi (IsFollowed) tương ứng trong danh sách trả về.
+    // L?y danh s�ch t?t c? c�c don v? t? ch?c k�m s? lu?ng ngu?i theo d�i.
+    // Nh?n v�o m� ngu?i d�ng hi?n t?i d? d�nh d?u tr?ng th�i d� theo d�i (IsFollowed) tuong ?ng trong danh s�ch tr? v?.
     Task<IEnumerable<OrganizerDto>> GetOrganizersWithFollowCountAsync(Guid currentUserId);
 
-    // Kiểm tra xem một người dùng có đang theo dõi một đơn vị tổ chức hay không.
-    // Đối chiếu cặp mã người theo dõi (Follower) và người được theo dõi (Followee) xem có tồn tại mối quan hệ trong hệ thống.
+    // Ki?m tra xem m?t ngu?i d�ng c� dang theo d�i m?t don v? t? ch?c hay kh�ng.
+    // �?i chi?u c?p m� ngu?i theo d�i (Follower) v� ngu?i du?c theo d�i (Followee) xem c� t?n t?i m?i quan h? trong h? th?ng.
     Task<bool> IsFollowingAsync(Guid followerId, Guid followeeId);
 
-    // Thực hiện thiết lập quan hệ theo dõi giữa người dùng và đơn vị tổ chức.
-    // Nhận vào mã người dùng và mã đơn vị tổ chức để tạo mới một bản ghi theo dõi nếu chưa tồn tại.
+    // Th?c hi?n thi?t l?p quan h? theo d�i gi?a ngu?i d�ng v� don v? t? ch?c.
+    // Nh?n v�o m� ngu?i d�ng v� m� don v? t? ch?c d? t?o m?i m?t b?n ghi theo d�i n?u chua t?n t?i.
     Task FollowAsync(Guid followerId, Guid followeeId);
 
-    // Hủy bỏ quan hệ theo dõi giữa người dùng và đơn vị tổ chức.
-    // Nhận vào mã người dùng và mã đơn vị tổ chức để xóa bản ghi theo dõi tương ứng ra khỏi hệ thống.
+    // H?y b? quan h? theo d�i gi?a ngu?i d�ng v� don v? t? ch?c.
+    // Nh?n v�o m� ngu?i d�ng v� m� don v? t? ch?c d? x�a b?n ghi theo d�i tuong ?ng ra kh?i h? th?ng.
     Task UnfollowAsync(Guid followerId, Guid followeeId);
 
-    // Lấy danh sách các đơn vị tổ chức mà một người dùng cụ thể đang theo dõi.
-    // Lọc và trả về thông tin các đơn vị tổ chức dựa theo mã của người theo dõi (FollowerId).
+    // L?y danh s�ch c�c don v? t? ch?c m� m?t ngu?i d�ng c? th? dang theo d�i.
+    // L?c v� tr? v? th�ng tin c�c don v? t? ch?c d?a theo m� c?a ngu?i theo d�i (FollowerId).
     Task<IEnumerable<OrganizerDto>> GetFollowedOrganizersAsync(Guid followerId);
 
-    // Lấy danh sách các sự kiện mới nhất từ các đơn vị tổ chức mà người dùng đã theo dõi.
-    // Tìm các đơn vị tổ chức được người dùng quan tâm, sau đó lọc ra các sự kiện ở trạng thái hiển thị của các đơn vị đó.
+    // L?y danh s�ch c�c s? ki?n m?i nh?t t? c�c don v? t? ch?c m� ngu?i d�ng d� theo d�i.
+    // T�m c�c don v? t? ch?c du?c ngu?i d�ng quan t�m, sau d� l?c ra c�c s? ki?n ? tr?ng th�i hi?n th? c?a c�c don v? d�.
     Task<IEnumerable<EventCardDTO>> GetNewEventsFromFollowedOrganizersAsync(Guid followerId);
 }

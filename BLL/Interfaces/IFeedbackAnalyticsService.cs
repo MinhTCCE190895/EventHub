@@ -1,4 +1,4 @@
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 
 namespace BLL.Interfaces;
 

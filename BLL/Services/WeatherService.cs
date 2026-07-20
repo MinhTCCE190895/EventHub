@@ -1,7 +1,7 @@
 using BLL.Interfaces;
 using System.Text.Json;
 using System.Threading; // Added to use SemaphoreSlim to prevent Cache Stampede
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 

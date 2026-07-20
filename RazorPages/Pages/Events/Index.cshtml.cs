@@ -1,6 +1,6 @@
-﻿using BLL.Services;
+using BLL.Services;
 using BLL.Interfaces;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -34,7 +34,7 @@ public class IndexModel : PageModel
         try
         {
             await _eventService.ChangeEventStatusAsync(id, status);
-            TempData["SuccessMessage"] = "Cập nhật trạng thái sự kiện thành công!";
+            TempData["SuccessMessage"] = "C?p nh?t tr?ng th�i s? ki?n th�nh c�ng!";
         }
         catch (System.Collections.Generic.KeyNotFoundException)
         {

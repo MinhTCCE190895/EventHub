@@ -1,10 +1,10 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Data;
 using DAL.Entities;
 using DAL.Repositories;
@@ -52,7 +52,7 @@ public class CategoryService : ICategoryService
     {
         dto.Name = dto.Name?.Trim() ?? string.Empty;
         var exists = await _categoryRepository.Query().AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
-        if (exists) throw new InvalidOperationException("Tên danh mục đã tồn tại.");
+        if (exists) throw new InvalidOperationException("T�n danh m?c d� t?n t?i.");
 
         var newCategory = _mapper.Map<Category>(dto);
 
@@ -66,7 +66,7 @@ public class CategoryService : ICategoryService
     {
         dto.Name = dto.Name?.Trim() ?? string.Empty;
         var exists = await _categoryRepository.Query().AnyAsync(c => c.Name.ToLower() == dto.Name.ToLower() && c.Id != dto.Id, cancellationToken);
-        if (exists) throw new InvalidOperationException("Tên danh mục đã tồn tại.");
+        if (exists) throw new InvalidOperationException("T�n danh m?c d� t?n t?i.");
 
         var category = await _categoryRepository.Query()
             .FirstOrDefaultAsync(c => c.Id == dto.Id, cancellationToken);
@@ -94,7 +94,7 @@ public class CategoryService : ICategoryService
 
         if (category.EventCategories != null && category.EventCategories.Any())
         {
-            throw new InvalidOperationException("Không thể xóa danh mục này vì đang có Sự kiện gắn với danh mục này.");
+            throw new InvalidOperationException("Kh�ng th? x�a danh m?c n�y v� dang c� S? ki?n g?n v?i danh m?c n�y.");
         }
 
         try
@@ -104,7 +104,7 @@ public class CategoryService : ICategoryService
         }
         catch (DbUpdateException)
         {
-            throw new InvalidOperationException("Không thể xóa danh mục này vì đang có Sự kiện gắn với danh mục này.");
+            throw new InvalidOperationException("Kh�ng th? x�a danh m?c n�y v� dang c� S? ki?n g?n v?i danh m?c n�y.");
         }
     }
 }

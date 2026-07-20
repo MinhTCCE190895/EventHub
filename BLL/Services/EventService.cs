@@ -1,6 +1,6 @@
 using BLL.Interfaces;
 using AutoMapper;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Data;
 using DAL.Entities;
 using DAL.Repositories;

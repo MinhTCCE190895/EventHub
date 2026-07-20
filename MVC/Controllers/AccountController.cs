@@ -1,4 +1,4 @@
-﻿using BusinessObjects.DTOs;
+using BLL.DTOs;
 using BLL.Services;
 using BLL.Interfaces;
 using Microsoft.AspNetCore.Authentication;
@@ -35,23 +35,23 @@ public class AccountController : Controller
     // POST /Account/Login
     [HttpPost]
     [AllowAnonymous]
-    [ValidateAntiForgeryToken] // Chống tấn công CSRF (Cross-Site Request Forgery) bằng cách yêu cầu token hợp lệ ẩn trong form đăng nhập.
+    [ValidateAntiForgeryToken] // Ch?ng t?n c�ng CSRF (Cross-Site Request Forgery) b?ng c�ch y�u c?u token h?p l? ?n trong form dang nh?p.
     public async Task<IActionResult> Login(LoginViewModel model)
     {
-        // 1. Kiểm tra tính hợp lệ của ViewModel (Data Annotations) để lọc sớm dữ liệu sai định dạng.
+        // 1. Ki?m tra t�nh h?p l? c?a ViewModel (Data Annotations) d? l?c s?m d? li?u sai d?nh d?ng.
         if (!ModelState.IsValid)
             return View(model);
 
-        // 2. Gọi logic BLL để xác thực tài khoản và kiểm tra mật khẩu đã mã hóa.
+        // 2. G?i logic BLL d? x�c th?c t�i kho?n v� ki?m tra m?t kh?u d� m� h�a.
         var user = await _userService.ValidateLoginAsync(model.Email, model.Password);
 
         if (user is null)
         {
-            ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị khoá.");
+            ModelState.AddModelError(string.Empty, "Email ho?c m?t kh?u kh�ng d�ng, ho?c t�i kho?n d� b? kho�.");
             return View(model);
         }
 
-        // 3. Khởi tạo danh sách Claims để cấp phát cho Cookie, chứa thông tin định danh và phân quyền.
+        // 3. Kh?i t?o danh s�ch Claims d? c?p ph�t cho Cookie, ch?a th�ng tin d?nh danh v� ph�n quy?n.
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -60,7 +60,7 @@ public class AccountController : Controller
             new(ClaimTypes.Role, user.Role)
         };
 
-        // 4. Thiết lập AuthenticationCookie và thời gian sống (Session vs Persistent tùy thuộc vào RememberMe)
+        // 4. Thi?t l?p AuthenticationCookie v� th?i gian s?ng (Session vs Persistent t�y thu?c v�o RememberMe)
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
         var authProps = new AuthenticationProperties
@@ -71,11 +71,11 @@ public class AccountController : Controller
                 : DateTimeOffset.UtcNow.AddHours(8)
         };
 
-        // 5. SignIn vào Context để sinh Cookie auth gửi về client
+        // 5. SignIn v�o Context d? sinh Cookie auth g?i v? client
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProps);
         _logger.LogInformation("User {Email} logged in", user.Email);
 
-        // Chống Open Redirect. Chỉ cho phép định tuyến nội bộ hoặc các subdomain SSO hợp lệ.
+        // Ch?ng Open Redirect. Ch? cho ph�p d?nh tuy?n n?i b? ho?c c�c subdomain SSO h?p l?.
         if (!string.IsNullOrEmpty(model.ReturnUrl) && 
            (Url.IsLocalUrl(model.ReturnUrl) || 
             model.ReturnUrl.StartsWith("http://localhost:5129") || 
@@ -85,7 +85,7 @@ public class AccountController : Controller
             return Redirect(model.ReturnUrl);
         }
 
-        // Điều hướng người dùng về các phân hệ tương ứng theo phân quyền (RBAC).
+        // �i?u hu?ng ngu?i d�ng v? c�c ph�n h? tuong ?ng theo ph�n quy?n (RBAC).
         return user.Role switch
         {
             "Organizer" => Redirect("http://localhost:5129/Events"),
@@ -109,24 +109,24 @@ public class AccountController : Controller
     // POST /Account/Register
     [HttpPost]
     [AllowAnonymous]
-    [ValidateAntiForgeryToken] // Yêu cầu ValidateAntiForgeryToken để tránh việc submit form giả mạo từ trang khác.
+    [ValidateAntiForgeryToken] // Y�u c?u ValidateAntiForgeryToken d? tr�nh vi?c submit form gi? m?o t? trang kh�c.
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // 1. Kiểm tra nhanh định dạng dữ liệu đầu vào (độ dài, ký tự hợp lệ).
+        // 1. Ki?m tra nhanh d?nh d?ng d? li?u d?u v�o (d? d�i, k� t? h?p l?).
         if (!ModelState.IsValid)
             return View(model);
 
-        // 2. Chặn tiêm quyền Admin qua form đăng ký công khai (đây là lỗ hổng bảo mật nếu bỏ sót).
+        // 2. Ch?n ti�m quy?n Admin qua form dang k� c�ng khai (d�y l� l? h?ng b?o m?t n?u b? s�t).
         if (model.Role == "Admin")
         {
-            ModelState.AddModelError("Role", "Không thể đăng ký tài khoản Admin.");
+            ModelState.AddModelError("Role", "Kh�ng th? dang k� t�i kho?n Admin.");
             return View(model);
         }
 
-        // 3. Xác minh không bị trùng lặp tài khoản (Business logic validator).
+        // 3. X�c minh kh�ng b? tr�ng l?p t�i kho?n (Business logic validator).
         if (await _userService.EmailExistsAsync(model.Email))
         {
-            ModelState.AddModelError("Email", "Email này đã được sử dụng.");
+            ModelState.AddModelError("Email", "Email n�y d� du?c s? d?ng.");
             return View(model);
         }
 
@@ -143,7 +143,7 @@ public class AccountController : Controller
         await _userService.RegisterAsync(dto);
         _logger.LogInformation("New user registered: {Email}", model.Email);
 
-        TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
+        TempData["SuccessMessage"] = "�ang k� th�nh c�ng! Vui l�ng dang nh?p.";
         return RedirectToAction(nameof(Login));
     }
 

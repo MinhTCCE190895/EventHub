@@ -1,10 +1,10 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Data;
 using DAL.Entities;
 using DAL.Repositories;
@@ -72,7 +72,7 @@ public class VenueService : IVenueService
         var maxRegistered = venue.Events.Any() ? venue.Events.Max(e => e.RegisteredCount) : 0;
         if (dto.MaxCapacity < maxRegistered)
         {
-            throw new InvalidOperationException($"Không thể giảm sức chứa xuống {dto.MaxCapacity} vì đang có sự kiện có {maxRegistered} lượt đăng ký.");
+            throw new InvalidOperationException($"Kh�ng th? gi?m s?c ch?a xu?ng {dto.MaxCapacity} v� dang c� s? ki?n c� {maxRegistered} lu?t dang k�.");
         }
 
         _mapper.Map(dto, venue);
@@ -93,7 +93,7 @@ public class VenueService : IVenueService
 
         if (venue.Events != null && venue.Events.Any())
         {
-            throw new InvalidOperationException("Không thể xóa địa điểm này vì đang có sự kiện được tổ chức tại đây");
+            throw new InvalidOperationException("Kh�ng th? x�a d?a di?m n�y v� dang c� s? ki?n du?c t? ch?c t?i d�y");
         }
 
         try
@@ -103,7 +103,7 @@ public class VenueService : IVenueService
         }
         catch (DbUpdateException)
         {
-            throw new InvalidOperationException("Không thể xóa địa điểm này vì đang có sự kiện được tổ chức tại đây");
+            throw new InvalidOperationException("Kh�ng th? x�a d?a di?m n�y v� dang c� s? ki?n du?c t? ch?c t?i d�y");
         }
     }
 }

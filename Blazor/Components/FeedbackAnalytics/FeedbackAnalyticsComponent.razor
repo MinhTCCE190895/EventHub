@@ -1,13 +1,13 @@
-﻿@page "/feedback-analytics"
+@page "/feedback-analytics"
 @rendermode InteractiveServer
-@using BusinessObjects.DTOs
+@using BLL.DTOs
 @using BLL.Services
 @using BLL.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin,Organizer")]
 @inject IFeedbackAnalyticsService FeedbackService
 
-<PageTitle>Phân tích phản hồi sự kiện - EventHub</PageTitle>
+<PageTitle>Ph�n t�ch ph?n h?i s? ki?n - EventHub</PageTitle>
 
 <div class="dashboard-container">
     <div class="dashboard-content">
@@ -15,13 +15,13 @@
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
-                <span class="text-primary fw-bold text-uppercase tracking-wider small">Đánh giá & Thống kê</span>
-                <h1 class="display-5 fw-bold mb-0">Phân Tích Đánh Giá Trực Tuyến</h1>
-                <p class="text-muted mb-0">Thống kê điểm số phản hồi đa tiêu chí được tổng hợp song song bằng PLINQ</p>
+                <span class="text-primary fw-bold text-uppercase tracking-wider small">��nh gi� & Th?ng k�</span>
+                <h1 class="display-5 fw-bold mb-0">Ph�n T�ch ��nh Gi� Tr?c Tuy?n</h1>
+                <p class="text-muted mb-0">Th?ng k� di?m s? ph?n h?i da ti�u ch� du?c t?ng h?p song song b?ng PLINQ</p>
             </div>
             <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill border border-secondary border-opacity-25">
                 <span class="pulse-green"></span>
-                <span class="text-success small fw-bold ms-2">XỬ LÝ SONG SONG ĐANG HOẠT ĐỘNG</span>
+                <span class="text-success small fw-bold ms-2">X? L� SONG SONG �ANG HO?T �?NG</span>
             </div>
         </div>
 
@@ -59,8 +59,8 @@
         {
             <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
                 <div class="display-3 text-muted mb-3"><i class="bi bi-chat-left-heart"></i></div>
-                <h5 class="fw-bold text-slate-700">Chưa có phản hồi nào</h5>
-                <p class="text-muted mb-0">Hệ thống chưa ghi nhận lượt đánh giá phản hồi nào từ sinh viên.</p>
+                <h5 class="fw-bold text-slate-700">Chua c� ph?n h?i n�o</h5>
+                <p class="text-muted mb-0">H? th?ng chua ghi nh?n lu?t d�nh gi� ph?n h?i n�o t? sinh vi�n.</p>
             </div>
         }
         else
@@ -69,10 +69,10 @@
             <div class="kpi-grid">
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
-                        <span class="text-muted small fw-bold text-uppercase">Tổng số phản hồi</span>
+                        <span class="text-muted small fw-bold text-uppercase">T?ng s? ph?n h?i</span>
                         <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-blue">@TotalFeedbacks</h2>
                         <span class="text-success small mt-1">
-                            <i class="bi bi-chat-fill"></i> Được gửi từ người tham gia
+                            <i class="bi bi-chat-fill"></i> �u?c g?i t? ngu?i tham gia
                         </span>
                     </div>
                     <div class="kpi-icon-wrapper kpi-blue">
@@ -82,10 +82,10 @@
 
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
-                        <span class="text-muted small fw-bold text-uppercase">Điểm đánh giá TB</span>
+                        <span class="text-muted small fw-bold text-uppercase">�i?m d�nh gi� TB</span>
                         <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-amber">@OverallScore.ToString("F1") <span class="fs-6 text-muted">/5</span></h2>
                         <span class="text-muted small mt-1">
-                            Tính toán song song qua PLINQ
+                            T�nh to�n song song qua PLINQ
                         </span>
                     </div>
                     <div class="kpi-icon-wrapper kpi-amber">
@@ -95,10 +95,10 @@
 
                 <div class="card-glass kpi-card">
                     <div class="kpi-info">
-                        <span class="text-muted small fw-bold text-uppercase">Sự kiện có đánh giá</span>
+                        <span class="text-muted small fw-bold text-uppercase">S? ki?n c� d�nh gi�</span>
                         <h2 class="display-6 fw-bold mb-0 mt-1 glow-text-green">@EventsCount</h2>
                         <span class="text-success small mt-1">
-                            <i class="bi bi-calendar-event"></i> Hoạt động ổn định
+                            <i class="bi bi-calendar-event"></i> Ho?t d?ng ?n d?nh
                         </span>
                     </div>
                     <div class="kpi-icon-wrapper kpi-green">
@@ -116,7 +116,7 @@
                             
                             <!-- Overall Score Badge top-right -->
                             <div class="position-absolute" style="top: 1.5rem; right: 1.5rem; text-align: right;">
-                                <span class="d-block text-muted small text-uppercase" style="font-size: 0.75rem;">Điểm TB</span>
+                                <span class="d-block text-muted small text-uppercase" style="font-size: 0.75rem;">�i?m TB</span>
                                 <h3 class="fw-bold mb-0 mt-0.5 glow-text-amber" style="font-size: 2.25rem;">
                                     @metric.OverallAverageScore <span class="fs-6 text-muted">/5</span>
                                 </h3>
@@ -124,7 +124,7 @@
 
                             <div style="max-width: 70%;">
                                 <span class="badge mb-2" style="background-color: rgba(37, 99, 235, 0.08); color: var(--primary); border: 1px solid rgba(37, 99, 235, 0.15); font-weight: 600;">
-                                    <i class="bi bi-chat-square-text-fill me-1"></i> @metric.TotalFeedbacks Đánh giá
+                                    <i class="bi bi-chat-square-text-fill me-1"></i> @metric.TotalFeedbacks ��nh gi�
                                 </span>
                                 <h4 class="fw-bold mb-3 text-truncate" title="@metric.EventTitle" style="color: var(--text-main); font-size: 1.25rem;">@metric.EventTitle</h4>
                             </div>
@@ -138,10 +138,10 @@
                                     var percentage = criteria.Value * 100 / 5;
                                     var criteriaIcon = criteria.Key switch
                                     {
-                                        "Diễn giả" => "",
-                                        "Hậu cần" => "",
-                                        "Nội dung" => "",
-                                        "Tổ chức" => "",
+                                        "Di?n gi?" => "",
+                                        "H?u c?n" => "",
+                                        "N?i dung" => "",
+                                        "T? ch?c" => "",
                                         _ => ""
                                     };
 
@@ -158,7 +158,7 @@
                             </div>
                             <div class="mt-3 pt-2 border-top text-end">
                                 <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="() => LoadDetailsAsync(metric.EventId, metric.EventTitle)">
-                                    <i class="bi bi-chat-text"></i> Xem nhận xét chi tiết
+                                    <i class="bi bi-chat-text"></i> Xem nh?n x�t chi ti?t
                                 </button>
                             </div>
                         </div>
@@ -175,7 +175,7 @@
                     <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="background: #ffffff;">
                         <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%); border-bottom: none;">
                             <h5 class="modal-title fw-bold">
-                                <i class="bi bi-chat-right-text-fill me-2"></i> Nhận xét chi tiết: @SelectedEventTitle
+                                <i class="bi bi-chat-right-text-fill me-2"></i> Nh?n x�t chi ti?t: @SelectedEventTitle
                             </h5>
                             <button type="button" class="btn-close btn-close-white" @onclick="CloseDetailsModal"></button>
                         </div>
@@ -184,14 +184,14 @@
                             {
                                 <div class="text-center py-5">
                                     <div class="spinner-border text-primary" role="status"></div>
-                                    <p class="text-muted mt-2">Đang tải nhận xét từ cơ sở dữ liệu...</p>
+                                    <p class="text-muted mt-2">�ang t?i nh?n x�t t? co s? d? li?u...</p>
                                 </div>
                             }
                             else if (DetailedFeedbacks == null || !DetailedFeedbacks.Any())
                             {
                                 <div class="text-center py-5">
                                     <i class="bi bi-chat-dots text-muted display-4"></i>
-                                    <p class="text-muted mt-2">Sự kiện này chưa có bình luận hay nhận xét chi tiết nào.</p>
+                                    <p class="text-muted mt-2">S? ki?n n�y chua c� b�nh lu?n hay nh?n x�t chi ti?t n�o.</p>
                                 </div>
                             }
                             else
@@ -228,9 +228,9 @@
                                             </div>
 
                                             <div class="mt-1">
-                                                <span class="text-muted small d-block mb-1">Ý kiến đóng góp:</span>
+                                                <span class="text-muted small d-block mb-1">� ki?n d�ng g�p:</span>
                                                 <p class="mb-0 text-slate-700 bg-light p-2.5 rounded-3" style="font-style: italic; font-size: 0.95rem; line-height: 1.5;">
-                                                    @(string.IsNullOrEmpty(fb.GeneralComment) ? "Không có ý kiến đóng góp thêm." : fb.GeneralComment)
+                                                    @(string.IsNullOrEmpty(fb.GeneralComment) ? "Kh�ng c� � ki?n d�ng g�p th�m." : fb.GeneralComment)
                                                 </p>
                                             </div>
                                         </div>
@@ -239,7 +239,7 @@
                             }
                         </div>
                         <div class="modal-footer bg-light px-4 py-3 border-top-0">
-                            <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="CloseDetailsModal">Đóng</button>
+                            <button type="button" class="btn btn-secondary rounded-pill px-4" @onclick="CloseDetailsModal">��ng</button>
                         </div>
                     </div>
                 </div>
@@ -264,7 +264,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Nhận kết quả từ service sử dụng PLINQ để tính toán đồng thời
+        // Nh?n k?t qu? t? service s? d?ng PLINQ d? t�nh to�n d?ng th?i
         MetricsList = await FeedbackService.GetFeedbackMetricsAsync();
 
         if (MetricsList != null && MetricsList.Any())

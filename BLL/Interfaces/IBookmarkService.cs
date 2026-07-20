@@ -1,18 +1,18 @@
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 
 namespace BLL.Interfaces;
 
 public interface IBookmarkService
 {
-    // Trả về danh sách EventId đã bookmark, dùng trên Index để highlight nút bookmark
+    // Returns list of bookmarked EventIds — used on Index page to highlight bookmark toggle buttons
     Task<List<Guid>> GetBookmarkedEventIdsAsync(Guid studentId, CancellationToken ct = default);
 
-    // Trả về danh sách event đã bookmark (dùng cho trang /Bookmarks)
+    // Returns full event cards for all bookmarked events (used on /Bookmarks page)
     Task<List<EventCardDTO>> GetBookmarkedEventsAsync(Guid studentId, CancellationToken cancellationToken = default);
 
-    // Kiểm tra student đã bookmark event này chưa
+    // Checks whether a student has already bookmarked a given event
     Task<bool> IsBookmarkedAsync(Guid studentId, Guid eventId, CancellationToken cancellationToken = default);
 
-    // Toggle: thêm nếu chưa có, xóa nếu đã có. Trả về true nếu sau đó là bookmarked.
+    // Toggle: adds if not bookmarked, removes if already bookmarked. Returns true if now bookmarked.
     Task<bool> ToggleBookmarkAsync(Guid studentId, Guid eventId, CancellationToken cancellationToken = default);
 }
