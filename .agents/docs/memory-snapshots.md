@@ -63,6 +63,11 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-20 (Antigravity / Agent)**:
+  - **Sửa lỗi logic tạo Sự kiện (FE-02)**:
+    - Bổ sung 2 vòng check Overlap (trùng thời gian) tại `EventService.cs` (`CreateEventAsync`, `UpdateEventAsync`): Check không cho phép 1 địa điểm tổ chức 2 sự kiện cùng lúc, và check không cho phép 1 Organizer tổ chức 2 sự kiện ở 2 nơi khác nhau cùng lúc. Sử dụng công thức giao điểm thời gian `(e.StartTime < dto.EndTime && e.EndTime > dto.StartTime)`.
+    - Fix UI lỗi bảo mật trên `Create.cshtml`: Bọc các thẻ Dropdown của `OrganizerId` và `Status` bằng `@if (User.IsInRole("Admin"))`. Đối với Organizer, hệ thống tự động gán `Status` thành "Draft" và ép `OrganizerId` theo Claim token ở tầng `Create.cshtml.cs` để ngăn chặn giả mạo nhà tổ chức và tự ý duyệt sự kiện.
+
 - **2026-07-20 (Antigravity / QuiNC)**:
   - **Tái cấu trúc và tối giản hóa phân hệ QuiNC (`FE-03`, `FE-08`, `FE-11`)**:
     - **`WeatherService.cs`**: Gỡ bỏ locks `SemaphoreSlim` phức tạp. Đơn giản hóa hàm check `NormalizeLocation` khỏi hardcode địa chỉ AI, làm sạch logic mapping khung giờ dự báo wttr.in dễ hiểu cho đồ án môn học.

@@ -89,11 +89,18 @@
                     <span asp-validation-for="Input.VenueId" class="text-danger small"></span>
                 </div>
 
-                <div class="mb-4">
-                    <label asp-for="Input.OrganizerId" class="form-label fw-medium">Nhà tổ chức <span class="text-danger">*</span></label>
-                    <select asp-for="Input.OrganizerId" asp-items="Model.Organizers" class="form-select"></select>
-                    <span asp-validation-for="Input.OrganizerId" class="text-danger small"></span>
-                </div>
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="mb-4">
+                        <label asp-for="Input.OrganizerId" class="form-label fw-medium">Nhà tổ chức <span class="text-danger">*</span></label>
+                        <select asp-for="Input.OrganizerId" asp-items="Model.Organizers" class="form-select"></select>
+                        <span asp-validation-for="Input.OrganizerId" class="text-danger small"></span>
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" name="Input.OrganizerId" value="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+                }
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary px-4">

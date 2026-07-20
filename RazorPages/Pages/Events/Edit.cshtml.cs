@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 
 namespace RazorPages.Pages.Events;
 
@@ -61,6 +62,13 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (!User.IsInRole("Admin"))
+        {
+            Input.OrganizerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            ModelState.ClearValidationState(nameof(Input.OrganizerId));
+            TryValidateModel(Input.OrganizerId, nameof(Input.OrganizerId));
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();
@@ -68,6 +76,7 @@ public class EditModel : PageModel
         }
 
         try
+
         {
             await _eventService.UpdateEventAsync(Input);
             TempData["SuccessMessage"] = "Sự kiện đã được cập nhật thành công!";
