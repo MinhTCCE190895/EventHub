@@ -45,7 +45,7 @@ public class FeedbackModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        // L?y th�ng tin Event
+        // Lấy thông tin Event
         var ev = await _context.Events
             .Include(e => e.Venue)
             .FirstOrDefaultAsync(e => e.Id == eventId);
@@ -57,20 +57,20 @@ public class FeedbackModel : PageModel
 
         EventItem = ev;
 
-        // Ki?m tra xem sinh vi�n d� d?t v� Confirmed chua v� d� g?i Feedback chua
+        // Kiểm tra xem sinh viên đã đặt vé Confirmed chưa và đã gửi Feedback chưa
         var booking = await _context.Bookings
             .Include(b => b.Feedback)
             .FirstOrDefaultAsync(b => b.EventId == eventId && b.StudentId == studentId && b.Status == "Confirmed");
 
         if (booking == null)
         {
-            TempData["ErrorMessage"] = "B?n chua dang k� ho?c chua thanh to�n v� cho s? ki?n n�y.";
+            TempData["ErrorMessage"] = "Bạn chưa đăng ký hoặc chưa thanh toán vé cho sự kiện này.";
             return RedirectToPage("/Events/Detail", new { id = eventId });
         }
 
         if (booking.Feedback != null)
         {
-            TempData["ErrorMessage"] = "B?n d� th?c hi?n d�nh gi� cho s? ki?n n�y r?i.";
+            TempData["ErrorMessage"] = "Bạn đã thực hiện đánh giá cho sự kiện này rồi.";
             return RedirectToPage("/Events/Detail", new { id = eventId });
         }
 
@@ -96,11 +96,11 @@ public class FeedbackModel : PageModel
             return Page();
         }
 
-        // Ki?m tra l?i t�nh h?p l?
+        // Kiểm tra lại tính hợp lệ
         var canSubmit = await _feedbackService.CanSubmitFeedbackAsync(eventId, studentId);
         if (!canSubmit)
         {
-            TempData["ErrorMessage"] = "B?n kh�ng c� quy?n d�nh gi� ho?c d� d�nh gi� s? ki?n n�y.";
+            TempData["ErrorMessage"] = "Bạn không có quyền đánh giá hoặc đã đánh giá sự kiện này.";
             return RedirectToPage("/Events/Detail", new { id = eventId });
         }
 
@@ -110,22 +110,22 @@ public class FeedbackModel : PageModel
             GeneralComment = Input.GeneralComment,
             Details = new List<FeedbackDetailDto>
             {
-                new() { Criteria = "Di?n gi?", Score = Input.SpeakerScore },
-                new() { Criteria = "H?u c?n", Score = Input.LogisticsScore },
-                new() { Criteria = "N?i dung", Score = Input.ContentScore },
-                new() { Criteria = "T? ch?c", Score = Input.OrganizationScore }
+                new() { Criteria = "Diễn giả", Score = Input.SpeakerScore },
+                new() { Criteria = "Hậu cần", Score = Input.LogisticsScore },
+                new() { Criteria = "Nội dung", Score = Input.ContentScore },
+                new() { Criteria = "Tổ chức", Score = Input.OrganizationScore }
             }
         };
 
         try
         {
             await _feedbackService.SubmitFeedbackAsync(submission);
-            TempData["SuccessMessage"] = "C?m on b?n d� g?i d�nh gi� ph?n h?i!";
+            TempData["SuccessMessage"] = "Cảm ơn bạn đã gửi đánh giá phản hồi!";
             return RedirectToPage("/Events/Detail", new { id = eventId });
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, "C� l?i x?y ra: " + ex.Message);
+            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra: " + ex.Message);
             return Page();
         }
     }

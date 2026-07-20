@@ -24,13 +24,13 @@ public class UserService : IUserService
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        // S? d?ng SingleOrDefaultAsync thay v� FirstOrDefaultAsync d? d?m b?o t�nh to�n v?n d? li?u (ch? c� duy nh?t 1 b?n ghi email trong DB).
+        // Sử dụng SingleOrDefaultAsync thay vì FirstOrDefaultAsync để đảm bảo tính toàn vẹn dữ liệu (chỉ có duy nhất 1 bản ghi email trong DB).
         return await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
     }
 
     public async Task<bool> EmailExistsAsync(string email)
     {
-        // T?i uu t?c d? ki?m tra tr�ng l?p email ? DB b?ng ExistsAsync (ch? sinh c�u l?nh IF EXISTS trong SQL) thay v� load to�n b? Entity.
+        // Tối ưu tốc độ kiểm tra trùng lặp email ở DB bằng ExistsAsync (chỉ sinh câu lệnh IF EXISTS trong SQL) thay vì load toàn bộ Entity.
         return await _userRepo.ExistsAsync(u => u.Email == email);
     }
 
@@ -38,7 +38,7 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Registering new user {Email} with role {Role}", dto.Email, dto.Role);
 
-        // Kh?i t?o Entity v?i c�c th�ng tin m?c d?nh. Qu?n l� ID t? ph�a Application thay v� ph� m?c cho DB d? ti?n l?i hon cho CQRS/Event Sourcing.
+        // Khởi tạo Entity với các thông tin mặc định. Quản lý ID từ phía Application thay vì phó mặc cho DB để tiện lợi hơn cho CQRS/Event Sourcing.
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -46,13 +46,13 @@ public class UserService : IUserService
             Email = dto.Email,
             StudentCode = dto.StudentCode,
             Role = dto.Role,
-            // Hash m?t kh?u 1 chi?u b?ng BCrypt. Tham s? work factor c?a bcrypt m?c d?nh l� 11 (c�n b?ng gi?a b?o m?t v� hi?u su?t).
+            // Hash mật khẩu 1 chiều bằng BCrypt. Tham số work factor của bcrypt mặc định là 11 (cân bằng giữa bảo mật và hiệu suất).
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Luu entity v�o DB th�ng qua Repository Pattern v� commit b?ng DbContext
+        // Lưu entity vào DB thông qua Repository Pattern và commit bằng DbContext
         await _userRepo.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -64,43 +64,43 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Login attempt for {Email}", email);
 
-        // Bu?c 1: Tra c?u User trong h? th?ng d?a tr�n email
+        // Bước 1: Tra cứu User trong hệ thống dựa trên email
         var user = await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
 
         if (user is null)
         {
-            _logger.LogWarning("Login failed � email {Email} not found", email);
+            _logger.LogWarning("Login failed — email {Email} not found", email);
             return null;
         }
 
-        // Bu?c 2: Ch?n dang nh?p n?u t�i kho?n d� b? v� hi?u h�a (IsActive = false)
+        // Bước 2: Chặn đăng nhập nếu tài khoản đã bị vô hiệu hóa (IsActive = false)
         if (!user.IsActive)
         {
-            _logger.LogWarning("Login failed � account {Email} is locked", email);
+            _logger.LogWarning("Login failed — account {Email} is locked", email);
             return null;
         }
 
         try
         {
-            // Bu?c 3: X�c th?c t�nh nguy�n v?n c?a Hash tru?c khi Verify
-            // Ngan BCrypt.Verify throw SaltParseException khi g?p hash cu ho?c sai d?nh d?ng.
+            // Bước 3: Xác thực tính nguyên vẹn của Hash trước khi Verify
+            // Ngăn BCrypt.Verify throw SaltParseException khi gặp hash cũ hoặc sai định dạng.
             if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
             {
-                _logger.LogWarning("Login failed � invalid password hash format for {Email}", email);
+                _logger.LogWarning("Login failed — invalid password hash format for {Email}", email);
                 return null;
             }
 
-            // Bu?c 4: So kh?p m?t kh?u b?n r� v?i Hash trong co s? d? li?u
+            // Bước 4: So khớp mật khẩu bản rõ với Hash trong cơ sở dữ liệu
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                _logger.LogWarning("Login failed � wrong password for {Email}", email);
+                _logger.LogWarning("Login failed — wrong password for {Email}", email);
                 return null;
             }
         }
         catch (Exception ex)
         {
-            // Ghi log l?i h? th?ng khi Verify th?t b?i (do l?i thu?t to�n/lib) thay v� throw Exception ra controller
-            _logger.LogError(ex, "Login failed � error verifying password for {Email}", email);
+            // Ghi log lỗi hệ thống khi Verify thất bại (do lỗi thuật toán/lib) thay vì throw Exception ra controller
+            _logger.LogError(ex, "Login failed — error verifying password for {Email}", email);
             return null;
         }
 
@@ -115,7 +115,7 @@ public class UserService : IUserService
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user is null)
-            throw new KeyNotFoundException("T�i kho?n kh�ng t?n t?i.");
+            throw new KeyNotFoundException("Tài khoản không tồn tại.");
 
         if (softDelete)
         {
@@ -126,10 +126,10 @@ public class UserService : IUserService
         }
 
         if (user.Role == "Organizer" && user.OrganizedEvents.Any())
-            throw new InvalidOperationException("Kh�ng cho x�a Organizer do d� t?o S? ki?n. Vui l�ng s? d?ng X�a m?m (kh�a t�i kho?n).");
+            throw new InvalidOperationException("Không cho xóa Organizer do đã tạo Sự kiện. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
 
         if (user.Role == "Student" && user.Bookings.Any())
-            throw new InvalidOperationException("Kh�ng cho x�a Student do dang gi? v� dang k�. Vui l�ng s? d?ng X�a m?m (kh�a t�i kho?n).");
+            throw new InvalidOperationException("Không cho xóa Student do đang giữ vé đăng ký. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
 
         try
         {
@@ -138,7 +138,7 @@ public class UserService : IUserService
         }
         catch (DbUpdateException)
         {
-            throw new InvalidOperationException("Kh�ng th? x�a t�i kho?n do r�ng bu?c d? li?u. Vui l�ng s? d?ng X�a m?m (kh�a t�i kho?n).");
+            throw new InvalidOperationException("Không thể xóa tài khoản do ràng buộc dữ liệu. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
         }
     }
 }

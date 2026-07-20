@@ -52,7 +52,7 @@ public class TagService : ITagService
     {
         dto.Name = dto.Name?.Trim() ?? string.Empty;
         var exists = await _tagRepository.Query().AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower(), cancellationToken);
-        if (exists) throw new InvalidOperationException("T�n th? d� t?n t?i.");
+        if (exists) throw new InvalidOperationException("Tên thẻ đã tồn tại.");
 
         var newTag = _mapper.Map<Tag>(dto);
 
@@ -66,7 +66,7 @@ public class TagService : ITagService
     {
         dto.Name = dto.Name?.Trim() ?? string.Empty;
         var exists = await _tagRepository.Query().AnyAsync(t => t.Name.ToLower() == dto.Name.ToLower() && t.Id != dto.Id, cancellationToken);
-        if (exists) throw new InvalidOperationException("T�n th? d� t?n t?i.");
+        if (exists) throw new InvalidOperationException("Tên thẻ đã tồn tại.");
 
         var tag = await _tagRepository.Query()
             .FirstOrDefaultAsync(t => t.Id == dto.Id, cancellationToken);
@@ -94,7 +94,7 @@ public class TagService : ITagService
 
         if (tag.EventTags != null && tag.EventTags.Any())
         {
-            throw new InvalidOperationException("Kh�ng th? x�a th? n�y v� dang c� S? ki?n g?n v?i th? n�y.");
+            throw new InvalidOperationException("Không thể xóa thẻ này vì đang có Sự kiện gắn với thẻ này.");
         }
 
         try
@@ -104,7 +104,7 @@ public class TagService : ITagService
         }
         catch (DbUpdateException)
         {
-            throw new InvalidOperationException("Kh�ng th? x�a th? n�y v� dang c� S? ki?n g?n v?i th? n�y.");
+            throw new InvalidOperationException("Không thể xóa thẻ này vì đang có Sự kiện gắn với thẻ này.");
         }
     }
 }

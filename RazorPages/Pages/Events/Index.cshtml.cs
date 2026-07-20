@@ -34,7 +34,7 @@ public class IndexModel : PageModel
         try
         {
             await _eventService.ChangeEventStatusAsync(id, status);
-            TempData["SuccessMessage"] = "C?p nh?t tr?ng th�i s? ki?n th�nh c�ng!";
+            TempData["SuccessMessage"] = "Cập nhật trạng thái sự kiện thành công!";
         }
         catch (System.Collections.Generic.KeyNotFoundException)
         {

@@ -9,7 +9,7 @@ public interface IUserService
     Task<bool> EmailExistsAsync(string email);
     Task<User> RegisterAsync(RegisterDto dto);
     /// <summary>
-    /// Validate login � tr? v? User n?u th�nh c�ng, null n?u sai email/pass ho?c b? kho�.
+    /// Validate login — trả về User nếu thành công, null nếu sai email/pass hoặc bị khoá.
     /// </summary>
     Task<User?> ValidateLoginAsync(string email, string password);
     Task DeleteUserAsync(Guid id, bool softDelete = true);

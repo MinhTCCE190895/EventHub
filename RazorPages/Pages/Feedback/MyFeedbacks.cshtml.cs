@@ -40,7 +40,7 @@ public class MyFeedbacksModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        // L?y to�n b? danh s�ch s? ki?n d� dang k� th�nh c�ng nhung chua th?c hi?n d�nh gi� (Feedback)
+        // Lấy toàn bộ danh sách sự kiện đã đăng ký thành công nhưng chưa thực hiện đánh giá (Feedback)
         PendingEvents = await _context.Bookings
             .Include(b => b.Event)
                 .ThenInclude(e => e.Venue)
