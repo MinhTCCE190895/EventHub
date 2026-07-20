@@ -65,11 +65,13 @@
     <div class="row g-3 align-items-end mt-1">
         <div class="col-md-6">
             <label asp-for="SearchVm.StartDate" class="form-label-minimal">Từ ngày</label>
-            <input type="date" asp-for="SearchVm.StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <input type="date" id="startDateInput" asp-for="SearchVm.StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <span asp-validation-for="SearchVm.StartDate" class="text-danger small"></span>
         </div>
         <div class="col-md-6">
             <label asp-for="SearchVm.EndDate" class="form-label-minimal">Đến ngày</label>
-            <input type="date" asp-for="SearchVm.EndDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <input type="date" id="endDateInput" asp-for="SearchVm.EndDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <span asp-validation-for="SearchVm.EndDate" class="text-danger small" id="endDateValMsg"></span>
         </div>
     </div>
 
@@ -376,188 +378,140 @@
 
 @section Scripts {
     <script>
-        let debounceTimer;
-        let fetchController = null; // Store AbortController to cancel previous request when user spams fast clicks
+        let searchDebounceTimer; // Timer for debouncing input requests
         const form = document.getElementById('searchForm');
-        const keywordInput = document.getElementById('keywordInput');
 
-        // Instant filter on input with 300ms debounce (no page reloads, keeps typing focus)
-        keywordInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                submitInstant();
+        // Trigger search on typing with a 300ms delay to prevent excessive queries
+        $('#keywordInput').on('input', function() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                performSearchAjax();
             }, 300);
         });
 
-        // Toggle layout view (Grid vs. List)
+        // Switch layouts between Grid and List
         function changeView(viewType) {
             document.getElementById('viewTypeInput').value = viewType;
-            submitInstant();
+            performSearchAjax();
         }
 
-        // Standard instant submission trigger
-        function submitInstant() {
-            // Cancel previous request if it's running in the background to avoid sluggishness
-            if (fetchController) {
-                fetchController.abort();
+        // Fetch search results asynchronously using fetch, async/await, try/catch
+        async function performSearchAjax() {
+            // Validate date range on client-side (F.E Custom Validation)
+            const startDate = document.getElementById('startDateInput')?.value;
+            const endDate = document.getElementById('endDateInput')?.value;
+            const validationMsg = document.getElementById('endDateValMsg');
+            if (validationMsg) validationMsg.textContent = ''; // Reset validation message
+
+            if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+                if (validationMsg) {
+                    validationMsg.textContent = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.';
+                }
+                return; // Stop execution if dates are invalid
             }
-            fetchController = new AbortController();
-            const { signal } = fetchController;
 
             const formData = new FormData(form);
-            const params = new URLSearchParams();
-
-            for (const [key, value] of formData.entries()) {
-                if (value) {
-                    params.append(key, value);
-                }
-            }
-
-            // Update URL dynamically without reloading page
-            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            const queryParams = new URLSearchParams(formData).toString();
+            const newUrl = `${window.location.pathname}?${queryParams}`;
+            
+            // Push history state to update browser address bar
             window.history.pushState({ path: newUrl }, '', newUrl);
 
-            // Show skeleton loader
-            const resultsWrapper = document.getElementById('resultsWrapper');
-            const viewType = document.getElementById('viewTypeInput').value || 'Grid';
-            let skeletonHtml = '';
-            
-            if (viewType === 'List') {
-                skeletonHtml = `
-                    <div class="d-flex flex-column gap-3 mb-5">
-                        ${Array(3).fill(`
-                            <div class="card-minimal p-3">
-                                <div class="d-flex flex-column flex-md-row align-items-center gap-4">
-                                    <div class="flex-shrink-0 skeleton-image" style="width: 160px; aspect-ratio: 16/10; border-radius: var(--radius-md);"></div>
-                                    <div class="flex-grow-1 w-100">
-                                        <div class="skeleton-line title"></div>
-                                        <div class="skeleton-line meta"></div>
-                                        <div class="skeleton-line" style="width: 40%; height: 0.75rem;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else {
-                skeletonHtml = `
-                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-                        ${Array(3).fill(`
-                            <div class="col">
-                                <div class="skeleton-card">
-                                    <div class="skeleton-image"></div>
-                                    <div class="skeleton-body">
-                                        <div class="skeleton-line title"></div>
-                                        <div class="skeleton-line meta"></div>
-                                        <div class="skeleton-line btn"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-            resultsWrapper.innerHTML = skeletonHtml;
+            try {
+                // Perform async fetch request to get new HTML content
+                const response = await fetch(newUrl);
+                if (!response.ok) return;
+                const htmlString = await response.text();
 
-            // Fetch dynamic partial content
-            fetch(newUrl, { signal }) // Send along with signal to allow cancellation if needed
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Replace results container
-                    const newResults = doc.getElementById('resultsWrapper');
-                    resultsWrapper.innerHTML = newResults.innerHTML;
-                    
-                    // Replace header count and toggles
-                    const headerContainer = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
-                    const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
-                    if (headerContainer && newHeader) {
-                        headerContainer.innerHTML = newHeader.innerHTML;
-                    }
-                    
-                    // Re-attach AJAX pagination click event listeners
-                    bindPaginationLinks();
-                })
-                .catch(err => {
-                    // If it is an active request cancellation error, ignore it and do not log red error in console
-                    if (err.name === 'AbortError') {
-                        return;
-                    }
-                    console.error('Error fetching search results:', err);
-                });
+                // Parse response HTML to swap out results section only
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+
+                // Swap results wrapper
+                document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
+
+                // Update result count header
+                const currentHeader = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                if (currentHeader && newHeader) {
+                    currentHeader.innerHTML = newHeader.innerHTML;
+                }
+
+                bindPaginationLinks(); // Re-attach pagination event listeners
+            } catch (error) {
+                console.error("Error performing search query:", error);
+            }
         }
 
-        // Bind AJAX request to pagination links to prevent full page reloads
+        // Intercept pagination clicks to execute via AJAX
         function bindPaginationLinks() {
             document.querySelectorAll('.ajax-page-link').forEach(link => {
-                link.addEventListener('click', function(e) {
+                link.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    const url = this.getAttribute('href');
+                    const targetUrl = this.getAttribute('href');
                     
-                    // Update URL dynamically
-                    window.history.pushState({ path: url }, '', url);
+                    window.history.pushState({ path: targetUrl }, '', targetUrl);
                     
-                    fetch(url)
-                        .then(response => response.text())
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            
-                            // Swap wrappers
-                            document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
-                            
-                            const headerContainer = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
-                            const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
-                            if (headerContainer && newHeader) {
-                                headerContainer.innerHTML = newHeader.innerHTML;
-                            }
-                            
-                            bindPaginationLinks();
-                            
-                            // Scroll back to top of results smoothly
-                            document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' });
-                        });
+                    try {
+                        const response = await fetch(targetUrl);
+                        if (!response.ok) return;
+                        const htmlString = await response.text();
+
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlString, 'text/html');
+
+                        document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
+
+                        const currentHeader = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                        const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+                        if (currentHeader && newHeader) {
+                            currentHeader.innerHTML = newHeader.innerHTML;
+                        }
+
+                        bindPaginationLinks();
+                        document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' }); // Scroll back to filter panel
+                    } catch (error) {
+                        console.error("Error navigating page:", error);
+                    }
                 });
             });
         }
 
-
-
-        // Initial binding
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize pagination event listeners on page load
+        $(document).ready(function() {
             bindPaginationLinks();
         });
 
-        // Toggle bookmark via AJAX POST — no page reload
-        async function toggleBookmark(btn, eventId) {
+        // Toggle bookmark asynchronously using AJAX POST (fetch API)
+        async function toggleBookmark(buttonEl, eventId) {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             if (!token) return;
 
-            btn.disabled = true;
+            buttonEl.disabled = true;
             try {
-                const res = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
+                const response = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
                     method: 'POST',
                     headers: { 'RequestVerificationToken': token }
                 });
-                if (!res.ok) return;
-                const data = await res.json();
+                if (!response.ok) return;
+                const result = await response.json();
 
-                const icon = btn.querySelector('i');
-                if (data.bookmarked) {
-                    btn.classList.add('bookmarked');
-                    icon.className = 'bi bi-bookmark-fill';
-                    btn.title = 'Bỏ lưu';
-                } else {
-                    btn.classList.remove('bookmarked');
-                    icon.className = 'bi bi-bookmark';
-                    btn.title = 'Lưu sự kiện';
+                if (result) {
+                    const iconEl = buttonEl.querySelector('i');
+                    if (result.bookmarked) {
+                        buttonEl.classList.add('bookmarked');
+                        iconEl.className = 'bi bi-bookmark-fill';
+                        buttonEl.title = 'Bỏ lưu';
+                    } else {
+                        buttonEl.classList.remove('bookmarked');
+                        iconEl.className = 'bi bi-bookmark';
+                        buttonEl.title = 'Lưu sự kiện';
+                    }
                 }
-            } catch (e) {
-                console.error('Bookmark error:', e);
+            } catch (error) {
+                console.error("Error toggling bookmark status:", error);
             } finally {
-                btn.disabled = false;
+                buttonEl.disabled = false;
             }
         }
     </script>

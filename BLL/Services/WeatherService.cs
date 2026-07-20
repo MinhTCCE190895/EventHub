@@ -1,6 +1,5 @@
 using BLL.Interfaces;
 using System.Text.Json;
-using System.Threading; // Added to use SemaphoreSlim to prevent Cache Stampede
 using BLL.DTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,34 +11,24 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
     private readonly HttpClient _httpClient = httpClient;
     private readonly IMemoryCache _cache = cache;
     private readonly ILogger<WeatherService> _logger = logger;
-    
-    // Semaphore to lock threads, allowing only 1 request to call the external API at a time (FE-08 Cache Stampede)
-    private static readonly SemaphoreSlim _weatherSemaphore = new(1, 1);
 
-
+    // Lấy thời tiết hiện tại của địa điểm
     public async Task<WeatherDTO?> GetWeatherAsync(string? location)
     {
         if (string.IsNullOrWhiteSpace(location)) return null;
+        
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_{normalized.ToLower().Replace(" ", "_")}";
 
-        // Step 1: Quick cache check before locking to optimize read speed
+        // Bước 1: Kiểm tra xem thời tiết của địa điểm này đã có trong cache chưa
         if (_cache.TryGetValue(cacheKey, out WeatherDTO? cachedWeather))
         {
             return cachedWeather;
         }
 
-        // Step 2: Wait for Semaphore lock if multiple threads are calling wttr.in simultaneously
-        await _weatherSemaphore.WaitAsync();
         try
         {
-            // Re-check cache after locking (Double-checked locking) in case another thread already populated the cache
-            if (_cache.TryGetValue(cacheKey, out cachedWeather))
-            {
-                return cachedWeather;
-            }
-
-            // Set a short timeout to prevent degrading user experience if the third-party API is congested
+            // Thiết lập timeout ngắn 3 giây để tránh làm đơ trang web nếu API bên thứ ba bị chậm
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
             string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
             var response = await _httpClient.GetAsync(url);
@@ -50,6 +39,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                 using var doc = JsonDocument.Parse(jsonString);
                 var root = doc.RootElement;
                 
+                // Đọc thông tin thời tiết hiện tại từ JSON
                 var currentCondition = root.GetProperty("current_condition")[0];
                 double temp = double.Parse(currentCondition.GetProperty("temp_C").GetString() ?? "25");
                 string desc = currentCondition.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
@@ -67,37 +57,33 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                     FetchedAt = DateTime.UtcNow
                 };
 
-                // Cache for 30 minutes as required
+                // Lưu dữ liệu vào cache trong 30 phút để tránh gọi API quá nhiều
                 _cache.Set(cacheKey, weather, TimeSpan.FromMinutes(30));
                 return weather;
             }
         }
         catch (Exception ex)
         {
-            // Only log system error, do not throw to avoid crashing the page when the weather API encounters issues
-            _logger.LogError(ex, "Lỗi khi gọi API thời tiết cho {Location}. Sẽ dùng fallback data.", location);
-        }
-        finally
-        {
-            // Release Semaphore
-            _weatherSemaphore.Release();
+            _logger.LogError(ex, "Lỗi khi gọi API thời tiết cho {Location}. Sẽ dùng dữ liệu dự phòng.", location);
         }
 
-        // Create high-quality fallback data if the API errors out or network is down
+        // Nếu API lỗi hoặc mất mạng, trả về dữ liệu thời tiết mặc định (fallback)
         var fallbackWeather = GetFallbackWeather(normalized);
-        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5)); // Shorter cache duration for fallback data
+        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5));
         return fallbackWeather;
     }
 
+    // Lấy dự báo thời tiết cho ngày và giờ diễn ra sự kiện
     public async Task<WeatherDTO?> GetWeatherForecastAsync(string? location, DateTime targetDate)
     {
         if (string.IsNullOrWhiteSpace(location)) return null;
-        // Add 7 hours to align with Vietnam timezone when calculating date difference
+
+        // Tính khoảng cách ngày (chuyển sang múi giờ Việt Nam UTC+7 để tính toán chính xác)
         var today = DateTime.UtcNow.AddHours(7).Date;
         var targetDateLocal = targetDate.Date;
         var daysDifference = (targetDateLocal - today).Days;
 
-        // Early exit if outside the 3-day forecast range to avoid unnecessary API requests since wttr.in only stores short-term forecast
+        // Chỉ hỗ trợ dự báo thời tiết trong khoảng 3 ngày (Hôm nay, ngày mai, ngày kia)
         if (daysDifference < 0 || daysDifference > 2)
         {
             return null;
@@ -106,21 +92,15 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{targetDateLocal:yyyyMMdd}";
 
+        // Thử lấy danh sách dự báo thời tiết 8 khung giờ trong ngày từ cache
         if (_cache.TryGetValue(cacheKey, out List<WeatherDTO>? cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
         {
             int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
             return cachedForecast[index];
         }
 
-        await _weatherSemaphore.WaitAsync();
         try
         {
-            if (_cache.TryGetValue(cacheKey, out cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
-            {
-                int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
-                return cachedForecast[index];
-            }
-
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
             string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
             var response = await _httpClient.GetAsync(url);
@@ -135,7 +115,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                 {
                     List<WeatherDTO>? targetResultList = null;
                     
-                    // Iterate through all forecast days returned from the API to batch-cache them
+                    // Duyệt qua các ngày dự báo trong kết quả API để lưu cache cho từng ngày
                     foreach (var day in weatherList.EnumerateArray())
                     {
                         if (day.TryGetProperty("date", out var dateProp) && 
@@ -145,7 +125,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                             var hourlyArray = day.GetProperty("hourly");
                             var dayForecastList = new List<WeatherDTO>();
 
-                            // Iterate through all 8 time slots of the day (3-hour intervals) to get detailed forecast
+                            // Duyệt qua 8 khung giờ trong ngày (mỗi khung cách nhau 3 tiếng từ wttr.in)
                             foreach (var hourly in hourlyArray.EnumerateArray())
                             {
                                 double temp = double.Parse(hourly.GetProperty("tempC").GetString() ?? day.GetProperty("avgtempC").GetString() ?? "28");
@@ -165,7 +145,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                                 });
                             }
 
-                            // Cache the 8 hourly time slots for that day for 30 minutes
+                            // Lưu danh sách dự báo 8 khung giờ của ngày này vào cache trong 30 phút
                             string loopCacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{dateKey:yyyyMMdd}";
                             _cache.Set(loopCacheKey, dayForecastList, TimeSpan.FromMinutes(30));
 
@@ -188,12 +168,8 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         {
             _logger.LogError(ex, "Lỗi khi gọi API dự báo thời tiết cho {Location} ngày {Date}.", location, targetDateLocal);
         }
-        finally
-        {
-            _weatherSemaphore.Release();
-        }
 
-        // Create fallback data with 8 identical hourly slots to avoid index errors
+        // Tạo dữ liệu dự phòng gồm 8 slot giống nhau nếu API bị lỗi
         var fallbackWeather = GetFallbackWeather(normalized);
         var fallbackList = Enumerable.Repeat(fallbackWeather, 8).ToList();
         _cache.Set(cacheKey, fallbackList, TimeSpan.FromMinutes(5));
@@ -202,54 +178,48 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return fallbackList[fallbackIndex];
     }
 
-    // Match event time with the closest 3-hour forecast block from wttr.in
+    // Tìm khung giờ dự báo gần nhất với giờ bắt đầu sự kiện (wttr.in cung cấp 8 mốc: 0h, 3h, 6h, 9h, 12h, 15h, 18h, 21h)
     private static int GetClosestHourlyIndex(DateTime targetDate, int maxIndex)
     {
         int hour = targetDate.Hour;
-        
-        int index = hour switch
-        {
-            >= 23 or < 2 => 0,   // 00:00 slot
-            >= 2 and < 5 => 1,   // 03:00 slot
-            >= 5 and < 8 => 2,   // 06:00 slot
-            >= 8 and < 11 => 3,  // 09:00 slot
-            >= 11 and < 14 => 4, // 12:00 slot
-            >= 14 and < 17 => 5, // 15:00 slot
-            >= 17 and < 20 => 6, // 18:00 slot
-            _ => 7               // 21:00 slot
-        };
+        int index = 0;
+
+        // Phân chia khung giờ đơn giản, tường minh cho đồ án
+        if (hour >= 2 && hour < 5) index = 1;       // 03:00
+        else if (hour >= 5 && hour < 8) index = 2;  // 06:00
+        else if (hour >= 8 && hour < 11) index = 3; // 09:00
+        else if (hour >= 11 && hour < 14) index = 4;// 12:00
+        else if (hour >= 14 && hour < 17) index = 5;// 15:00
+        else if (hour >= 17 && hour < 20) index = 6;// 18:00
+        else if (hour >= 20 || hour < 2) index = 7; // 21:00
 
         return Math.Clamp(index, 0, maxIndex);
     }
 
-
+    // Chuẩn hóa địa điểm từ địa chỉ Venue (lấy Tỉnh/Thành phố ở cuối chuỗi để API wttr.in nhận dạng tốt hơn)
     private static string NormalizeLocation(string location)
     {
-        // Null or empty safety check to avoid string manipulation errors
         if (string.IsNullOrWhiteSpace(location)) return "Can Tho";
 
-        // Split address by comma to extract the province/city at the end
+        // Tách địa chỉ bằng dấu phẩy để lấy phần cuối cùng (thường là Tỉnh/Thành phố)
         var parts = location.Split(',');
         string cityCandidate = parts.Length > 0 ? parts[^1].Trim() : location.Trim();
         
-        // If commas result in an empty candidate, assign default
         if (string.IsNullOrWhiteSpace(cityCandidate))
         {
             cityCandidate = "Can Tho";
         }
 
-        // Clean common administrative prefixes in Vietnam
+        // Loại bỏ các tiền tố hành chính phổ biến ở Việt Nam
         cityCandidate = cityCandidate
             .Replace("TP.", "", StringComparison.OrdinalIgnoreCase)
             .Replace("Thành phố", "", StringComparison.OrdinalIgnoreCase)
             .Replace("Tỉnh", "", StringComparison.OrdinalIgnoreCase)
             .Trim();
 
-        // Normalize to unsigned English for accurate recognition by wttr.in API
+        // Ánh xạ nhanh về tên tiếng Anh không dấu cho API dễ nhận dạng
         if (cityCandidate.Contains("Hồ Chí Minh", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("HCM", StringComparison.OrdinalIgnoreCase) ||
-            location.Contains("Nguyễn Văn Cừ", StringComparison.OrdinalIgnoreCase) ||
-            location.Contains("Võ Văn Ngân", StringComparison.OrdinalIgnoreCase))
+            cityCandidate.Contains("HCM", StringComparison.OrdinalIgnoreCase))
         {
             return "Ho Chi Minh";
         }
@@ -261,8 +231,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         }
 
         if (cityCandidate.Contains("Cần Thơ", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("Can Tho", StringComparison.OrdinalIgnoreCase) ||
-            cityCandidate.Contains("CT", StringComparison.OrdinalIgnoreCase))
+            cityCandidate.Contains("Can Tho", StringComparison.OrdinalIgnoreCase))
         {
             return "Can Tho";
         }
@@ -276,6 +245,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return cityCandidate;
     }
 
+    // Dịch mô tả thời tiết tiếng Anh từ wttr.in sang tiếng Việt cho thân thiện
     private static string TranslateCondition(string condition)
     {
         condition = condition.ToLower();
@@ -284,9 +254,10 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         if (condition.Contains("rain") || condition.Contains("shower")) return "Có mưa";
         if (condition.Contains("thunder") || condition.Contains("storm")) return "Dông bão";
         if (condition.Contains("mist") || condition.Contains("fog")) return "Có sương mù";
-        return "Nhiệt đới";
+        return "Trong lành";
     }
 
+    // Ánh xạ trạng thái thời tiết sang CSS class của Bootstrap Icon
     private static string MapConditionToIcon(string condition)
     {
         condition = condition.ToLower();
@@ -297,19 +268,15 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return "bi-cloud-sun text-warning";
     }
 
+    // Dữ liệu dự phòng mặc định khi API gặp sự cố
     private static WeatherDTO GetFallbackWeather(string location)
     {
-        // Slightly randomize temperature for visual variance
-        var hour = DateTime.Now.Hour;
-        double baseTemp = (hour > 18 || hour < 6) ? 26.5 : 31.0;
-        baseTemp += new Random().Next(-2, 3);
-
         return new WeatherDTO
         {
             Location = location,
-            Temperature = baseTemp,
+            Temperature = 30.0,
             Condition = "Nắng ráo",
-            WindSpeed = 12.5,
+            WindSpeed = 12.0,
             Humidity = 75,
             WeatherIconClass = "bi-sun-fill text-warning",
             FetchedAt = DateTime.UtcNow

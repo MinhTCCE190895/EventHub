@@ -63,6 +63,13 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-20 (Antigravity / QuiNC)**:
+  - **Tái cấu trúc và tối giản hóa phân hệ QuiNC (`FE-03`, `FE-08`, `FE-11`)**:
+    - **`WeatherService.cs`**: Gỡ bỏ locks `SemaphoreSlim` phức tạp. Đơn giản hóa hàm check `NormalizeLocation` khỏi hardcode địa chỉ AI, làm sạch logic mapping khung giờ dự báo wttr.in dễ hiểu cho đồ án môn học.
+    - **`BookmarkService.cs`**: Xóa bỏ dependency chéo `AppDbContext`, chuyển hẳn sang dùng `IRepository<Bookmark>`. Viết lại truy vấn LINQ bằng Projection `.Select()` trực tiếp sang DTO để loại bỏ code Include lồng nhau.
+    - **`Index.cshtml`**: Tinh giản Javascript Debounce và AJAX search, comment tiếng Việt rõ ràng để dễ thuyết minh vấn đáp.
+    - Đảm bảo biên dịch thành công 100% không lỗi.
+
 - **2026-07-20 (Antigravity / LongNH)**:
   - **Account Lockout & Force Logout System (`FE-09` / Task 4)**: Cập nhật tài liệu phân công (`TASK_DIVISION.md`) và trạng thái bộ nhớ (`memory-snapshots.md`) để đồng bộ trạng thái "Done" cho hệ thống Khóa tài khoản và Buộc đăng xuất tức thì, khẳng định tính sẵn sàng và tính độc lập của phân hệ quản trị MVC Admin Control Panel.
 
