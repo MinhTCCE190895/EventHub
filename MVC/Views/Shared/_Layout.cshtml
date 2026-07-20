@@ -2,7 +2,7 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var useTopNavbar = currentController == "Account" || (currentController == "Home" && currentAction == "Index");
+    var useTopNavbar = currentController == "Account";
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var userName = User.Identity?.Name;
     var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -29,22 +29,17 @@
             
             <nav class="sidebar-nav">
                 <!-- Links visible to everyone -->
-                <a class="sidebar-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-door-open-fill"></i> Portal Trang chủ
-                </a>
-                
                 <a class="sidebar-link" href="http://localhost:5129/">
-                    <i class="bi bi-compass-fill"></i> Khám phá sự kiện (RazorPages)
+                    <i class="bi bi-compass-fill"></i> Khám phá sự kiện
                 </a>
                 
-                <a class="sidebar-link" href="http://localhost:5210/">
-                    <i class="bi bi-activity"></i> Live Dashboard (Blazor)
-                </a>
-
-
-                <!-- Links visible to Admin or Organizer -->
                 @if (isAuthenticated && (userRole == "Admin" || userRole == "Organizer"))
                 {
+                    <a class="sidebar-link" href="http://localhost:5210/">
+                        <i class="bi bi-activity"></i> Live Dashboard
+                    </a>
+                    
+                    <!-- Admin & Organizer only links -->
                     <a class="sidebar-link" href="http://localhost:5129/Events">
                         <i class="bi bi-calendar-event-fill"></i> Quản lý sự kiện
                     </a>
@@ -52,25 +47,30 @@
                         <i class="bi bi-tags-fill"></i> Quản lý danh mục
                     </a>
                     <a class="sidebar-link" href="http://localhost:5129/Tags">
-                        <i class="bi bi-hash"></i> Quản lý thẻ (Tags)
+                        <i class="bi bi-hash"></i> Quản lý Thẻ
                     </a>
                     <a class="sidebar-link" href="http://localhost:5129/Venues">
                         <i class="bi bi-building"></i> Quản lý địa điểm
                     </a>
+                    <a class="sidebar-link" href="http://localhost:5129/Requests">
+                        <i class="bi bi-lightbulb-fill"></i> Duyệt ý tưởng sự kiện
+                    </a>
                     <a class="sidebar-link" href="http://localhost:5210/feedback-analytics">
-                        <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá (Live)
+                        <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
                     </a>
                 }
 
                 @if (isAuthenticated && userRole == "Admin")
                 {
-                    <a class="sidebar-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" asp-controller="Admin" asp-action="Index">
-                        <i class="bi bi-speedometer2"></i> Admin Panel
-                    </a>
+                    <!-- Admin specific links -->
                     <a class="sidebar-link @(currentController == "Admin" && currentAction == "Users" ? "active" : "")" asp-controller="Admin" asp-action="Users">
                         <i class="bi bi-people-fill"></i> Quản lý User
                     </a>
                 }
+                
+                <a class="sidebar-link" href="http://localhost:5129/Privacy">
+                    <i class="bi bi-shield-lock-fill"></i> Riêng tư
+                </a>
             </nav>
 
             <!-- User Auth status block inside Sidebar -->

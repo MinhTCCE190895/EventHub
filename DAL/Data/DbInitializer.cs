@@ -162,14 +162,23 @@ public static class DbInitializer
         {
             try
             {
-                var hasHandle = seedMutex.WaitOne(TimeSpan.FromSeconds(30));
+                bool hasHandle = false;
+                try
+                {
+                    hasHandle = seedMutex.WaitOne(TimeSpan.FromSeconds(30));
+                }
+                catch (AbandonedMutexException)
+                {
+                    hasHandle = true; // Mutex bị tiến trình cũ bỏ rơi, ta chiếm quyền điều khiển để seed tiếp
+                }
+
                 if (hasHandle)
                 {
                     if (await context.Events.AnyAsync())
                         return;
 
                     var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
-        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
+                    var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };

@@ -1,96 +1,49 @@
-# II. Release Package & User Guides
+# UniEvent Hub - Detailed Project Backlog & Status
 
-## 1. Deliverable Package
-
-| No. | Deliverable Item | Description | Version |
-|---|---|---|---|
-| 1 | Project Schedule/Tracking | Jira/Trello board for tracking progress and milestones | v1.0 |
-| 2 | Project Backlog | List of user stories and functional requirements (FE-01 to FE-15) | v1.0 |
-| 3 | Source Codes | EventHub system source code (.NET 9, C# 13, MVC/Razor Pages, Blazor) | v1.0 |
-| 4 | Database Script(s) | EF Core Migrations and initial Seed Data scripts | v1.0 |
-| 5 | Final Report Document | Final summary report, architecture, and technical decisions | v1.0 |
-| 6 | Test Cases Document | List of test cases (Unit tests and Manual tests) | v1.0 |
-| 7 | Defects List | List of recorded bugs and their status | v1.0 |
-| 8 | Issues List | List of technical issues (Technical Debt/Impediments) | v1.0 |
-| 9 | Slide | Final project presentation slides | v1.0 |
-
-## 2. Installation Guides
-
-### 2.1 System Requirements
-
-**Hardware:**
-- CPU: Dual-core 2.0 GHz or higher
-- RAM: Minimum 4GB (8GB recommended)
-- Storage: Minimum 500MB free space
-
-**Software:**
-- OS: Windows 10/11, macOS, Linux
-- Runtime: .NET 9.0 SDK
-- Database: SQL Server 2022 or PostgreSQL 15+
-- Message/Cache: Redis Server
-- Browser: Latest version of Chrome, Firefox, Edge, Safari
-
-### 2.2 Installation Instruction
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository_url>
-   cd EventHub
-   ```
-
-2. **Database Configuration:**
-   - Ensure SQL Server / PostgreSQL is running.
-   - Update the `ConnectionStrings` in `appsettings.json` and `appsettings.Development.json` within the MVC/API project.
-
-3. **Run EF Core Migrations:**
-   ```bash
-   dotnet ef database update --project DAL --startup-project MVC
-   ```
-
-4. **Start Redis:**
-   - Ensure Redis Server is running on the default port `6379`.
-
-5. **Build and Run the system:**
-   ```bash
-   dotnet build
-   dotnet run --project MVC
-   ```
-   The system will be available at `http://localhost:5000` or `https://localhost:5001`.
-
-## 3. User Manual
-
-### 3.1 Overview
-
-**UniEvent Hub** is an online event management and ticket booking platform. The system supports multiple roles with core functional groups:
-- **Attendees:** Search for events (FE-03), book tickets directly (FE-04), track history, and interact with Live Q&A (FE-15).
-- **Organizers:** Manage events (FE-02), set venue capacity limits (FE-05), and monitor the Live Dashboard (FE-10).
-- **Admins:** Manage RBAC (FE-01) and Admin Control Panel (FE-09).
-
-### 3.2 Workflow 1: Event Management (Organizer)
-
-**Purpose:**
-Allows Organizers to create new events, set seating limits, and publish events to the system.
-
-**Detailed Instructions:**
-1. **Login:** Access the system with an Organizer account.
-2. **Open Dashboard:** Select **Event Management** on the navigation bar.
-3. **Create Event:** Click **Create New Event**.
-4. **Enter Information:**
-   - Fill in Event Name, Description, and Time.
-   - Select Venue (the system automatically checks capacity limits according to FE-05).
-   - Add Category and Tags.
-5. **Publish:** Click **Submit**. The event transitions to the "Published" state.
-
-### 3.3 Workflow 2: Search and Book Tickets (Attendee)
-
-**Purpose:**
-Allows attendees to find suitable events and book tickets in real-time with anti-duplication processing (Concurrency).
-
-**Detailed Instructions:**
-1. **Search Event:** Use the search bar and filters on the homepage (FE-03) to find events by name, tag, or time.
-2. **View Details:** Click on the event card to view detailed information and the number of available tickets.
-3. **Proceed to Book:**
-   - Select the number of tickets to buy.
-   - Click **Book Now**.
-   - *Note:* The system applies Live Ticket Booking (FE-04), transactions may be rejected if the tickets were just purchased by someone else (DbUpdateConcurrencyException will be handled safely).
-4. **Confirmation:** Check email to receive confirmation notifications and automated reminders (FE-06).
+| No. | Feature (Phân hệ) | Module | Page / Screen (Đường dẫn & Công nghệ) | Complexity | Point | Function / Task (Chức năng cụ thể) | Start Date | End Date | Status | Assignee |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **1** | User Registration | Authentication | `MVC/Views/Account/Register.cshtml` (ASP.NET Core MVC) | Simple | 1 | Create User Account with Input Validation | 2026-06-15 | 2026-06-16 | Done | Nguyễn Hoàng Long |
+| **2** | User Login | Authentication | `MVC/Views/Account/Login.cshtml` (ASP.NET Core MVC) | Simple | 1 | Authenticate User and Create Login Session | 2026-06-16 | 2026-06-17 | Done | Nguyễn Hoàng Long |
+| **3** | Session Storage | Authentication | `BLL/Services/UserService.cs` (Identity Session Config) | Simple | 1 | Store and Retrieve Authentication Session State | 2026-06-17 | 2026-06-18 | Done | Nguyễn Hoàng Long |
+| **4** | Role-Based Authorization | Authentication | `MVC/Configurations/ServiceExtensions.cs` (Global Middleware) | Simple | 1 | Enforce Role-Based Access Permissions | 2026-06-18 | 2026-06-20 | Done | Nguyễn Hoàng Long |
+| **5** | Dynamic Authorization Policies | Authentication | `MVC/Configurations/ServiceExtensions.cs` (Named Policies) | Simple | 1 | Define Claims-Based Rules and Route Guards | 2026-06-20 | 2026-06-21 | Done | Nguyễn Hoàng Long |
+| **6** | Admin Dashboard | Administration | `MVC/Views/Admin/Index.cshtml` (ASP.NET Core MVC) | Simple | 1 | Develop Admin Dashboard Core Interface | 2026-06-21 | 2026-06-30 | Doing | Nguyễn Hoàng Long |
+| **7** | Dashboard Query Statistics | Administration | `BLL/Services/AdminService.cs` (Database Query Aggregations) | Medium | 2 | Optimize SQL Queries for User/Event Stats | 2026-06-22 | 2026-06-25 | Doing | Nguyễn Hoàng Long |
+| **8** | Account Lockout | Account Administration | `MVC/Views/Admin/Users.cshtml` (ASP.NET Core MVC) | Simple | 1 | Lock User Account after Security Violations | 2026-06-25 | 2026-06-28 | Pending | Nguyễn Hoàng Long |
+| **9** | User Data List Management | Account Administration | `BLL/Services/AdminService.cs` (Retrieve list with projections) | Simple | 1 | View and Paginate Complete User Registry | 2026-06-27 | 2026-06-29 | Pending | Nguyễn Hoàng Long |
+| **10** | Forced Logout | Account Administration | `MVC/Configurations/ServiceExtensions.cs` (ValidatePrincipal) | Simple | 1 | Force Active User Sessions to Log Out | 2026-06-29 | 2026-07-01 | Pending | Nguyễn Hoàng Long |
+| **11** | Create Event | Event Management | `RazorPages/Pages/Events/Create.cshtml` (Razor Pages) | Simple | 1 | Create a New Event | 2026-06-11 | 2026-06-11 | Done | Trần Công Minh |
+| **12** | View Event | Event Management | `RazorPages/Pages/Events/Detail.cshtml` (Razor Pages) | Simple | 1 | View Event List and Event Details | 2026-06-12 | 2026-06-12 | Done | Trần Công Minh |
+| **13** | Update Event | Event Management | `RazorPages/Pages/Events/Edit.cshtml` (Razor Pages) | Simple | 1 | Update Existing Event Information | 2026-06-13 | 2026-06-13 | Done | Trần Công Minh |
+| **14** | Delete Event | Event Management | `RazorPages/Pages/Events/Delete.cshtml` (Razor Pages) | Simple | 1 | Delete an Existing Event | 2026-06-14 | 2026-06-14 | Done | Trần Công Minh |
+| **15** | Create Category and Tag | Category & Tag Management | `RazorPages/Pages/Categories/Create.cshtml` & `Tags/Create.cshtml` (Razor Pages) | Simple | 1 | Create Event Categories and Tags | 2026-06-15 | 2026-06-15 | Done | Trần Công Minh |
+| **16** | View Category and Tag | Category & Tag Management | `RazorPages/Pages/Categories/Index.cshtml` & `Tags/Index.cshtml` (Razor Pages) | Simple | 1 | View Category and Tag Lists | 2026-06-16 | 2026-06-16 | Done | Trần Công Minh |
+| **17** | Update Category and Tag | Category & Tag Management | `RazorPages/Pages/Categories/Edit.cshtml` & `Tags/Edit.cshtml` (Razor Pages) | Simple | 1 | Update Category and Tag Information | 2026-06-17 | 2026-06-17 | Done | Trần Công Minh |
+| **18** | Delete Category and Tag | Category & Tag Management | `RazorPages/Pages/Categories/Delete.cshtml` & `Tags/Delete.cshtml` (Razor Pages) | Simple | 1 | Delete Categories and Tags | 2026-06-17 | 2026-06-17 | Done | Trần Công Minh |
+| **19** | Create Venue | Venue Management | `RazorPages/Pages/Venues/Create.cshtml` (Razor Pages) | Simple | 1 | Create a New Venue | 2026-06-18 | 2026-06-18 | Done | Trần Công Minh |
+| **20** | View Venue | Venue Management | `RazorPages/Pages/Venues/Index.cshtml` & `Details.cshtml` (Razor Pages) | Simple | 1 | View Venue List and Venue Details | 2026-06-19 | 2026-06-19 | Done | Trần Công Minh |
+| **21** | Update Venue | Venue Management | `RazorPages/Pages/Venues/Edit.cshtml` (Razor Pages) | Simple | 1 | Update Venue Configuration | 2026-06-20 | 2026-06-20 | Done | Trần Công Minh |
+| **22** | Delete Venue | Venue Management | `RazorPages/Pages/Venues/Delete.cshtml` (Razor Pages) | Simple | 1 | Delete an Existing Venue | 2026-06-20 | 2026-06-20 | Done | Trần Công Minh |
+| **23** | Venue Capacity Validation | Venue Management | `BLL/Services/VenueService.cs` (BLL Engine) | Simple | 1 | Validate Venue Capacity Limits | 2026-06-21 | 2026-06-24 | Done | Trần Công Minh |
+| **24** | Venue Delete Restriction | Venue Management | `BLL/Services/VenueService.cs` (Restrict DB Rule) | Simple | 1 | Prevent Deletion of Venues Referencing Events | 2026-06-25 | 2026-06-26 | Done | Trần Công Minh |
+| **25** | Student Event Proposal | Event Approval | `RazorPages/Pages/Requests/Create.cshtml` (Razor Pages) | Simple | 1 | Submit a Student Event Idea Proposal | 2026-06-27 | 2026-06-28 | Done | Trần Công Minh |
+| **26** | Event Approval | Event Approval | `RazorPages/Pages/Requests/Process.cshtml` (Razor Pages) | Simple | 1 | Approve or Reject Student Event Proposals | 2026-06-29 | 2026-06-30 | Done | Trần Công Minh |
+| **27** | Duplicate Event Protection | Event Approval | `BusinessObjects/DTOs/EventRequestDTOs.cs` (Data Validation) | Simple | 1 | Prevent Duplicate and Excessive Event Posting | 2026-07-01 | 2026-07-01 | Done | Trần Công Minh |
+| **28** | Event Discovery | Event Exploration | `RazorPages/Pages/Index.cshtml` (Razor Pages Grid/List Layout) | Simple | 1 | Display Available Events for Students | 2026-06-11 | 2026-06-14 | Done | Nguyễn Cao Quí |
+| **29** | Event Search | Event Exploration | `RazorPages/Pages/Index.cshtml` (Razor Pages AJAX) | Simple | 1 | Search Events by Keyword | 2026-06-15 | 2026-06-16 | Done | Nguyễn Cao Quí |
+| **30** | Event Filtering | Event Exploration | `RazorPages/Pages/Index.cshtml` (Razor Pages Multi-tag) | Simple | 1 | Filter Events by Multiple Tags | 2026-06-17 | 2026-06-17 | Done | Nguyễn Cao Quí |
+| **31** | Event Pagination | Event Exploration | `BLL/Services/SearchService.cs` (Skip/Take BLL) | Simple | 1 | Paginate Event Results on the Server | 2026-06-18 | 2026-06-20 | Done | Nguyễn Cao Quí |
+| **32** | Event Weather Forecast | Event Support | `RazorPages/Pages/Events/Detail.cshtml` (Weather API Integration) | Simple | 1 | Display Weather Forecast for Event Location | 2026-06-21 | 2026-06-24 | Done | Nguyễn Cao Quí |
+| **33** | Weather Data Cache | Event Support | `BLL/Services/WeatherService.cs` (IMemoryCache 30-min Setup) | Simple | 1 | Cache Weather Data for 30 Minutes | 2026-06-25 | 2026-06-26 | Done | Nguyễn Cao Quí |
+| **34** | Bookmark Event | User Engagement | `RazorPages/Pages/Bookmarks/Index.cshtml` (Razor Pages) | Simple | 1 | Add or Remove an Event from Bookmarks | 2026-06-26 | 2026-07-01 | Done | Nguyễn Cao Quí |
+| **35** | Ticket Registration | Ticketing | `Blazor/Components/Booking/BookingComponent.razor` (Blazor Interactive Server) | Simple | 1 | Register a Ticket for an Event | 2026-06-11 | 2026-06-14 | Done | Trần Huỳnh Khôi |
+| **36** | Ticket Concurrency Control | Ticketing | `BLL/Services/BookingService.cs` (Database Serializable / RowVersion) | Medium | 2 | Prevent Ticket Overselling with Optimistic Concurrency | 2026-06-15 | 2026-06-20 | Done | Trần Huỳnh Khôi |
+| **37** | Live Dashboard | Real-Time Operations | `Blazor/Components/Dashboard/DashboardComponent.razor` (Blazor Screen) | Simple | 1 | Develop Live Event Dashboard Interface | 2026-06-18 | 2026-06-20 | Done | Trần Huỳnh Khôi |
+| **38** | Real-Time Dashboard Updates | Real-Time Operations | `BLL/SignalR/EventHub.cs` (SignalR Hub) | Medium | 2 | Push Live Dashboard Updates through SignalR | 2026-06-21 | 2026-06-25 | Doing | Trần Huỳnh Khôi |
+| **39** | Live Q&A | Real-Time Interaction | `Blazor/Components/QA/QAComponent.razor` (Blazor Screen) | Complex | 3 | Post and Display Live Q&A Comments | 2026-06-25 | 2026-06-27 | Pending | Trần Huỳnh Khôi |
+| **40** | Q&A Spam Protection | Real-Time Interaction | `BLL/SignalR/EventHub.cs` (Spam rate limiter) | Medium | 2 | Limit Repeated Q&A Requests to Prevent Spam | 2026-06-28 | 2026-07-01 | Pending | Trần Huỳnh Khôi |
+| **41** | Event Feedback | Analytics | `RazorPages/Pages/Events/Feedback.cshtml` (Razor Pages) | Simple | 1 | Submit Event Feedback and Ratings | 2026-06-11 | 2026-06-14 | Done | Lê Thiện Trí |
+| **42** | Analytics Aggregation | Analytics | `BLL/Services/FeedbackAnalyticsService.cs` (PLINQ engine) | Medium | 2 | Aggregate Event Metrics with Parallel LINQ | 2026-06-15 | 2026-06-17 | Done | Lê Thiện Trí |
+| **43** | Email Notification | Notification | `BLL/Services/EmailSender.cs` (Smtp Infrastructure) | Simple | 1 | Send Transactional Email Notifications | 2026-06-18 | 2026-06-20 | Done | Lê Thiện Trí |
+| **44** | Background Email Processing | Notification | `BLL/BackgroundServices/EmailReminderWorker.cs` (BackgroundService TPL) | Medium | 2 | Process Email Tasks in Parallel with TPL | 2026-06-21 | 2026-06-23 | Done | Lê Thiện Trí |
+| **45** | Follow Organizer | User Engagement | `RazorPages/Pages/Follow/OrganizerDetails.cshtml` (Razor Pages) | Simple | 1 | Follow or Unfollow an Organizer | 2026-06-24 | 2026-07-01 | Done | Lê Thiện Trí |

@@ -40,8 +40,8 @@ MVC/  → AccountController, AdminController + Razor Views
 
 | Task | Công nghệ chính | Chi tiết |
 |---|---|---|
-| **FE-01** Identity & Auth | ASP.NET Core MVC · Cookie/JWT | Đăng ký, Đăng nhập, phân quyền RBAC · `[Authorize(Roles="Admin")]` |
-| **FE-09** Admin Control Panel | MVC Controller + View | Dashboard user/event · Khóa tài khoản · Force logout qua Unit of Work |
+| **FE-01** Identity & Auth | ASP.NET Core MVC · Cookie/JWT | Đăng ký, Đăng nhập, phân quyền RBAC · `[Authorize(Roles="Admin")]` | Done |
+| **FE-09** Admin Control Panel | MVC Controller + View | Dashboard user/event · Khóa tài khoản · Force logout qua Unit of Work | Done |
 
 ---
 

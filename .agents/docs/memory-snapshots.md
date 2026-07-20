@@ -24,6 +24,7 @@ graph TD
 ### 1.1. Architecture & Global Config
 - **Environment**: Upgraded 100% to **.NET 8** and **C# 12**.
 - **Shared Authentication**: SSO implemented via shared Cookie `.EventHub.Auth` using EF Core Data Protection (`Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) across MVC, RazorPages, and Blazor.
+- **Account Lockout & Force Logout (`FE-09` / Task 4)**: Real-time enforcement using `CookieAuthenticationEvents.OnValidatePrincipal` to automatically log out users whose accounts are locked (`IsActive = false`) on any active page request across all applications (MVC, RazorPages, Blazor).
 
 ### 1.2. Razor Pages (Explore, Bookmarks & Event CRUD)
 - **Explore & Search (`Pages/Index.cshtml` / `FE-03`)**: Form search (.search-card-minimal) with time filters (All, Upcoming, Ongoing, Past). Dynamic LED status dots, seats capacity urgency warnings, grayscale for past events, skeleton loader, and AJAX pagination.
@@ -62,6 +63,8 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-20 (Antigravity / LongNH)**:
+  - **Account Lockout & Force Logout System (`FE-09` / Task 4)**: Cập nhật tài liệu phân công (`TASK_DIVISION.md`) và trạng thái bộ nhớ (`memory-snapshots.md`) để đồng bộ trạng thái "Done" cho hệ thống Khóa tài khoản và Buộc đăng xuất tức thì, khẳng định tính sẵn sàng và tính độc lập của phân hệ quản trị MVC Admin Control Panel.
 
 - **2026-07-14 (Antigravity / TriLT)**:
   - **Tạo tài liệu thiết kế hệ thống (Class Diagram & Integrated Communication Diagram)**:
