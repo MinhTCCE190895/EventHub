@@ -160,9 +160,18 @@ public static class DbInitializer
 
         using (var seedMutex = new Mutex(false, "UniEventHubDbSeedMutex"))
         {
+            bool hasHandle = false;
             try
             {
-                var hasHandle = seedMutex.WaitOne(TimeSpan.FromSeconds(30));
+                try
+                {
+                    hasHandle = seedMutex.WaitOne(TimeSpan.FromSeconds(60));
+                }
+                catch (AbandonedMutexException)
+                {
+                    hasHandle = true;
+                }
+
                 if (hasHandle)
                 {
                     if (await context.Events.AnyAsync())
