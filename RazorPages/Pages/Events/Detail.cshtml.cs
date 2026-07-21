@@ -1,6 +1,6 @@
 using BLL.Services;
 using BLL.Interfaces;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;

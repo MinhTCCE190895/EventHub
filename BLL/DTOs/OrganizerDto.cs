@@ -1,6 +1,6 @@
 using System;
 
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
 public class OrganizerDto
 {

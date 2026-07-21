@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 
 namespace BLL.Interfaces;
 

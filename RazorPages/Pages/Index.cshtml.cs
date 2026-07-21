@@ -1,5 +1,5 @@
 using BLL.Interfaces;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RazorPages.ViewModels;

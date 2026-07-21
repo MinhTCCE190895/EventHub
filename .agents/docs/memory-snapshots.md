@@ -60,7 +60,12 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
-### 3.1. Detailed Changes Log
+- **2026-07-20 (Antigravity / Khôi)**:
+  - **Tích hợp giao diện Hỏi đáp & Bình luận (FE-15 Live Q&A Hub), Phân màu Badge & Tính năng Admin Ẩn Bình Luận**:
+    - Bổ sung `IsHidden` vào `EventComment` (DAL), `CommentDTO` (BusinessObjects).
+    - Triển khai `HideCommentAsync` trong `ICommentService`/`CommentService` (BLL), kiểm tra phân quyền Admin (ngăn ẩn bình luận của Admin khác).
+    - Thêm phương thức `HideComment` & broadcast `ReceiveCommentHidden` vào SignalR `EventHub.cs`.
+    - Giao diện Admin: Hiển thị icon 3 chấm góc phải bình luận của Sinh Viên & Ban Tổ Chức khi đăng nhập role Admin, bật modal/alert xác nhận ẩn, cập nhật hiển thị nội dung thành *"Bình luận đã bị admin ẩn"* trên cả RazorPages (`Detail.cshtml`) và Blazor (`QAComponent.razor`).
 
 - **2026-07-14 (Antigravity / TriLT)**:
   - **Tạo tài liệu thiết kế hệ thống (Class Diagram & Integrated Communication Diagram)**:

@@ -1,4 +1,4 @@
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
 public class LoginDto
 {

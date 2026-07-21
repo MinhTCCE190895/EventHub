@@ -1,5 +1,5 @@
 using BLL.Interfaces;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Data;
 using DAL.Entities;
 using DAL.Interfaces;
@@ -20,7 +20,7 @@ public class BookmarkService : IBookmarkService
 
     public async Task<List<Guid>> GetBookmarkedEventIdsAsync(Guid studentId, CancellationToken ct = default)
     {
-        // Lấy toàn bộ EventId đã bookmark để Index page biết cái nào cần highlight nút
+        // Retrieve all bookmarked EventIds so the Index page knows which toggle buttons to highlight
         return await _context.Bookmarks
             .Where(b => b.StudentId == studentId)
             .Select(b => b.EventId)
@@ -72,13 +72,13 @@ public class BookmarkService : IBookmarkService
 
         if (existing is not null)
         {
-            // Đã bookmark rồi thì xóa (unBookmark)
+            // If already bookmarked, remove it (unBookmark)
             _bookmarkRepo.Remove(existing);
             await _context.SaveChangesAsync(cancellationToken);
             return false;
         }
 
-        // Chưa bookmark thì thêm mới
+        // If not bookmarked yet, add a new one
         await _bookmarkRepo.AddAsync(new Bookmark
         {
             StudentId = studentId,

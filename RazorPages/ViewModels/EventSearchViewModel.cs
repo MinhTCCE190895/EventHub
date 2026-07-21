@@ -1,4 +1,4 @@
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using System.ComponentModel.DataAnnotations;
 
 namespace RazorPages.ViewModels;

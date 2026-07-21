@@ -1,6 +1,8 @@
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL.Data;
 using DAL.Entities;
+using DAL.Interfaces;
 using DAL.Repositories;
 using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;

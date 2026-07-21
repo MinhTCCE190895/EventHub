@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
 public class CategoryUpdateDTO
 {

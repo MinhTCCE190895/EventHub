@@ -1,9 +1,8 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
-public class CategoryDTO
+public class TagDTO
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;

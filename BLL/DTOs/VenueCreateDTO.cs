@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
-public class VenueUpdateDTO
+public class VenueCreateDTO
 {
-    public int Id { get; set; }
-
     [Required(ErrorMessage = "Venue Name is required")]
     [MaxLength(200, ErrorMessage = "Venue Name cannot exceed 200 characters")]
     public string Name { get; set; } = null!;

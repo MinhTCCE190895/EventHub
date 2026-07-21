@@ -1,9 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessObjects.DTOs;
+namespace BLL.DTOs;
 
-public class EventCreateDTO : IValidatableObject
+public class EventUpdateDTO : IValidatableObject
 {
+    [Required]
+    public Guid Id { get; set; }
+
     [Required(ErrorMessage = "Tiêu đề không được để trống.")]
     [MaxLength(200)]
     public string Title { get; set; } = null!;
@@ -18,9 +21,6 @@ public class EventCreateDTO : IValidatableObject
 
     [Required(ErrorMessage = "Vui lòng chọn ngày kết thúc.")]
     public DateTime EndTime { get; set; }
-
-    [Required(ErrorMessage = "Vui lòng chọn trạng thái.")]
-    public string Status { get; set; } = "Upcoming";
 
     [Required(ErrorMessage = "Vui lòng chọn địa điểm.")]
     public int VenueId { get; set; }
