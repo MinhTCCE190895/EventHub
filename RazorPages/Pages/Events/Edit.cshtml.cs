@@ -42,6 +42,11 @@ public class EditModel : PageModel
         var ev = await _eventService.GetEventByIdAsync(id);
         if (ev == null) return NotFound();
 
+        if (!User.IsInRole("Admin") && ev.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            return Forbid();
+        }
+
         Input = new EventUpdateDTO
         {
             Id          = ev.Id,
@@ -62,6 +67,14 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var existingEvent = await _eventService.GetEventByIdAsync(Input.Id);
+        if (existingEvent == null) return NotFound();
+
+        if (!User.IsInRole("Admin") && existingEvent.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            return Forbid();
+        }
+
         if (!User.IsInRole("Admin"))
         {
             Input.OrganizerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -78,7 +91,7 @@ public class EditModel : PageModel
         try
 
         {
-            await _eventService.UpdateEventAsync(Input);
+            await _eventService.UpdateEventAsync(Input, User.IsInRole("Admin"));
             TempData["SuccessMessage"] = "Sự kiện đã được cập nhật thành công!";
             return RedirectToPage("./Index");
         }

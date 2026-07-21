@@ -117,7 +117,7 @@ public class EventService : IEventService
         return _mapper.Map<EventDTO>(created!);
     }
 
-    public async Task UpdateEventAsync(EventUpdateDTO dto, CancellationToken cancellationToken = default)
+    public async Task UpdateEventAsync(EventUpdateDTO dto, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         if (dto.StartTime >= dto.EndTime)
             throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
@@ -165,6 +165,12 @@ public class EventService : IEventService
         }
 
         _mapper.Map(dto, ev);
+
+        // Downgrade status if a non-admin edits a published event
+        if (!isAdmin && ev.Status == "Published")
+        {
+            ev.Status = "Draft";
+        }
 
         ev.EventCategories.Clear();
         if (dto.CategoryIds != null)

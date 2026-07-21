@@ -4,6 +4,7 @@ using BLL.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 
 namespace RazorPages.Pages.Events;
 
@@ -24,12 +25,25 @@ public class DeleteModel : PageModel
         var ev = await _eventService.GetEventByIdAsync(id);
         if (ev == null) return NotFound();
 
+        if (!User.IsInRole("Admin") && ev.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            return Forbid();
+        }
+
         EventItem = ev;
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(Guid id)
     {
+        var ev = await _eventService.GetEventByIdAsync(id);
+        if (ev == null) return NotFound();
+
+        if (!User.IsInRole("Admin") && ev.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier))
+        {
+            return Forbid();
+        }
+
         try
         {
             await _eventService.DeleteEventAsync(id);

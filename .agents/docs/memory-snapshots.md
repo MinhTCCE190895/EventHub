@@ -62,6 +62,12 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-21 (Antigravity / Agent)**:
+  - **Sửa lỗi bảo mật IDOR (Insecure Direct Object Reference) và hoàn thiện luồng kiểm soát trạng thái sự kiện**:
+    - Ngăn chặn quyền chỉnh sửa sự kiện chéo (IDOR): Bổ sung guard clause kiểm tra quyền `!User.IsInRole("Admin") && ev.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier)` trong `Edit.cshtml.cs` và `Delete.cshtml.cs`. Đảm bảo Organizer chỉ được phép xem, sửa, và xóa sự kiện do chính mình tạo ra; các trường hợp vi phạm sẽ bị chặn bằng mã HTTP 403 (Forbid).
+    - Cập nhật quy trình kiểm soát thay đổi trạng thái (Change Control Workflow): Điều chỉnh phương thức `UpdateEventAsync` trong `EventService.cs` thêm tham số `isAdmin`. Nếu Organizer cập nhật một sự kiện đã được "Published", hệ thống tự động giáng cấp trạng thái sự kiện về "Draft" để yêu cầu Admin xét duyệt lại. Nếu là Admin sửa thì giữ nguyên.
+    - Sửa lỗi biên dịch do thiếu `using System.Security.Claims` trong `Delete.cshtml.cs`.
+
 - **2026-07-20 (Antigravity / Khôi)**:
   - **Tích hợp giao diện Hỏi đáp & Bình luận (FE-15 Live Q&A Hub), Phân màu Badge & Tính năng Admin Ẩn Bình Luận**:
     - Bổ sung `IsHidden` vào `EventComment` (DAL), `CommentDTO` (BLL/DTOs).
