@@ -39,7 +39,14 @@ public class EventHub : Hub
         var comment = await _commentService.AddCommentAsync(eventId, userId, commentText);
 
         // Broadcast bình luận mới đến tất cả các client đang kết nối
-        await Clients.All.SendAsync("ReceiveComment", eventId, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"));
+        await Clients.All.SendAsync("ReceiveComment", eventId, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"), comment.UserRole);
+    }
+
+    // Phương thức ẩn bình luận dành cho Admin
+    public async Task HideComment(Guid commentId, Guid adminUserId)
+    {
+        await _commentService.HideCommentAsync(commentId, adminUserId);
+        await Clients.All.SendAsync("ReceiveCommentHidden", commentId);
     }
 
     // Tự động dọn dẹp bộ nhớ cache connectionId khi client ngắt kết nối

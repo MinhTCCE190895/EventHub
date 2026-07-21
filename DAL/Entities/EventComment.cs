@@ -8,6 +8,7 @@ public class EventComment
     public Guid? ParentCommentId { get; set; }
     public string Content { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public bool IsHidden { get; set; } = false;
 
     // Navigation properties
     public Event Event { get; set; } = null!;
