@@ -63,9 +63,6 @@
                 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
                 {
                     <!-- Admin specific links linking back to MVC -->
-                    <a class="sidebar-link" href="http://localhost:5259/Admin">
-                        <i class="bi bi-speedometer2"></i> Admin Panel
-                    </a>
                     <a class="sidebar-link" href="http://localhost:5259/Admin/Users">
                         <i class="bi bi-people-fill"></i> Quản lý User
                     </a>

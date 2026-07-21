@@ -1,6 +1,6 @@
 using BLL.DTOs;
 
-namespace BLL.Services;
+namespace BLL.Interfaces;
 
 public interface IAdminService
 {

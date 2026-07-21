@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RazorPages.ViewModels;
 
-public class EventSearchViewModel
+public class EventSearchViewModel : IValidatableObject
 {
     [MaxLength(200)]
     public string? Keyword { get; set; }
@@ -36,5 +36,16 @@ public class EventSearchViewModel
     // Used to populate dropdowns and checkboxes on the form — use DTOs, not Entities
     public List<CategoryDTO> Categories { get; set; } = new();
     public List<TagDTO> Tags { get; set; } = new();
+
+    // Custom Validation (B.E) - Check if EndDate is not earlier than StartDate
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)
+        {
+            yield return new ValidationResult(
+                "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.",
+                new[] { nameof(EndDate) });
+        }
+    }
 }
 

@@ -169,7 +169,7 @@ public static class DbInitializer
                 }
                 catch (AbandonedMutexException)
                 {
-                    hasHandle = true;
+                    hasHandle = true; // Mutex bị tiến trình cũ bỏ rơi, ta chiếm quyền điều khiển để seed tiếp
                 }
 
                 if (hasHandle)
@@ -178,7 +178,7 @@ public static class DbInitializer
                         return;
 
                     var currentOrganizer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Organizer");
-        var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
+                    var orgId = currentOrganizer?.Id ?? Guid.NewGuid();
 
         // --- Categories ---
         var catIT = new Category { Name = "Hội thảo chuyên đề", Description = "Các hội thảo về chuyên môn" };

@@ -105,33 +105,31 @@
 
 @section Scripts {
     <script>
+        // Unsave event asynchronously via AJAX POST and hide the card using jQuery fadeOut
         async function toggleBookmark(eventId) {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             if (!token) return;
 
             try {
-                const res = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
+                const response = await fetch(`?handler=ToggleBookmark&eventId=${eventId}`, {
                     method: 'POST',
                     headers: { 'RequestVerificationToken': token }
                 });
-                const data = await res.json();
+                if (!response.ok) return;
+                const result = await response.json();
 
-                if (data.success && !data.isBookmarked) {
-                    // Bỏ lưu thành công → ẩn card với animation mượt
-                    const cardEl = document.getElementById(`card_${eventId}`);
-                    if (cardEl) {
-                        cardEl.style.transition = 'all 0.35s ease';
-                        cardEl.style.opacity = '0';
-                        cardEl.style.transform = 'scale(0.9)';
-                        setTimeout(() => {
-                            cardEl.remove();
-                            // Nếu không còn card nào thì reload để hiện empty state
-                            if (!document.querySelector('.card-minimal')) location.reload();
-                        }, 350);
-                    }
+                if (result.success && !result.isBookmarked) {
+                    // Hide the unsaved card smoothly with jQuery fadeOut
+                    $(`#card_${eventId}`).fadeOut(350, function() {
+                        $(this).remove();
+                        // Reload to show empty state if no bookmarks remain
+                        if ($('.card-minimal').length === 0) {
+                            location.reload();
+                        }
+                    });
                 }
-            } catch (e) {
-                console.error('Bookmark toggle error:', e);
+            } catch (error) {
+                console.error("Error toggling bookmark status:", error);
             }
         }
     </script>

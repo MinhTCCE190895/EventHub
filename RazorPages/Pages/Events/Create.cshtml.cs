@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 
 namespace RazorPages.Pages.Events;
 
@@ -50,6 +51,17 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (!User.IsInRole("Admin"))
+        {
+            Input.OrganizerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            Input.Status = "Draft";
+            // Re-validate since we just modified Input programmatically
+            ModelState.ClearValidationState(nameof(Input.OrganizerId));
+            TryValidateModel(Input.OrganizerId, nameof(Input.OrganizerId));
+            ModelState.ClearValidationState(nameof(Input.Status));
+            TryValidateModel(Input.Status, nameof(Input.Status));
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();
@@ -57,6 +69,7 @@ public class CreateModel : PageModel
         }
 
         try
+
         {
             await _eventService.CreateEventAsync(Input);
             TempData["SuccessMessage"] = "Sự kiện đã được tạo thành công!";

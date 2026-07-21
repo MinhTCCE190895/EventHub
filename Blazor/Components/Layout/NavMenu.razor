@@ -30,9 +30,21 @@
                 <a class="sidebar-link" href="http://localhost:5129/Venues">
                     <i class="bi bi-building"></i> Quản lý địa điểm
                 </a>
+                <a class="sidebar-link" href="http://localhost:5129/Requests">
+                    <i class="bi bi-lightbulb-fill"></i> Duyệt ý tưởng sự kiện
+                </a>
                 <NavLink class="sidebar-link" href="feedback-analytics">
                     <i class="bi bi-bar-chart-line-fill"></i> Phân tích đánh giá
                 </NavLink>
+
+                <!-- Admin specific links linking back to MVC -->
+                <AuthorizeView Roles="Admin">
+                    <Authorized Context="adminContext">
+                        <a class="sidebar-link" href="http://localhost:5259/Admin/Users">
+                            <i class="bi bi-people-fill"></i> Quản lý User
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
             </Authorized>
         </AuthorizeView>
 

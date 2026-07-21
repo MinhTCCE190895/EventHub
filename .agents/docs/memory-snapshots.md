@@ -24,6 +24,7 @@ graph TD
 ### 1.1. Architecture & Global Config
 - **Environment**: Upgraded 100% to **.NET 8** and **C# 12**.
 - **Shared Authentication**: SSO implemented via shared Cookie `.EventHub.Auth` using EF Core Data Protection (`Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) across MVC, RazorPages, and Blazor.
+- **Account Lockout & Force Logout (`FE-09` / Task 4)**: Real-time enforcement using `CookieAuthenticationEvents.OnValidatePrincipal` to automatically log out users whose accounts are locked (`IsActive = false`) on any active page request across all applications (MVC, RazorPages, Blazor).
 
 ### 1.2. Razor Pages (Explore, Bookmarks & Event CRUD)
 - **Explore & Search (`Pages/Index.cshtml` / `FE-03`)**: Form search (.search-card-minimal) with time filters (All, Upcoming, Ongoing, Past). Dynamic LED status dots, seats capacity urgency warnings, grayscale for past events, skeleton loader, and AJAX pagination.
@@ -60,12 +61,28 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
+### 3.1. Detailed Changes Log
 - **2026-07-20 (Antigravity / Khôi)**:
   - **Tích hợp giao diện Hỏi đáp & Bình luận (FE-15 Live Q&A Hub), Phân màu Badge & Tính năng Admin Ẩn Bình Luận**:
-    - Bổ sung `IsHidden` vào `EventComment` (DAL), `CommentDTO` (BusinessObjects).
+    - Bổ sung `IsHidden` vào `EventComment` (DAL), `CommentDTO` (BLL/DTOs).
     - Triển khai `HideCommentAsync` trong `ICommentService`/`CommentService` (BLL), kiểm tra phân quyền Admin (ngăn ẩn bình luận của Admin khác).
     - Thêm phương thức `HideComment` & broadcast `ReceiveCommentHidden` vào SignalR `EventHub.cs`.
     - Giao diện Admin: Hiển thị icon 3 chấm góc phải bình luận của Sinh Viên & Ban Tổ Chức khi đăng nhập role Admin, bật modal/alert xác nhận ẩn, cập nhật hiển thị nội dung thành *"Bình luận đã bị admin ẩn"* trên cả RazorPages (`Detail.cshtml`) và Blazor (`QAComponent.razor`).
+
+- **2026-07-20 (Antigravity / Agent)**:
+  - **Sửa lỗi logic tạo Sự kiện (FE-02)**:
+    - Bổ sung 2 vòng check Overlap (trùng thời gian) tại `EventService.cs` (`CreateEventAsync`, `UpdateEventAsync`): Check không cho phép 1 địa điểm tổ chức 2 sự kiện cùng lúc, và check không cho phép 1 Organizer tổ chức 2 sự kiện ở 2 nơi khác nhau cùng lúc. Sử dụng công thức giao điểm thời gian `(e.StartTime < dto.EndTime && e.EndTime > dto.StartTime)`.
+    - Fix UI lỗi bảo mật trên `Create.cshtml`: Bọc các thẻ Dropdown của `OrganizerId` và `Status` bằng `@if (User.IsInRole("Admin"))`. Đối với Organizer, hệ thống tự động gán `Status` thành "Draft" và ép `OrganizerId` theo Claim token ở tầng `Create.cshtml.cs` để ngăn chặn giả mạo nhà tổ chức và tự ý duyệt sự kiện.
+
+- **2026-07-20 (Antigravity / QuiNC)**:
+  - **Tái cấu trúc và tối giản hóa phân hệ QuiNC (`FE-03`, `FE-08`, `FE-11`)**:
+    - **`WeatherService.cs`**: Gỡ bỏ locks `SemaphoreSlim` phức tạp. Đơn giản hóa hàm check `NormalizeLocation` khỏi hardcode địa chỉ AI, làm sạch logic mapping khung giờ dự báo wttr.in dễ hiểu cho đồ án môn học.
+    - **`BookmarkService.cs`**: Xóa bỏ dependency chéo `AppDbContext`, chuyển hẳn sang dùng `IRepository<Bookmark>`. Viết lại truy vấn LINQ bằng Projection `.Select()` trực tiếp sang DTO để loại bỏ code Include lồng nhau.
+    - **`Index.cshtml`**: Tinh giản Javascript Debounce và AJAX search, comment tiếng Việt rõ ràng để dễ thuyết minh vấn đáp.
+    - Đảm bảo biên dịch thành công 100% không lỗi.
+
+- **2026-07-20 (Antigravity / LongNH)**:
+  - **Account Lockout & Force Logout System (`FE-09` / Task 4)**: Cập nhật tài liệu phân công (`TASK_DIVISION.md`) và trạng thái bộ nhớ (`memory-snapshots.md`) để đồng bộ trạng thái "Done" cho hệ thống Khóa tài khoản và Buộc đăng xuất tức thì, khẳng định tính sẵn sàng và tính độc lập của phân hệ quản trị MVC Admin Control Panel.
 
 - **2026-07-14 (Antigravity / TriLT)**:
   - **Tạo tài liệu thiết kế hệ thống (Class Diagram & Integrated Communication Diagram)**:

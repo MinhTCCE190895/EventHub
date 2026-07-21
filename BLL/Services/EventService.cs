@@ -62,6 +62,26 @@ public class EventService : IEventService
         if (dto.StartTime >= dto.EndTime)
             throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
 
+        // Check Venue Conflict
+        var isVenueBooked = await _eventRepository.Query().AnyAsync(e => 
+            e.VenueId == dto.VenueId && 
+            e.Status != "Cancelled" &&
+            e.StartTime < dto.EndTime && e.EndTime > dto.StartTime, 
+            cancellationToken);
+
+        if (isVenueBooked)
+            throw new InvalidOperationException("Địa điểm này đã có sự kiện khác diễn ra trong khung giờ này.");
+
+        // Check Organizer Conflict
+        var isOrganizerBusy = await _eventRepository.Query().AnyAsync(e => 
+            e.OrganizerId == dto.OrganizerId && 
+            e.Status != "Cancelled" &&
+            e.StartTime < dto.EndTime && e.EndTime > dto.StartTime, 
+            cancellationToken);
+
+        if (isOrganizerBusy)
+            throw new InvalidOperationException("Bạn đã có lịch tổ chức một sự kiện khác trong khung giờ này.");
+
         var newEvent = _mapper.Map<Event>(dto);
         newEvent.Id = Guid.NewGuid();
         newEvent.CreatedAt = DateTime.UtcNow;
@@ -101,6 +121,28 @@ public class EventService : IEventService
     {
         if (dto.StartTime >= dto.EndTime)
             throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+
+        // Check Venue Conflict
+        var isVenueBooked = await _eventRepository.Query().AnyAsync(e => 
+            e.Id != dto.Id &&
+            e.VenueId == dto.VenueId && 
+            e.Status != "Cancelled" &&
+            e.StartTime < dto.EndTime && e.EndTime > dto.StartTime, 
+            cancellationToken);
+
+        if (isVenueBooked)
+            throw new InvalidOperationException("Địa điểm này đã có sự kiện khác diễn ra trong khung giờ này.");
+
+        // Check Organizer Conflict
+        var isOrganizerBusy = await _eventRepository.Query().AnyAsync(e => 
+            e.Id != dto.Id &&
+            e.OrganizerId == dto.OrganizerId && 
+            e.Status != "Cancelled" &&
+            e.StartTime < dto.EndTime && e.EndTime > dto.StartTime, 
+            cancellationToken);
+
+        if (isOrganizerBusy)
+            throw new InvalidOperationException("Bạn đã có lịch tổ chức một sự kiện khác trong khung giờ này.");
 
         var ev = await _eventRepository.Query()
             .Include(e => e.EventCategories)

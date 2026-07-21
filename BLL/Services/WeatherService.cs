@@ -1,6 +1,5 @@
 using BLL.Interfaces;
 using System.Text.Json;
-using System.Threading; // Added to use SemaphoreSlim to prevent Cache Stampede
 using BLL.DTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,34 +11,22 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
     private readonly HttpClient _httpClient = httpClient;
     private readonly IMemoryCache _cache = cache;
     private readonly ILogger<WeatherService> _logger = logger;
-    
-    // Semaphore to lock threads, allowing only 1 request to call the external API at a time (FE-08 Cache Stampede)
-    private static readonly SemaphoreSlim _weatherSemaphore = new(1, 1);
 
-
+    // Get the current weather of a location
     public async Task<WeatherDTO?> GetWeatherAsync(string? location)
     {
         if (string.IsNullOrWhiteSpace(location)) return null;
+        
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_{normalized.ToLower().Replace(" ", "_")}";
 
-        // Step 1: Quick cache check before locking to optimize read speed
         if (_cache.TryGetValue(cacheKey, out WeatherDTO? cachedWeather))
         {
             return cachedWeather;
         }
 
-        // Step 2: Wait for Semaphore lock if multiple threads are calling wttr.in simultaneously
-        await _weatherSemaphore.WaitAsync();
         try
         {
-            // Re-check cache after locking (Double-checked locking) in case another thread already populated the cache
-            if (_cache.TryGetValue(cacheKey, out cachedWeather))
-            {
-                return cachedWeather;
-            }
-
-            // Set a short timeout to prevent degrading user experience if the third-party API is congested
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
             string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
             var response = await _httpClient.GetAsync(url);
@@ -67,37 +54,30 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                     FetchedAt = DateTime.UtcNow
                 };
 
-                // Cache for 30 minutes as required
                 _cache.Set(cacheKey, weather, TimeSpan.FromMinutes(30));
                 return weather;
             }
         }
         catch (Exception ex)
         {
-            // Only log system error, do not throw to avoid crashing the page when the weather API encounters issues
-            _logger.LogError(ex, "Lỗi khi gọi API thời tiết cho {Location}. Sẽ dùng fallback data.", location);
-        }
-        finally
-        {
-            // Release Semaphore
-            _weatherSemaphore.Release();
+            _logger.LogError(ex, "Lỗi khi gọi API thời tiết cho {Location}.", location);
         }
 
-        // Create high-quality fallback data if the API errors out or network is down
         var fallbackWeather = GetFallbackWeather(normalized);
-        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5)); // Shorter cache duration for fallback data
+        _cache.Set(cacheKey, fallbackWeather, TimeSpan.FromMinutes(5));
         return fallbackWeather;
     }
 
+    // Fetch weather forecast for the event date and time
     public async Task<WeatherDTO?> GetWeatherForecastAsync(string? location, DateTime targetDate)
     {
         if (string.IsNullOrWhiteSpace(location)) return null;
-        // Add 7 hours to align with Vietnam timezone when calculating date difference
+
         var today = DateTime.UtcNow.AddHours(7).Date;
         var targetDateLocal = targetDate.Date;
         var daysDifference = (targetDateLocal - today).Days;
 
-        // Early exit if outside the 3-day forecast range to avoid unnecessary API requests since wttr.in only stores short-term forecast
+        // Only support weather forecast within 3 days (today, tomorrow, next day)
         if (daysDifference < 0 || daysDifference > 2)
         {
             return null;
@@ -106,21 +86,13 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         string normalized = NormalizeLocation(location);
         string cacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{targetDateLocal:yyyyMMdd}";
 
-        if (_cache.TryGetValue(cacheKey, out List<WeatherDTO>? cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
+        if (_cache.TryGetValue(cacheKey, out List<WeatherDTO>? cachedForecast) && cachedForecast != null)
         {
-            int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
-            return cachedForecast[index];
+            return cachedForecast[GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1)];
         }
 
-        await _weatherSemaphore.WaitAsync();
         try
         {
-            if (_cache.TryGetValue(cacheKey, out cachedForecast) && cachedForecast != null && cachedForecast.Count > 0)
-            {
-                int index = GetClosestHourlyIndex(targetDate, cachedForecast.Count - 1);
-                return cachedForecast[index];
-            }
-
             _httpClient.Timeout = TimeSpan.FromSeconds(3);
             string url = $"https://wttr.in/{Uri.EscapeDataString(normalized)}?format=j1";
             var response = await _httpClient.GetAsync(url);
@@ -133,54 +105,28 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
                 
                 if (root.TryGetProperty("weather", out var weatherList) && weatherList.ValueKind == JsonValueKind.Array)
                 {
-                    List<WeatherDTO>? targetResultList = null;
-                    
-                    // Iterate through all forecast days returned from the API to batch-cache them
-                    foreach (var day in weatherList.EnumerateArray())
+                    // Access the day's forecast directly using daysDifference as the index
+                    var day = weatherList[daysDifference];
+                    var hourlyArray = day.GetProperty("hourly");
+                    var dayForecastList = new List<WeatherDTO>();
+
+                    foreach (var hourly in hourlyArray.EnumerateArray())
                     {
-                        if (day.TryGetProperty("date", out var dateProp) && 
-                            DateTime.TryParse(dateProp.GetString(), out var parsedDate))
+                        string desc = hourly.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
+                        dayForecastList.Add(new WeatherDTO
                         {
-                            var dateKey = parsedDate.Date;
-                            var hourlyArray = day.GetProperty("hourly");
-                            var dayForecastList = new List<WeatherDTO>();
-
-                            // Iterate through all 8 time slots of the day (3-hour intervals) to get detailed forecast
-                            foreach (var hourly in hourlyArray.EnumerateArray())
-                            {
-                                double temp = double.Parse(hourly.GetProperty("tempC").GetString() ?? day.GetProperty("avgtempC").GetString() ?? "28");
-                                string desc = hourly.GetProperty("weatherDesc")[0].GetProperty("value").GetString() ?? "Trong lành";
-                                double wind = double.Parse(hourly.GetProperty("windspeedKmph").GetString() ?? "10");
-                                int humidity = int.Parse(hourly.GetProperty("humidity").GetString() ?? "75");
-
-                                dayForecastList.Add(new WeatherDTO
-                                {
-                                    Location = normalized,
-                                    Temperature = temp,
-                                    Condition = TranslateCondition(desc),
-                                    WindSpeed = wind,
-                                    Humidity = humidity,
-                                    WeatherIconClass = MapConditionToIcon(desc),
-                                    FetchedAt = DateTime.UtcNow
-                                });
-                            }
-
-                            // Cache the 8 hourly time slots for that day for 30 minutes
-                            string loopCacheKey = $"weather_fc_day_{normalized.ToLower().Replace(" ", "_")}_{dateKey:yyyyMMdd}";
-                            _cache.Set(loopCacheKey, dayForecastList, TimeSpan.FromMinutes(30));
-
-                            if (dateKey == targetDateLocal)
-                            {
-                                targetResultList = dayForecastList;
-                            }
-                        }
+                            Location = normalized,
+                            Temperature = double.Parse(hourly.GetProperty("tempC").GetString() ?? "28"),
+                            Condition = TranslateCondition(desc),
+                            WindSpeed = double.Parse(hourly.GetProperty("windspeedKmph").GetString() ?? "10"),
+                            Humidity = int.Parse(hourly.GetProperty("humidity").GetString() ?? "75"),
+                            WeatherIconClass = MapConditionToIcon(desc),
+                            FetchedAt = DateTime.UtcNow
+                        });
                     }
 
-                    if (targetResultList != null && targetResultList.Count > 0)
-                    {
-                        int index = GetClosestHourlyIndex(targetDate, targetResultList.Count - 1);
-                        return targetResultList[index];
-                    }
+                    _cache.Set(cacheKey, dayForecastList, TimeSpan.FromMinutes(30));
+                    return dayForecastList[GetClosestHourlyIndex(targetDate, dayForecastList.Count - 1)];
                 }
             }
         }
@@ -188,94 +134,50 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         {
             _logger.LogError(ex, "Lỗi khi gọi API dự báo thời tiết cho {Location} ngày {Date}.", location, targetDateLocal);
         }
-        finally
-        {
-            _weatherSemaphore.Release();
-        }
 
-        // Create fallback data with 8 identical hourly slots to avoid index errors
-        var fallbackWeather = GetFallbackWeather(normalized);
-        var fallbackList = Enumerable.Repeat(fallbackWeather, 8).ToList();
-        _cache.Set(cacheKey, fallbackList, TimeSpan.FromMinutes(5));
-        
-        int fallbackIndex = GetClosestHourlyIndex(targetDate, 7);
-        return fallbackList[fallbackIndex];
+        return GetFallbackWeather(normalized);
     }
 
-    // Match event time with the closest 3-hour forecast block from wttr.in
+    // Find the closest hourly forecast block to the event start time (wttr.in provides 8 slots)
     private static int GetClosestHourlyIndex(DateTime targetDate, int maxIndex)
     {
         int hour = targetDate.Hour;
-        
-        int index = hour switch
-        {
-            >= 23 or < 2 => 0,   // 00:00 slot
-            >= 2 and < 5 => 1,   // 03:00 slot
-            >= 5 and < 8 => 2,   // 06:00 slot
-            >= 8 and < 11 => 3,  // 09:00 slot
-            >= 11 and < 14 => 4, // 12:00 slot
-            >= 14 and < 17 => 5, // 15:00 slot
-            >= 17 and < 20 => 6, // 18:00 slot
-            _ => 7               // 21:00 slot
-        };
+        int index = 0;
+
+        if (hour >= 2 && hour < 5) index = 1;       // 03:00
+        else if (hour >= 5 && hour < 8) index = 2;  // 06:00
+        else if (hour >= 8 && hour < 11) index = 3; // 09:00
+        else if (hour >= 11 && hour < 14) index = 4;// 12:00
+        else if (hour >= 14 && hour < 17) index = 5;// 15:00
+        else if (hour >= 17 && hour < 20) index = 6;// 18:00
+        else if (hour >= 20 || hour < 2) index = 7; // 21:00
 
         return Math.Clamp(index, 0, maxIndex);
     }
 
-
+    // Normalize location from Venue address (extract city/province at the end for wttr.in recognition)
     private static string NormalizeLocation(string location)
     {
-        // Null or empty safety check to avoid string manipulation errors
         if (string.IsNullOrWhiteSpace(location)) return "Can Tho";
 
-        // Split address by comma to extract the province/city at the end
-        var parts = location.Split(',');
-        string cityCandidate = parts.Length > 0 ? parts[^1].Trim() : location.Trim();
-        
-        // If commas result in an empty candidate, assign default
-        if (string.IsNullOrWhiteSpace(cityCandidate))
-        {
-            cityCandidate = "Can Tho";
-        }
+        // Extract the last part of the address (usually the city/province)
+        string city = location.Split(',').Last().Trim();
 
-        // Clean common administrative prefixes in Vietnam
-        cityCandidate = cityCandidate
+        // Map popular Vietnamese cities to English unsigned names for API compatibility
+        if (city.Contains("Hồ Chí Minh", StringComparison.OrdinalIgnoreCase) || city.Contains("HCM", StringComparison.OrdinalIgnoreCase)) return "Ho Chi Minh";
+        if (city.Contains("Hà Nội", StringComparison.OrdinalIgnoreCase) || city.Contains("Hanoi", StringComparison.OrdinalIgnoreCase)) return "Hanoi";
+        if (city.Contains("Cần Thơ", StringComparison.OrdinalIgnoreCase) || city.Contains("Can Tho", StringComparison.OrdinalIgnoreCase)) return "Can Tho";
+        if (city.Contains("Đà Nẵng", StringComparison.OrdinalIgnoreCase) || city.Contains("Da Nang", StringComparison.OrdinalIgnoreCase)) return "Da Nang";
+
+        // Remove common administrative prefixes
+        return city
             .Replace("TP.", "", StringComparison.OrdinalIgnoreCase)
             .Replace("Thành phố", "", StringComparison.OrdinalIgnoreCase)
             .Replace("Tỉnh", "", StringComparison.OrdinalIgnoreCase)
             .Trim();
-
-        // Normalize to unsigned English for accurate recognition by wttr.in API
-        if (cityCandidate.Contains("Hồ Chí Minh", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("HCM", StringComparison.OrdinalIgnoreCase) ||
-            location.Contains("Nguyễn Văn Cừ", StringComparison.OrdinalIgnoreCase) ||
-            location.Contains("Võ Văn Ngân", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Ho Chi Minh";
-        }
-
-        if (cityCandidate.Contains("Hà Nội", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("Hanoi", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Hanoi";
-        }
-
-        if (cityCandidate.Contains("Cần Thơ", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("Can Tho", StringComparison.OrdinalIgnoreCase) ||
-            cityCandidate.Contains("CT", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Can Tho";
-        }
-
-        if (cityCandidate.Contains("Đà Nẵng", StringComparison.OrdinalIgnoreCase) || 
-            cityCandidate.Contains("Da Nang", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Da Nang";
-        }
-
-        return cityCandidate;
     }
 
+    // Translate English weather description from wttr.in to friendly Vietnamese
     private static string TranslateCondition(string condition)
     {
         condition = condition.ToLower();
@@ -284,9 +186,10 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         if (condition.Contains("rain") || condition.Contains("shower")) return "Có mưa";
         if (condition.Contains("thunder") || condition.Contains("storm")) return "Dông bão";
         if (condition.Contains("mist") || condition.Contains("fog")) return "Có sương mù";
-        return "Nhiệt đới";
+        return "Trong lành";
     }
 
+    // Map weather condition to Bootstrap Icon CSS class
     private static string MapConditionToIcon(string condition)
     {
         condition = condition.ToLower();
@@ -297,19 +200,15 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         return "bi-cloud-sun text-warning";
     }
 
+    // Default fallback weather when API encounters issues
     private static WeatherDTO GetFallbackWeather(string location)
     {
-        // Slightly randomize temperature for visual variance
-        var hour = DateTime.Now.Hour;
-        double baseTemp = (hour > 18 || hour < 6) ? 26.5 : 31.0;
-        baseTemp += new Random().Next(-2, 3);
-
         return new WeatherDTO
         {
             Location = location,
-            Temperature = baseTemp,
+            Temperature = 30.0,
             Condition = "Nắng ráo",
-            WindSpeed = 12.5,
+            WindSpeed = 12.0,
             Humidity = 75,
             WeatherIconClass = "bi-sun-fill text-warning",
             FetchedAt = DateTime.UtcNow
