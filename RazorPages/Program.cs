@@ -3,6 +3,8 @@ using DAL;
 using DAL.Data;
 using RazerPages.Configurations;
 
+using BLL.SignalR;
+
 namespace RazerPages
 {
     public class Program
@@ -44,6 +46,7 @@ namespace RazerPages
             app.UseAuthorization();
 
             app.MapRazorPages();
+            app.MapHub<EventHub>("/eventhub");
 
             app.Run();
         }

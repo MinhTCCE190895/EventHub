@@ -117,6 +117,110 @@
                         <div class="text-muted small mt-1">@Model.EventItem.Venue?.Address</div>
                     </div>
                 </div>
+
+                <hr class="whitepaper-divider" />
+
+                <!-- Phần 4: Hỏi đáp & Bình luận (Live Q&A Hub) -->
+                <div class="whitepaper-section" id="qa-hub-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="whitepaper-section-title mb-0">
+                            <i class="bi bi-chat-left-text-fill text-primary me-2"></i> 4. Hỏi đáp & Bình luận (Live Q&A Hub)
+                        </h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1.5 rounded-pill fw-semibold">
+                            @(Model.Comments?.Count() ?? 0) bình luận
+                        </span>
+                    </div>
+
+                    <!-- Danh sách bình luận hiện có -->
+                    <div class="comments-list-wrapper mb-4" id="commentsList" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                        @if (Model.Comments == null || !Model.Comments.Any())
+                        {
+                            <div class="p-4 text-center bg-light rounded-3 text-muted" id="noCommentsPlaceholder">
+                                <i class="bi bi-chat-dots display-6 text-slate-300 d-block mb-2"></i>
+                                <span class="small">Chưa có bình luận nào cho sự kiện này. Hãy là người đầu tiên đặt câu hỏi!</span>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var c in Model.Comments)
+                            {
+                                var initials = string.IsNullOrWhiteSpace(c.UserFullName) ? "U" : 
+                                    (c.UserFullName.Trim().Split(' ').Length > 1 ? 
+                                        (c.UserFullName.Trim().Split(' ')[0][0].ToString() + c.UserFullName.Trim().Split(' ')[c.UserFullName.Trim().Split(' ').Length - 1][0].ToString()).ToUpper() : 
+                                        c.UserFullName.Substring(0, Math.Min(2, c.UserFullName.Length)).ToUpper());
+
+                                <div class="comment-item p-3 mb-3 bg-white rounded-3 border shadow-3xs position-relative" id="comment-@c.Id">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-circle rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-7" style="width: 32px; height: 32px;">
+                                                @initials
+                                            </div>
+                                            <div>
+                                                <strong class="text-slate-800 fs-7">@c.UserFullName</strong>
+                                                <span class="badge ms-1" style="font-size: 0.65rem; @c.RoleBadgeStyle">@c.RoleBadgeText</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted fs-7">@c.CreatedAt.AddHours(7).ToString("HH:mm:ss dd/MM/yyyy")</small>
+                                            
+                                            @if (User.IsInRole("Admin") && !c.IsHidden && c.UserRole != "Admin")
+                                            {
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn quản trị">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.82rem;">
+                                                        <li>
+                                                            <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmHideComment('@c.Id')">
+                                                                <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="comment-body fs-7 ps-4 ms-2" id="comment-body-@c.Id">
+                                        @if (c.IsHidden)
+                                        {
+                                            <span class="text-muted fst-italic">
+                                                <i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-slate-700">@c.Content</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Form đăng bình luận -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form method="post" asp-page-handler="Comment" asp-route-id="@Model.EventItem.Id" id="commentForm" class="mt-3">
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-slate-700 fs-7">Viết bình luận mới:</label>
+                                <textarea asp-for="CommentText" id="commentInput" class="form-control rounded-3" rows="3" placeholder="Nhập thắc mắc hoặc ý kiến của bạn về sự kiện..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" id="btnSubmitComment" class="btn btn-primary px-4 fw-bold rounded-3 btn-gradient-primary">
+                                    <i class="bi bi-send-fill me-1"></i> Gửi bình luận
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning text-center small mb-0 rounded-3 border-0">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Bạn cần <a href="http://localhost:5259/Account/Login?returnUrl=@(System.Net.WebUtility.UrlEncode(HttpContext.Request.Path))" class="fw-bold text-decoration-none">đăng nhập</a> để tham gia hỏi đáp và gửi bình luận.
+                        </div>
+                    }
+                </div>
             </div>
         </div>
 
@@ -381,4 +485,134 @@
         }
         .whitepaper-banner-wrapper {
             height: 180px;
+        }
+    }
 </style>
+
+<!-- Modal xác nhận ẩn bình luận dành cho Admin -->
+<div class="modal fade" id="hideCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold text-slate-800"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Xác nhận ẩn</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-slate-600 small py-3">
+                Bạn có chắc chắn muốn ẩn bình luận này không? Bình luận sau khi ẩn sẽ hiển thị thông báo <em>"Bình luận đã bị admin ẩn"</em>.
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-sm btn-light fw-bold rounded-3" data-bs-dismiss="modal">Hủy</button>
+                <form method="post" asp-page-handler="HideComment" asp-route-id="@Model.EventItem.Id">
+                    <input type="hidden" id="hideCommentIdInput" name="commentId" value="" />
+                    <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-3">Ẩn bình luận</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    function confirmHideComment(commentId) {
+        document.getElementById('hideCommentIdInput').value = commentId;
+        var modalElement = document.getElementById('hideCommentModal');
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const currentEventId = "@Model.EventItem.Id";
+        const currentUserId = "@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "")";
+
+        // Khởi tạo SignalR WebSocket Client kết nối tới Hub /eventhub
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/eventhub")
+            .withAutomaticReconnect()
+            .build();
+
+        // Lắng nghe bình luận mới từ bất kỳ client nào đẩy qua SignalR
+        connection.on("ReceiveComment", function (eventId, authorName, content, timeStr, role) {
+            if (eventId.toLowerCase() === currentEventId.toLowerCase()) {
+                const noCommentsPlaceholder = document.getElementById("noCommentsPlaceholder");
+                if (noCommentsPlaceholder) {
+                    noCommentsPlaceholder.remove();
+                }
+
+                const commentsList = document.getElementById("commentsList");
+                if (commentsList) {
+                    const initials = authorName ? authorName.trim().substring(0, 2).toUpperCase() : "U";
+                    let roleBadgeStyle = "background-color: #e2e8f0; color: #000000; font-weight: 600;";
+                    let roleBadgeText = "Sinh Viên";
+                    if (role === "Admin") {
+                        roleBadgeStyle = "background-color: #dc3545; color: #000000; font-weight: 600;";
+                        roleBadgeText = "Admin";
+                    } else if (role === "Organizer") {
+                        roleBadgeStyle = "background-color: #fd7e14; color: #000000; font-weight: 600;";
+                        roleBadgeText = "Ban Tổ Chức";
+                    }
+
+                    const commentDiv = document.createElement("div");
+                    commentDiv.className = "comment-item p-3 mb-3 bg-white rounded-3 border shadow-3xs position-relative";
+                    commentDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-7" style="width: 32px; height: 32px;">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <strong class="text-slate-800 fs-7">${authorName}</strong>
+                                    <span class="badge ms-1" style="font-size: 0.65rem; ${roleBadgeStyle}">${roleBadgeText}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <small class="text-muted fs-7">${timeStr}</small>
+                            </div>
+                        </div>
+                        <div class="comment-body fs-7 ps-4 ms-2">
+                            <span class="text-slate-700">${content}</span>
+                        </div>
+                    `;
+
+                    commentsList.appendChild(commentDiv);
+                    commentsList.scrollTop = commentsList.scrollHeight;
+                }
+            }
+        });
+
+        // Lắng nghe tín hiệu ẩn bình luận thời gian thực từ Admin
+        connection.on("ReceiveCommentHidden", function (commentId) {
+            const commentBody = document.getElementById("comment-body-" + commentId);
+            if (commentBody) {
+                commentBody.innerHTML = '<span class="text-muted fst-italic"><i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn</span>';
+            }
+        });
+
+        connection.start().then(function () {
+            console.log("SignalR Live Q&A connected successfully.");
+        }).catch(function (err) {
+            console.error("SignalR connection error: ", err);
+        });
+
+        // Đăng bình luận qua SignalR WebSocket không cần reload trang
+        const commentForm = document.getElementById("commentForm");
+        if (commentForm && currentUserId) {
+            commentForm.addEventListener("submit", function (e) {
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    e.preventDefault();
+                    const input = document.getElementById("commentInput");
+                    const text = input ? input.value.trim() : "";
+                    if (!text) return;
+
+                    connection.invoke("SendComment", currentEventId, currentUserId, text)
+                        .then(function () {
+                            if (input) input.value = "";
+                        })
+                        .catch(function (err) {
+                            console.error("Error sending comment via SignalR: ", err);
+                            commentForm.submit(); // Fallback form POST
+                        });
+                }
+            });
+        }
+    });
+</script>
