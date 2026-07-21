@@ -1,7 +1,7 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.AspNetCore.Authorization
 @using BLL.Interfaces
-@using BusinessObjects.DTOs
+@using BLL.DTOs
 @inject ICommentService CommentService
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
@@ -29,7 +29,7 @@
         {
             @foreach (var c in Comments)
             {
-                <div class="comment-bubble-wrapper mb-3 p-3 rounded-3 bg-white border border-light shadow-3xs hover-scale">
+                <div class="comment-bubble-wrapper mb-3 p-3 rounded-3 bg-white border border-light shadow-3xs hover-scale position-relative">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <div class="d-flex align-items-center gap-2">
                             <div class="avatar-placeholder rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
@@ -37,14 +37,54 @@
                             </div>
                             <div>
                                 <strong class="text-slate-800 text-sm">@c.UserFullName</strong>
-                                <span class="badge bg-slate-100 text-slate-600 border text-3xs ms-1">Thành viên</span>
+                                <span class="badge ms-1" style="font-size: 0.65rem; @c.RoleBadgeStyle">@c.RoleBadgeText</span>
                             </div>
                         </div>
-                        <small class="text-muted text-xs">@c.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
+
+                        <div class="d-flex align-items-center gap-1">
+                            <small class="text-muted text-xs me-1">@c.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
+
+                            @if (CurrentUserRole == "Admin" && !c.IsHidden && c.UserRole != "Admin")
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
+                                        <li>
+                                            <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestHideComment(c.Id)">
+                                                <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
                     </div>
-                    <div class="comment-content text-slate-700 text-sm ps-4 ms-2">
-                        @c.Content
+
+                    <div class="comment-content text-sm ps-4 ms-2">
+                        @if (c.IsHidden)
+                        {
+                            <span class="text-muted fst-italic">
+                                <i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-slate-700">@c.Content</span>
+                        }
                     </div>
+
+                    @if (ConfirmingHideCommentId == c.Id)
+                    {
+                        <div class="mt-2 p-2 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 d-flex align-items-center justify-content-between text-xs">
+                            <span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Bạn có chắc chắn muốn ẩn bình luận này không?</span>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-xs btn-secondary py-0 px-2 fw-bold" @onclick="CancelHideComment">Hủy</button>
+                                <button class="btn btn-xs btn-danger py-0 px-2 fw-bold" @onclick="() => ConfirmHideCommentAsync(c.Id)">Xác nhận ẩn</button>
+                            </div>
+                        </div>
+                    }
                 </div>
             }
         }
@@ -130,6 +170,8 @@
     private HubConnection? hubConnection;
     private Guid? CurrentUserId;
     private string? CurrentUserFullName;
+    private string? CurrentUserRole;
+    private Guid? ConfirmingHideCommentId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -145,6 +187,7 @@
                 {
                     CurrentUserId = userId;
                     CurrentUserFullName = user.Identity.Name;
+                    CurrentUserRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
                 }
             }
         }
@@ -182,7 +225,7 @@
                         .WithAutomaticReconnect()
                         .Build();
 
-                    hubConnection.On<Guid, string, string, string>("ReceiveComment", (id, author, content, time) =>
+                    hubConnection.On<Guid, string, string, string, string>("ReceiveComment", (id, author, content, time, role) =>
                     {
                         if (id == EventId)
                         {
@@ -191,9 +234,20 @@
                                 Id = Guid.NewGuid(),
                                 EventId = id,
                                 UserFullName = author,
+                                UserRole = role,
                                 Content = content,
                                 CreatedAt = DateTime.UtcNow
                             });
+                            InvokeAsync(StateHasChanged);
+                        }
+                    });
+
+                    hubConnection.On<Guid>("ReceiveCommentHidden", (commentId) =>
+                    {
+                        var target = Comments.FirstOrDefault(c => c.Id == commentId);
+                        if (target != null)
+                        {
+                            target.IsHidden = true;
                             InvokeAsync(StateHasChanged);
                         }
                     });
@@ -250,6 +304,40 @@
         if (e.Key == "Enter" && !e.ShiftKey)
         {
             await SendCommentAsync();
+        }
+    }
+
+    private void RequestHideComment(Guid commentId)
+    {
+        ConfirmingHideCommentId = commentId;
+    }
+
+    private void CancelHideComment()
+    {
+        ConfirmingHideCommentId = null;
+    }
+
+    private async Task ConfirmHideCommentAsync(Guid commentId)
+    {
+        if (CurrentUserId == null || CurrentUserRole != "Admin") return;
+        ConfirmingHideCommentId = null;
+        try
+        {
+            if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
+            {
+                await hubConnection.SendAsync("HideComment", commentId, CurrentUserId.Value);
+            }
+            else
+            {
+                await CommentService.HideCommentAsync(commentId, CurrentUserId.Value);
+                var target = Comments.FirstOrDefault(c => c.Id == commentId);
+                if (target != null) target.IsHidden = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
         }
     }
 

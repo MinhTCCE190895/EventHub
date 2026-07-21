@@ -1,6 +1,6 @@
 using BLL.Interfaces;
 using AutoMapper;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 using DAL.Entities;
 using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -58,5 +58,32 @@ public class CommentService : ICommentService
             .FirstOrDefaultAsync(c => c.Id == comment.Id, cancellationToken);
 
         return _mapper.Map<CommentDTO>(inserted!);
+    }
+
+    public async Task<bool> HideCommentAsync(Guid commentId, Guid adminUserId, CancellationToken cancellationToken = default)
+    {
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Id == adminUserId, cancellationToken);
+        if (admin == null || admin.Role != "Admin")
+        {
+            throw new UnauthorizedAccessException("Chỉ có Quản trị viên (Admin) mới có quyền ẩn bình luận.");
+        }
+
+        var comment = await _commentRepository.Query()
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+
+        if (comment == null)
+        {
+            throw new KeyNotFoundException("Bình luận không tồn tại.");
+        }
+
+        if (comment.User != null && comment.User.Role == "Admin")
+        {
+            throw new InvalidOperationException("Không thể ẩn bình luận của Quản trị viên.");
+        }
+
+        comment.IsHidden = true;
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

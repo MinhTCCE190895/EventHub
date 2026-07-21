@@ -12,18 +12,28 @@ namespace RazorPages.Pages.Events
         private readonly IEventService _eventService;
         private readonly IFeedbackAnalyticsService _feedbackService;
         private readonly IWeatherService _weatherService;
+        private readonly ICommentService _commentService;
 
-        public DetailModel(IEventService eventService, IFeedbackAnalyticsService feedbackService, IWeatherService weatherService)
+        public DetailModel(
+            IEventService eventService, 
+            IFeedbackAnalyticsService feedbackService, 
+            IWeatherService weatherService,
+            ICommentService commentService)
         {
             _eventService = eventService;
             _feedbackService = feedbackService;
             _weatherService = weatherService;
+            _commentService = commentService;
         }
 
         public Event EventItem { get; set; } = default!;
         public bool ShowFeedbackButton { get; set; } = false;
         public WeatherDTO? EventWeather { get; set; }
         public bool IsForecastAvailable { get; set; }
+        public IEnumerable<CommentDTO> Comments { get; set; } = new List<CommentDTO>();
+
+        [BindProperty]
+        public string CommentText { get; set; } = string.Empty;
 
         public int MaxCapacity => EventItem?.Venue?.MaxCapacity ?? 0;
         public int BookedCount => EventItem?.RegisteredCount ?? 0;
@@ -56,8 +66,71 @@ namespace RazorPages.Pages.Events
             EventWeather = await _weatherService.GetWeatherForecastAsync(EventItem.Venue?.Address, EventItem.StartTime.AddHours(7));
             IsForecastAvailable = EventWeather != null;
             ShowFeedbackButton = await _feedbackService.CanSubmitFeedbackAsync(id, User);
+            Comments = await _commentService.GetCommentsForEventAsync(id);
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostCommentAsync(Guid id)
+        {
+            if (!User.Identity?.IsAuthenticated == true)
+            {
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập để thực hiện bình luận.";
+                return RedirectToPage(new { id });
+            }
+
+            if (string.IsNullOrWhiteSpace(CommentText))
+            {
+                TempData["ErrorMessage"] = "Nội dung bình luận không được để trống.";
+                return RedirectToPage(new { id });
+            }
+
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                TempData["ErrorMessage"] = "Không xác định được danh tính người dùng.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _commentService.AddCommentAsync(id, userId, CommentText.Trim());
+                TempData["SuccessMessage"] = "Bình luận của bạn đã được đăng thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostHideCommentAsync(Guid id, Guid commentId)
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                TempData["ErrorMessage"] = "Chỉ Quản trị viên (Admin) mới có quyền ẩn bình luận.";
+                return RedirectToPage(new { id });
+            }
+
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var adminUserId))
+            {
+                TempData["ErrorMessage"] = "Không xác định được danh tính Admin.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _commentService.HideCommentAsync(commentId, adminUserId);
+                TempData["SuccessMessage"] = "Đã ẩn bình luận thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToPage(new { id });
         }
     }
 }

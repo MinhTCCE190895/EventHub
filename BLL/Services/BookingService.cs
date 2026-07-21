@@ -7,7 +7,7 @@ using DAL.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
-using BusinessObjects.DTOs;
+using BLL.DTOs;
 
 namespace BLL.Services;
 
