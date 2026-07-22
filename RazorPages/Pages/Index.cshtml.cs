@@ -75,13 +75,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        // Validate thủ công khoảng thời gian bắt đầu và kết thúc
+        // So sánh ngày kết thúc có trước ngày bắt đầu không để báo lỗi ra form
         if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)
         {
             ModelState.AddModelError(nameof(EndDate), "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
         }
 
-        // Load danh mục và thẻ trước để hiển thị ra form bất kể có lỗi hay không
+        // Load danh mục và thẻ trước để hiển thị ra form bất kể có lỗi nhập liệu hay không
         try
         {
             Categories = (await _categoryService.GetAllCategoriesAsync(cancellationToken)).ToList();
@@ -92,15 +92,17 @@ public class IndexModel : PageModel
             _logger.LogError(ex, "Không thể tải danh sách danh mục hoặc thẻ trên trang chủ");
         }
 
+        // Nếu có lỗi validation (như nhập sai khoảng ngày) thì dừng và hiển thị trang luôn
         if (!ModelState.IsValid)
             return Page();
 
-        // Lấy danh sách bookmark của sinh viên nếu đã đăng nhập
+        // Lấy danh sách ID các sự kiện đã lưu của sinh viên này để hiển thị icon bookmark tương ứng
         if (CurrentStudentId.HasValue && User.IsInRole("Student"))
         {
             BookmarkedEventIds = await _bookmarkService.GetBookmarkedEventIdsAsync(CurrentStudentId.Value, cancellationToken);
         }
 
+        // Map các biến filter từ PageModel sang DTO để truyền xuống tầng BLL
         var searchDto = new EventSearchDTO
         {
             Keyword    = Keyword,
@@ -113,12 +115,13 @@ public class IndexModel : PageModel
             SortBy     = SortBy
         };
 
+        // Gọi service xử lý tìm kiếm và lấy tổng số bản ghi phục vụ phân trang
         var (items, totalCount) = await _eventService.SearchEventsAsync(searchDto, cancellationToken);
 
         Results    = items;
         TotalCount = totalCount;
 
-        // Giới hạn số trang nằm trong khoảng hợp lệ
+        // Giới hạn PageNumber không được vượt quá TotalPages và không được nhỏ hơn 1 để tránh lỗi ngoài phạm vi
         PageNumber = Math.Clamp(PageNumber, 1, Math.Max(1, TotalPages));
 
         return Page();
