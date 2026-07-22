@@ -235,7 +235,7 @@
     // Vòng đời chạy sau khi component đã render giao diện: Thiết lập kết nối SignalR thời gian thực
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && EventItem != null)
+        if (firstRender)
         {
             // Khởi chạy ngầm tiến trình kết nối SignalR để tránh chặn luồng render giao diện chính
             _ = Task.Run(async () =>
@@ -265,7 +265,7 @@
                     // Đăng ký sự kiện lắng nghe broadcast từ Server gửi về khi có cập nhật chỗ trống
                     hubConnection.On<Guid, int>("ReceiveTicketUpdate", (id, remainingSeats) =>
                     {
-                        if (EventItem != null && EventItem.Id == id)
+                        if (EventItem != null && id == EventId)
                         {
                             // Tính toán lại số lượng vé đã đăng ký dựa trên số ghế trống nhận được
                             EventItem.RegisteredCount = EventItem.MaxCapacity - remainingSeats;

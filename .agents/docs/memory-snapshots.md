@@ -62,6 +62,10 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-22 (Antigravity / Khôi)**:
+  - **Sửa lỗi kẹt trạng thái kết nối SignalR tại trang Đặt Vé (`FE-04`)**:
+    - Sửa logic kiểm tra vòng đời `OnAfterRenderAsync` trong [BookingComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/Booking/BookingComponent.razor) từ `firstRender && EventItem != null` thành `firstRender`. Giải quyết triệt để race condition khi tải thông tin sự kiện bất đồng bộ khiến bộ phận SignalR không bao giờ được khởi tạo, giữ trạng thái kết nối luôn ở mức *"Đang kết nối..."*.
+
 - **2026-07-22 (Antigravity / Agent)**:
   - **Đồng bộ mã nguồn từ nhánh `develop`**:
     - Kéo thành công 14 commit mới nhất từ `origin/develop` qua `git pull origin develop --rebase`.
