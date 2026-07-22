@@ -13,17 +13,20 @@ namespace RazorPages.Pages.Events
         private readonly IFeedbackAnalyticsService _feedbackService;
         private readonly IWeatherService _weatherService;
         private readonly ICommentService _commentService;
+        private readonly IBookingService _bookingService;
 
         public DetailModel(
             IEventService eventService, 
             IFeedbackAnalyticsService feedbackService, 
             IWeatherService weatherService,
-            ICommentService commentService)
+            ICommentService commentService,
+            IBookingService bookingService)
         {
             _eventService = eventService;
             _feedbackService = feedbackService;
             _weatherService = weatherService;
             _commentService = commentService;
+            _bookingService = bookingService;
         }
 
         public Event EventItem { get; set; } = default!;
@@ -31,6 +34,8 @@ namespace RazorPages.Pages.Events
         public WeatherDTO? EventWeather { get; set; }
         public bool IsForecastAvailable { get; set; }
         public IEnumerable<CommentDTO> Comments { get; set; } = new List<CommentDTO>();
+        public BookingDTO? UserBooking { get; set; }
+        public bool HasBooked => UserBooking != null;
 
         [BindProperty]
         public string CommentText { get; set; } = string.Empty;
@@ -67,6 +72,15 @@ namespace RazorPages.Pages.Events
             IsForecastAvailable = EventWeather != null;
             ShowFeedbackButton = await _feedbackService.CanSubmitFeedbackAsync(id, User);
             Comments = await _commentService.GetCommentsForEventAsync(id);
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(userIdClaim, out var userId))
+                {
+                    UserBooking = await _bookingService.GetUserBookingForEventAsync(id, userId);
+                }
+            }
 
             return Page();
         }

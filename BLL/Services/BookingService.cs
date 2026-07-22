@@ -113,6 +113,17 @@ public class BookingService : IBookingService
         }
     }
 
+    public async Task<BookingDTO?> GetUserBookingForEventAsync(Guid eventId, Guid studentId, CancellationToken cancellationToken = default)
+    {
+        var booking = await _bookingRepo.Query()
+            .Where(b => b.EventId == eventId && b.StudentId == studentId && b.Status == "Confirmed")
+            .Include(b => b.Student)
+            .Include(b => b.Event)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return booking == null ? null : _mapper.Map<BookingDTO>(booking);
+    }
+
     public async Task<IEnumerable<BookingDTO>> GetRecentBookingsAsync(int count, CancellationToken cancellationToken = default)
     {
         var bookings = await _bookingRepo.Query()

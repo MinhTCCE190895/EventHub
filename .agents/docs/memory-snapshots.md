@@ -63,6 +63,11 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ### 3.1. Detailed Changes Log
 - **2026-07-22 (Antigravity / Khôi)**:
+  - **Cập nhật giao diện Đặt vé & Chi tiết sự kiện (`FE-04`)**:
+    - Thêm phương thức `GetUserBookingForEventAsync` vào `IBookingService` và `BookingService` để kiểm tra vé đã đặt của sinh viên.
+    - Cập nhật trang Chi tiết sự kiện ([Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml)) và component ([BookingComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/Booking/BookingComponent.razor)): Khi sinh viên đã đăng ký vé thành công, chuyển nút *"Đăng Ký Đặt Vé Ngay"* thành nút disabled xanh *"Bạn đã đặt vé rồi"* và hiển thị khung mã vé QR (`TicketCode`) bên dưới.
+
+- **2026-07-22 (Antigravity / Khôi)**:
   - **Sửa lỗi kẹt trạng thái kết nối SignalR tại trang Đặt Vé (`FE-04`)**:
     - Sửa logic kiểm tra vòng đời `OnAfterRenderAsync` trong [BookingComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/Booking/BookingComponent.razor) từ `firstRender && EventItem != null` thành `firstRender`. Giải quyết triệt để race condition khi tải thông tin sự kiện bất đồng bộ khiến bộ phận SignalR không bao giờ được khởi tạo, giữ trạng thái kết nối luôn ở mức *"Đang kết nối..."*.
 

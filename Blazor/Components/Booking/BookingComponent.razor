@@ -67,30 +67,46 @@
                     </div>
                 </div>
 
-                <button class="btn @(hasEnded ? "btn-secondary" : (isSoldOut ? "btn-secondary" : "btn-primary")) w-100 py-3 fw-bold shadow-sm text-white" 
-                        disabled="@(hasEnded || isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student" || ConnectionStatus == "Mất kết nối")"
-                        @onclick="BookTicketAsync">
-                    @if (IsProcessing)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2"></span>
-                        <span>Đang xử lý...</span>
-                    }
-                    else if (hasEnded)
-                    {
-                        <i class="bi bi-calendar-x-fill me-2"></i>
-                        <span>Sự Kiện Đã Kết Thúc</span>
-                    }
-                    else if (isSoldOut)
-                    {
-                        <i class="bi bi-x-circle-fill me-2"></i>
-                        <span>Sự Kiện Hết Vé</span>
-                    }
-                    else
-                    {
-                        <i class="bi bi-ticket-perforated-fill me-2"></i>
-                        <span>Xác Nhận Đặt Vé</span>
-                    }
-                </button>
+                @if (HasBooked)
+                {
+                    <button class="btn btn-success w-100 py-3 fw-bold shadow-sm text-white" disabled style="opacity: 0.95;">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <span>Bạn Đã Đặt Vé Rồi</span>
+                    </button>
+                    <div class="text-center p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 mt-3">
+                        <small class="text-muted d-block uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">MÃ VÉ THAM GIA CỦA BẠN</small>
+                        <span class="fw-bold text-success font-monospace" style="font-size: 1.15rem; letter-spacing: 1px;">
+                            <i class="bi bi-qr-code me-1"></i>@UserBooking?.TicketCode
+                        </span>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn @(hasEnded ? "btn-secondary" : (isSoldOut ? "btn-secondary" : "btn-primary")) w-100 py-3 fw-bold shadow-sm text-white" 
+                            disabled="@(hasEnded || isSoldOut || IsProcessing || CurrentUserId == null || CurrentUserRole != "Student" || ConnectionStatus == "Mất kết nối")"
+                            @onclick="BookTicketAsync">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Đang xử lý...</span>
+                        }
+                        else if (hasEnded)
+                        {
+                            <i class="bi bi-calendar-x-fill me-2"></i>
+                            <span>Sự Kiện Đã Kết Thúc</span>
+                        }
+                        else if (isSoldOut)
+                        {
+                            <i class="bi bi-x-circle-fill me-2"></i>
+                            <span>Sự Kiện Hết Vé</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-ticket-perforated-fill me-2"></i>
+                            <span>Xác Nhận Đặt Vé</span>
+                        }
+                    </button>
+                }
 
                 @if (ConnectionStatus == "Mất kết nối")
                 {
@@ -175,6 +191,10 @@
     // Vai trò của người dùng hiện tại (bắt buộc phải là "Student" mới được book)
     private string? CurrentUserRole;
 
+    // DTO chứa thông tin vé đã đăng ký của sinh viên hiện tại
+    private BLL.DTOs.BookingDTO? UserBooking;
+    private bool HasBooked => UserBooking != null;
+
     // Trạng thái kết nối SignalR (Đang kết nối, Đang kết nối lại, Đã kết nối, Mất kết nối)
     private string ConnectionStatus = "Đang kết nối...";
 
@@ -208,7 +228,7 @@
             }
         }
 
-        // 2. Tải thông tin chi tiết sự kiện (bao gồm sức chứa địa điểm và số người đã đăng ký)
+        // 2. Tải thông tin chi tiết sự kiện và kiểm tra vé đã đặt của sinh viên
         try
         {
             var ev = await EventService.GetEventByIdAsync(EventId);
@@ -224,6 +244,11 @@
                     RegisteredCount = ev.RegisteredCount,
                     EndTime = ev.EndTime
                 };
+            }
+
+            if (CurrentUserId != null)
+            {
+                UserBooking = await BookingService.GetUserBookingForEventAsync(EventId, CurrentUserId.Value);
             }
         }
         catch (Exception ex)
@@ -341,6 +366,7 @@
         {
             // Thực hiện gọi service xử lý đặt vé
             var ticketCode = await BookingService.BookTicketAsync(EventItem.Id, CurrentUserId.Value);
+            UserBooking = await BookingService.GetUserBookingForEventAsync(EventItem.Id, CurrentUserId.Value);
             
             IsSuccess = true;
             Message = $"Đặt vé thành công! Mã vé của bạn: {ticketCode}";

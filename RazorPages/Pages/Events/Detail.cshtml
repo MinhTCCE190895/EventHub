@@ -274,7 +274,19 @@
 
                     <!-- Nút hành động chính -->
                     <div class="d-grid gap-2 mb-4">
-                        @if (Model.IsPastEvent)
+                        @if (Model.HasBooked)
+                        {
+                            <button class="btn btn-success py-3 fw-bold rounded-3 shadow-sm" disabled style="opacity: 0.95;">
+                                <i class="bi bi-check-circle-fill me-1"></i> Bạn đã đặt vé rồi
+                            </button>
+                            <div class="text-center p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 mt-1">
+                                <small class="text-muted d-block uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">MÃ VÉ THAM GIA CỦA BẠN</small>
+                                <span class="fw-bold text-success font-monospace" style="font-size: 1.15rem; letter-spacing: 1px;">
+                                    <i class="bi bi-qr-code me-1"></i>@Model.UserBooking?.TicketCode
+                                </span>
+                            </div>
+                        }
+                        else if (Model.IsPastEvent)
                         {
                             <button class="btn btn-secondary py-3 fw-bold rounded-3" disabled>
                                 <i class="bi bi-calendar-x-fill me-1"></i> Sự kiện đã kết thúc
@@ -292,7 +304,6 @@
                                 <i class="bi bi-cursor-fill me-1"></i> Đăng Ký Đặt Vé Ngay
                             </a>
                         }
-
                     </div>
 
                     <hr class="border-light my-4" />
