@@ -1,4 +1,4 @@
-@model MVC.ViewModels.LoginViewModel
+@model LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
 }
@@ -10,19 +10,14 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <div class="auth-header">
-            <a href="/" class="auth-logo">
+            <a asp-controller="Home" asp-action="Index" class="auth-logo">
                 <i class="bi bi-shield-check"></i> UniEvent Hub
             </a>
             <h2 class="auth-title">Chào mừng trở lại</h2>
             <p class="auth-subtitle">Vui lòng đăng nhập tài khoản của bạn</p>
         </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success border-0 rounded-3 text-center py-2" style="font-size: 0.88rem; background-color: rgba(74, 222, 128, 0.1); color: #15803d;" role="alert">
-                <i class="bi bi-check-circle-fill me-1"></i> @TempData["SuccessMessage"]
-            </div>
-        }
+        <partial name="_Alerts" />
 
         <form asp-action="Login" method="post">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
@@ -51,7 +46,7 @@
                     <input asp-for="RememberMe" class="auth-checkbox-input" />
                     <span>@Html.DisplayNameFor(m => m.RememberMe)</span>
                 </label>
-                <a href="#" class="auth-link font-weight-bold" style="font-size: 0.85rem;">Quên mật khẩu?</a>
+                <a asp-action="ForgotPassword" class="auth-link auth-link-small">Quên mật khẩu?</a>
             </div>
 
             <button type="submit" class="btn-auth-submit">

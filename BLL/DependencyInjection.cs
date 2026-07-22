@@ -35,11 +35,14 @@ public static class DependencyInjection
         // Đăng ký MemoryCache để phục vụ lưu trữ đệm 30 phút theo yêu cầu
         services.AddMemoryCache();
 
-        // Bind EmailSettings từ appsettings.json
-        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection(EmailSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         // Đăng ký các Interface/Service của tầng BLL tại đây
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddSingleton<IEmailTemplateRenderer, EmailTemplateRenderer>();
         services.AddScoped<IEventReminderService, EventReminderService>();
         services.AddScoped<IFeedbackAnalyticsService, FeedbackAnalyticsService>();
         services.AddScoped<IFollowService, FollowService>();

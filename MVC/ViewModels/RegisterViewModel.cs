@@ -7,30 +7,29 @@ public class RegisterViewModel
     [Required(ErrorMessage = "Họ tên không được để trống.")]
     [StringLength(100, ErrorMessage = "Họ tên tối đa 100 ký tự.")]
     [Display(Name = "Họ và tên")]
-    public string FullName { get; set; } = null!;
+    public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Email không được để trống.")]
     [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
     [Display(Name = "Email")]
-    public string Email { get; set; } = null!;
+    public string Email { get; set; } = string.Empty;
 
-    [StringLength(20)]
-    [Display(Name = "Mã sinh viên (nếu có)")]
-    public string? StudentCode { get; set; }
+    [Required(ErrorMessage = "Mã sinh viên không được để trống.")]
+    [StringLength(20, ErrorMessage = "Mã sinh viên tối đa 20 ký tự.")]
+    [Display(Name = "Mã sinh viên")]
+    public string StudentCode { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mật khẩu không được để trống.")]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu tối thiểu 6 ký tự.")]
     [DataType(DataType.Password)]
     [Display(Name = "Mật khẩu")]
-    public string Password { get; set; } = null!;
+    public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]
     [DataType(DataType.Password)]
-    [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
+    [Compare(nameof(Password), ErrorMessage = "Mật khẩu xác nhận không khớp.")]
     [Display(Name = "Xác nhận mật khẩu")]
-    public string ConfirmPassword { get; set; } = null!;
+    public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
-    [Display(Name = "Vai trò")]
-    public string Role { get; set; } = "Student";
+    public string? ReturnUrl { get; set; }
 }

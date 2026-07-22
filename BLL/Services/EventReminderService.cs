@@ -75,28 +75,32 @@ public class EventReminderService : IEventReminderService
         _logger.LogInformation(">>> [TPL Core Engine] Phát hiện {Count} sự kiện cần gửi email nhắc nhở.", remindersList.Count);
 
         foreach (var reminder in remindersList)
-        {   // log debug xem tên sự kiện, id và số lượt book
-            var rawBookingsCount = reminder.Event?.Bookings?.Count ?? 0;
-            _logger.LogInformation(">>> [DEBUG] Sự kiện '{EventTitle}' (Id: {EventId}) - Tổng số Bookings trong RAM: {RawCount}",
-                reminder.Event?.Title, reminder.EventId, rawBookingsCount);
-
-            if (reminder.Event?.Bookings != null)
+        {
+            var eventDetails = reminder.Event;
+            if (eventDetails is null)
             {
-                foreach (var b in reminder.Event.Bookings)
-                {   // log debug sinh viên book
-                    _logger.LogInformation(">>> [DEBUG] Booking Id: {BookingId} | Status: '{Status}' | StudentEmail: '{Email}'",
-                        b.Id, b.Status, b.Student?.Email);
-                }
+                _logger.LogWarning("Event {EventId} was not loaded for its reminder", reminder.EventId);
+                continue;
             }
 
-            var activeBookings = reminder.Event.Bookings
+            var rawBookingsCount = eventDetails.Bookings.Count;
+            _logger.LogInformation(">>> [DEBUG] Sự kiện '{EventTitle}' (Id: {EventId}) - Tổng số Bookings trong RAM: {RawCount}",
+                eventDetails.Title, reminder.EventId, rawBookingsCount);
+
+            foreach (var booking in eventDetails.Bookings)
+            {
+                _logger.LogInformation(">>> [DEBUG] Booking Id: {BookingId} | Status: '{Status}' | StudentEmail: '{Email}'",
+                    booking.Id, booking.Status, booking.Student?.Email);
+            }
+
+            var activeBookings = eventDetails.Bookings
                 .Where(b => b.Status == "Confirmed")
                 .ToList();
 
-            if (activeBookings.Any())
-            {   // log debug thông báo gủi thành công đến từng sv
+            if (activeBookings.Count > 0)
+            {
                 _logger.LogInformation(">>> [TPL Core Engine] Đang xử lý gửi email cho sự kiện '{EventTitle}' tới {UserCount} sinh viên song song...",
-                    reminder.Event.Title, activeBookings.Count);
+                    eventDetails.Title, activeBookings.Count);
 
                 await Parallel.ForEachAsync(activeBookings, new ParallelOptions
                 {
@@ -107,7 +111,7 @@ public class EventReminderService : IEventReminderService
                     try
                     {
                         var studentEmail = booking.Student.Email;
-                        var subject = $"[UniEvent Hub] Nhắc nhở sự kiện sắp diễn ra: {reminder.Event.Title}";
+                        var subject = $"[UniEvent Hub] Nhắc nhở sự kiện sắp diễn ra: {eventDetails.Title}";
                         var body = $@"
 <div style=""font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f9f9f9; color: #333333;"">
     
@@ -124,9 +128,9 @@ public class EventReminderService : IEventReminderService
         </p>
 
         <div style=""background-color: #ffffff; border-left: 4px solid #0056b3; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"">
-            <h3 style=""margin-top: 0; color: #111111; font-size: 18px;"">🎬 {reminder.Event.Title}</h3>
+            <h3 style=""margin-top: 0; color: #111111; font-size: 18px;"">🎬 {eventDetails.Title}</h3>
             <p style=""margin: 8px 0; font-size: 15px;"">
-                🗓️ <strong>Thời gian bắt đầu:</strong> <span style=""color: #d9534f; font-weight: bold;"">{reminder.Event.StartTime.ToLocalTime():dd/MM/yyyy HH:mm}</span>
+                🗓️ <strong>Thời gian bắt đầu:</strong> <span style=""color: #d9534f; font-weight: bold;"">{eventDetails.StartTime.ToLocalTime():dd/MM/yyyy HH:mm}</span>
             </p>
             <p style=""margin: 8px 0; font-size: 15px;"">
                 🎟️ <strong>Mã vé của bạn:</strong> <span style=""background-color: #eef2f7; padding: 3px 8px; border-radius: 4px; font-family: monospace; font-size: 16px; font-weight: bold; color: #2c3e50; border: 1px dashed #b0c4de;"">{booking.TicketCode}</span>

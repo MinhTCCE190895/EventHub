@@ -1,6 +1,21 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Chính sách bảo mật";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4 mx-auto privacy-card">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 fw-bold mb-3">
+                <i class="bi bi-shield-lock-fill text-primary me-2"></i>@ViewData["Title"]
+            </h1>
+            <p class="text-muted">
+                UniEvent Hub chỉ sử dụng thông tin tài khoản để xác thực người dùng, phân quyền và hỗ trợ hoạt động đăng ký sự kiện.
+            </p>
+            <ul class="text-muted mb-0">
+                <li class="mb-2">Mật khẩu được lưu dưới dạng băm và không được hiển thị lại.</li>
+                <li class="mb-2">Cookie đăng nhập được bảo vệ và chỉ dùng cho phiên làm việc của hệ thống.</li>
+                <li>Không chia sẻ mã OTP hoặc thông tin đăng nhập với người khác.</li>
+            </ul>
+        </div>
+    </div>
+</div>

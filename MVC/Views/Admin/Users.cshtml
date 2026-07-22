@@ -1,7 +1,8 @@
-@model MVC.ViewModels.AdminUsersViewModel
+@model AdminUsersViewModel
 
 @{
     ViewData["Title"] = "Quản lý User";
+    var rowNumber = ((Model.CurrentPage - 1) * Model.PageSize) + 1;
 }
 
 <div class="container-fluid py-4">
@@ -10,93 +11,80 @@
             <h1 class="h3 fw-bold mb-1">
                 <i class="bi bi-people-fill text-primary me-2"></i>Quản lý User
             </h1>
-            <p class="text-muted mb-0">Danh sách tất cả tài khoản trong hệ thống</p>
+            <p class="text-muted mb-0">Danh sách tài khoản trong hệ thống</p>
         </div>
-        <a asp-action="Index" class="btn btn-outline-primary rounded-3 px-3 py-2 fw-semibold">
-            <i class="bi bi-arrow-left me-1"></i> Dashboard
-        </a>
+        <div class="d-flex gap-2">
+            <button type="button"
+                    class="btn btn-primary rounded-3 px-3 py-2 fw-semibold"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createUserModal">
+                <i class="bi bi-person-plus-fill me-1"></i> Tạo tài khoản
+            </button>
+        </div>
     </div>
 
-    @* ── Thông báo Toast ── *@
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+    <partial name="_Alerts" />
 
-    @* ── Bảng danh sách User ── *@
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-header bg-white border-bottom-0 py-3 px-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">
-                    <i class="bi bi-list-ul me-2 text-primary"></i>Tất cả User
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2 fw-semibold" style="font-size:.75rem;">@Model.Users.Count</span>
-                </h5>
-            </div>
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-list-ul me-2 text-primary"></i>Tất cả User
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2 fw-semibold text-xxs">
+                    @Model.TotalUsers
+                </span>
+            </h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4" style="width:5%;">#</th>
-                            <th style="width:20%;">Họ tên</th>
-                            <th style="width:20%;">Email</th>
-                            <th style="width:10%;">MSSV</th>
-                            <th style="width:8%;">Vai trò</th>
-                            <th style="width:8%;">Trạng thái</th>
-                            <th style="width:7%;">Events</th>
-                            <th style="width:7%;">Bookings</th>
-                            <th style="width:10%;">Ngày tạo</th>
-                            <th style="width:5%;" class="text-center">Hành động</th>
+                            <th class="ps-4">#</th>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>MSSV</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Events</th>
+                            <th class="text-center">Bookings</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @{ int index = 1; }
+                        @if (Model.Users.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-5">Chưa có tài khoản nào.</td>
+                            </tr>
+                        }
                         @foreach (var user in Model.Users)
                         {
-                            <tr class="@(!user.IsActive ? "table-danger bg-opacity-10" : "")">
-                                <td class="ps-4 text-muted">@index</td>
+                            <tr class="@(!user.IsActive ? "table-danger bg-opacity-10" : null)">
+                                <td class="ps-4 text-muted">@rowNumber</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="@(user.IsActive ? "bg-primary" : "bg-secondary") text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:34px;height:34px;font-size:.85rem;">
-                                            @user.FullName.Substring(0, 1).ToUpper()
+                                        <div class="user-avatar @(user.IsActive ? "bg-primary" : "bg-secondary") text-white rounded-circle d-flex align-items-center justify-content-center fw-bold">
+                                            @user.Initial
                                         </div>
                                         <span class="fw-semibold">@user.FullName</span>
                                     </div>
                                 </td>
-                                <td class="text-muted" style="font-size:.85rem;">@user.Email</td>
-                                <td class="text-muted" style="font-size:.85rem;">@(user.StudentCode ?? "—")</td>
+                                <td class="text-muted text-sm">@user.Email</td>
+                                <td class="text-muted text-sm">@(user.StudentCode ?? "—")</td>
                                 <td>
-                                    @{
-                                        var roleBadgeClass = user.Role switch
-                                        {
-                                            "Admin" => "bg-danger-subtle text-danger border-danger-subtle",
-                                            "Organizer" => "bg-primary-subtle text-primary border-primary-subtle",
-                                            _ => "bg-secondary-subtle text-secondary border-secondary-subtle"
-                                        };
-                                    }
-                                    <span class="badge @roleBadgeClass border fw-semibold" style="font-size:.75rem;">@user.Role</span>
+                                    <span class="badge @user.RoleBadgeClass border fw-semibold text-xxs">@user.Role</span>
                                 </td>
                                 <td>
                                     @if (user.IsActive)
                                     {
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold" style="font-size:.75rem;">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold text-xxs">
                                             <i class="bi bi-check-circle-fill me-1"></i>Hoạt động
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold" style="font-size:.75rem;">
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold text-xxs">
                                             <i class="bi bi-lock-fill me-1"></i>Bị khóa
                                         </span>
                                     }
@@ -107,55 +95,142 @@
                                 <td class="text-center">
                                     <span class="badge bg-light text-dark border fw-semibold">@user.BookingCount</span>
                                 </td>
-                                <td class="text-muted" style="font-size:.85rem;">@user.CreatedAt.AddHours(7).ToString("dd/MM/yyyy")</td>
+                                <td class="text-muted text-sm">
+                                    <time datetime="@user.CreatedAtUtcIso" data-local-datetime data-date-only="true">@user.CreatedAtUtcDisplay</time>
+                                </td>
                                 <td class="text-center">
-                                    @if (user.Role != "Admin")
+                                    @if (user.CanBeManaged)
                                     {
-                                        <form asp-action="ToggleUserActive" asp-route-id="@user.Id" method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            @if (user.IsActive)
-                                            {
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <form asp-action="ToggleUserActive"
+                                                  asp-route-id="@user.Id"
+                                                  asp-route-page="@Model.CurrentPage"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  data-confirm="@user.ActiveToggleConfirmation">
                                                 <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger border-0 rounded-2 px-2 py-1"
-                                                        title="Khóa tài khoản"
-                                                        onclick="return confirm('Bạn có chắc muốn KHÓA tài khoản @user.FullName?')">
-                                                    <i class="bi bi-lock-fill"></i>
+                                                        class="btn btn-sm @user.ActiveToggleButtonClass border-0 rounded-2 px-2 py-1"
+                                                        title="@user.ActiveToggleTitle"
+                                                        aria-label="@user.ActiveToggleTitle">
+                                                    <i class="bi @user.ActiveToggleIconClass"></i>
                                                 </button>
-                                            }
-                                            else
+                                            </form>
+
+                                            @if (user.NextRole is string nextRole)
                                             {
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-success border-0 rounded-2 px-2 py-1"
-                                                        title="Mở khóa tài khoản"
-                                                        onclick="return confirm('Bạn có chắc muốn MỞ KHÓA tài khoản @user.FullName?')">
-                                                    <i class="bi bi-unlock-fill"></i>
-                                                </button>
+                                                <form asp-action="ChangeUserRole"
+                                                      asp-route-id="@user.Id"
+                                                      asp-route-page="@Model.CurrentPage"
+                                                      method="post"
+                                                      class="d-inline"
+                                                      data-confirm="@user.RoleChangeConfirmation">
+                                                    <input type="hidden" name="role" value="@nextRole" />
+                                                    <button type="submit"
+                                                            class="btn btn-sm @user.RoleChangeButtonClass border-0 rounded-2 px-2 py-1"
+                                                            title="@user.RoleChangeTitle"
+                                                            aria-label="@user.RoleChangeTitle">
+                                                        <i class="bi @user.RoleChangeIconClass"></i>
+                                                    </button>
+                                                </form>
                                             }
-                                        </form>
+                                        </div>
                                     }
                                     else
                                     {
-                                        <span class="text-muted" title="Không thể khóa tài khoản Admin"><i class="bi bi-shield-lock"></i></span>
+                                        <span class="text-muted" title="Không thể thay đổi tài khoản Admin">
+                                            <i class="bi bi-shield-lock"></i>
+                                        </span>
                                     }
                                 </td>
                             </tr>
-                            index++;
+                            rowNumber++;
                         }
                     </tbody>
                 </table>
             </div>
         </div>
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white border-top py-3">
+                <nav aria-label="Phân trang tài khoản">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)">
+                            <a class="page-link" asp-action="Users" asp-route-page="@(Model.CurrentPage - 1)">Trước</a>
+                        </li>
+                        @foreach (var pageNumber in Model.VisiblePages)
+                        {
+                            <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : null)">
+                                <a class="page-link" asp-action="Users" asp-route-page="@pageNumber">@pageNumber</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : null)">
+                            <a class="page-link" asp-action="Users" asp-route-page="@(Model.CurrentPage + 1)">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade"
+     id="createUserModal"
+     tabindex="-1"
+     aria-labelledby="createUserModalLabel"
+     aria-hidden="true"
+     data-show-on-load="@Model.OpenCreateUserModal.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header border-bottom-0 pt-4 px-4 pb-2">
+                <h5 class="modal-title fw-bold" id="createUserModalLabel">
+                    <i class="bi bi-person-plus-fill text-primary me-2"></i>Tạo tài khoản mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <form asp-action="CreateUser" asp-route-page="@Model.CurrentPage" method="post">
+                <div class="modal-body px-4 pb-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="mb-3">
+                        <label asp-for="NewUserForm.FullName" class="form-label fw-semibold">Họ và tên</label>
+                        <input asp-for="NewUserForm.FullName" class="form-control rounded-3" placeholder="Nguyễn Văn A" autocomplete="name" />
+                        <span asp-validation-for="NewUserForm.FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewUserForm.Email" class="form-label fw-semibold">Email</label>
+                        <input asp-for="NewUserForm.Email" class="form-control rounded-3" placeholder="example@fpt.edu.vn" autocomplete="email" />
+                        <span asp-validation-for="NewUserForm.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewUserForm.Password" class="form-label fw-semibold">Mật khẩu</label>
+                        <input asp-for="NewUserForm.Password" class="form-control rounded-3" placeholder="••••••••" autocomplete="new-password" />
+                        <span asp-validation-for="NewUserForm.Password" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="NewUserForm.Role" class="form-label fw-semibold">Vai trò</label>
+                        <select asp-for="NewUserForm.Role"
+                                class="form-select rounded-3"
+                                data-role-select
+                                data-student-role="@ApplicationRoles.Student">
+                            <option value="@ApplicationRoles.Student">Sinh viên</option>
+                            <option value="@ApplicationRoles.Organizer">Ban tổ chức</option>
+                        </select>
+                        <span asp-validation-for="NewUserForm.Role" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3" data-student-code-group>
+                        <label asp-for="NewUserForm.StudentCode" class="form-label fw-semibold">Mã số sinh viên (MSSV)</label>
+                        <input asp-for="NewUserForm.StudentCode" class="form-control rounded-3" placeholder="Ví dụ: SE190000" />
+                        <span asp-validation-for="NewUserForm.StudentCode" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-3 py-2 fw-semibold">Tạo tài khoản</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        // Tự động ẩn alert sau 4 giây
-        setTimeout(function () {
-            document.querySelectorAll('.alert').forEach(function (el) {
-                var bsAlert = new bootstrap.Alert(el);
-                bsAlert.close();
-            });
-        }, 4000);
-    </script>
+    <partial name="_ValidationScriptsPartial" />
 }

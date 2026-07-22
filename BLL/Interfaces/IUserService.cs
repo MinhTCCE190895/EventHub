@@ -1,16 +1,25 @@
 using BLL.DTOs;
-using DAL.Entities;
 
 namespace BLL.Interfaces;
 
 public interface IUserService
 {
-    Task<User?> GetByEmailAsync(string email);
-    Task<bool> EmailExistsAsync(string email);
-    Task<User> RegisterAsync(RegisterDto dto);
-    /// <summary>
-    /// Validate login — trả về User nếu thành công, null nếu sai email/pass hoặc bị khoá.
-    /// </summary>
-    Task<User?> ValidateLoginAsync(string email, string password);
-    Task DeleteUserAsync(Guid id, bool softDelete = true);
+    Task<AuthenticatedUserDto?> GetAuthenticatedUserAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+    Task<ServiceResultDto> RegisterStudentAsync(
+        StudentRegistrationDto dto,
+        CancellationToken cancellationToken = default);
+    Task<AuthenticatedUserDto?> ValidateLoginAsync(
+        string email,
+        string password,
+        CancellationToken cancellationToken = default);
+    Task<ServiceResultDto> SendPasswordResetOtpAsync(
+        string email,
+        CancellationToken cancellationToken = default);
+    Task<ServiceResultDto> ResetPasswordWithOtpAsync(
+        string email,
+        string otp,
+        string newPassword,
+        CancellationToken cancellationToken = default);
 }

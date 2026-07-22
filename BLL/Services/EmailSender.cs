@@ -1,4 +1,4 @@
-﻿using BLL.Interfaces;
+using BLL.Interfaces;
 using BLL.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,19 +18,18 @@ public class EmailSender : IEmailSender
         _logger = logger;
     }
 
-    // Thực hiện cấu hình và gửi thư điện tử (Email) bất đồng bộ.
-    // Khởi tạo SmtpClient từ cấu hình hệ thống -> Tạo đối tượng MailMessage với định dạng HTML -> Gọi SendMailAsync để gửi qua giao thức SMTP.
     public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
         try
         {
             using var smtpClient = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort)
             {
+                UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password),
                 EnableSsl = _settings.EnableSsl
             };
 
-            var mailMessage = new MailMessage
+            using var mailMessage = new MailMessage
             {
                 From = new MailAddress(_settings.SenderEmail, _settings.SenderName),
                 Subject = subject,

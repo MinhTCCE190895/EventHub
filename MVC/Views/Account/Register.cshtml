@@ -1,4 +1,4 @@
-@model MVC.ViewModels.RegisterViewModel
+@model RegisterViewModel
 @{
     ViewData["Title"] = "Đăng ký";
 }
@@ -8,9 +8,9 @@
 }
 
 <div class="auth-wrapper">
-    <div class="auth-card" style="max-width: 480px;">
+    <div class="auth-card auth-card-wide">
         <div class="auth-header">
-            <a href="/" class="auth-logo">
+            <a asp-controller="Home" asp-action="Index" class="auth-logo">
                 <i class="bi bi-shield-check"></i> UniEvent Hub
             </a>
             <h2 class="auth-title">Đăng ký tài khoản</h2>
@@ -19,25 +19,7 @@
 
         <form asp-action="Register" method="post">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
-
-            <div class="form-group-minimal">
-                <label>Vai trò của bạn</label>
-                <div class="role-selector-group">
-                    <label>
-                        <input type="radio" asp-for="Role" value="Student" class="role-selector-input" checked />
-                        <div class="role-pill">
-                            <i class="bi bi-mortarboard me-1"></i> Sinh viên
-                        </div>
-                    </label>
-                    <label>
-                        <input type="radio" asp-for="Role" value="Organizer" class="role-selector-input" />
-                        <div class="role-pill">
-                            <i class="bi bi-building me-1"></i> Ban tổ chức
-                        </div>
-                    </label>
-                </div>
-                <span asp-validation-for="Role" class="text-danger-custom"></span>
-            </div>
+            <input type="hidden" asp-for="ReturnUrl" />
 
             <div class="form-group-minimal">
                 <label asp-for="FullName"></label>
@@ -91,32 +73,11 @@
         </form>
 
         <div class="auth-footer">
-            Đã có tài khoản? <a asp-action="Login" class="auth-link">Đăng nhập</a>
+            Đã có tài khoản? <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">Đăng nhập</a>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        // Tự động ẩn/hiện mã sinh viên dựa trên Role
-        document.querySelectorAll('input[name="Role"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const studentCodeGroup = document.getElementById('studentCodeGroup');
-                if (this.value === 'Student') {
-                    studentCodeGroup.style.display = 'block';
-                } else {
-                    studentCodeGroup.style.display = 'none';
-                    // Reset input
-                    studentCodeGroup.querySelector('input').value = '';
-                }
-            });
-        });
-        
-        // Kích hoạt trạng thái ban đầu
-        const activeRole = document.querySelector('input[name="Role"]:checked').value;
-        if (activeRole !== 'Student') {
-            document.getElementById('studentCodeGroup').style.display = 'none';
-        }
-    </script>
 }

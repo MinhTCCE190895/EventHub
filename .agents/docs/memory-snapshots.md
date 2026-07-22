@@ -62,6 +62,22 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-22 (Antigravity / Agent)**:
+  - **Đồng bộ mã nguồn từ nhánh `develop`**:
+    - Kéo thành công 14 commit mới nhất từ `origin/develop` qua `git pull origin develop --rebase`.
+    - Giải quyết xung đột dữ liệu tại `AdminService.cs` và `.agents/docs/memory-snapshots.md`.
+    - Kiểm tra và đảm bảo toàn bộ giải pháp `EventHub.sln` biên dịch thành công 100% (0 Error, 1 Warning minor).
+
+- **2026-07-22 (Codex / MVC Architecture Refactor)**:
+  - Refactored MVC authentication and admin flows so controllers depend only on BLL interfaces and DTOs; no controller or view accesses `AppDbContext`, repositories, or DAL entities.
+  - Standardized `UserService` and `AdminService` data access through `AppDbContext`, added `AsNoTracking()` for read-only queries, and moved registration validation into the service layer.
+  - Moved Bootstrap role-badge mapping into MVC ViewModels, removed duplicate Razor switch blocks, externalized cross-application URLs, and restricted logout to anti-forgery-protected POST.
+  - Completed a senior-level second pass: split auth/admin input DTOs by use case, replaced tuple results with an explicit service result, propagated request cancellation, and added server-side pagination for admin users.
+  - Fixed auth flow defects: registration now preserves `returnUrl`; cookie validation reloads and renews current user claims so role changes do not leave stale authorization; sensitive auth endpoints now use per-client fixed-window rate limiting.
+  - Improved MVC UX and maintainability: admin create validation reopens its modal with field errors, shared alerts and centralized JavaScript replace duplicate/inline handlers, UTC timestamps render in the browser locale, and placeholder Home/Privacy/Error views were replaced.
+  - Simplified the refactor structure after review: removed the one-purpose `MVC/Constants`, `MVC/Security`, and `BLL/Constants` folders; colocated authentication helpers with `Configurations`, restored `ErrorViewModel` to the standard MVC `Models` folder, and kept only the justified `BLL/EmailTemplates` resource folder.
+  - Hardened configuration: portal and email options validate on startup; the MVC SMTP credential was moved from local `appsettings.json` to .NET User Secrets; email failure handling now returns a controlled UI error.
+
 - **2026-07-21 (Antigravity / Agent)**:
   - **Sửa lỗi bảo mật IDOR (Insecure Direct Object Reference) và hoàn thiện luồng kiểm soát trạng thái sự kiện**:
     - Ngăn chặn quyền chỉnh sửa sự kiện chéo (IDOR): Bổ sung guard clause kiểm tra quyền `!User.IsInRole("Admin") && ev.OrganizerId.ToString() != User.FindFirstValue(ClaimTypes.NameIdentifier)` trong `Edit.cshtml.cs` và `Delete.cshtml.cs`. Đảm bảo Organizer chỉ được phép xem, sửa, và xóa sự kiện do chính mình tạo ra; các trường hợp vi phạm sẽ bị chặn bằng mã HTTP 403 (Forbid).

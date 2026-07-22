@@ -1,144 +1,226 @@
-using BLL.Interfaces;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.Security.Cryptography;
+using BLL;
 using BLL.DTOs;
+using BLL.Interfaces;
 using DAL.Data;
 using DAL.Entities;
-using DAL.Repositories;
-using DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace BLL.Services;
 
 public class UserService : IUserService
 {
-    private readonly IRepository<User> _userRepo;
     private readonly AppDbContext _context;
     private readonly ILogger<UserService> _logger;
+    private readonly IEmailSender _emailSender;
+    private readonly IEmailTemplateRenderer _emailTemplateRenderer;
+    private readonly IMemoryCache _cache;
 
-    public UserService(IRepository<User> userRepo, AppDbContext context, ILogger<UserService> logger)
+    public UserService(
+        AppDbContext context,
+        ILogger<UserService> logger,
+        IEmailSender emailSender,
+        IEmailTemplateRenderer emailTemplateRenderer,
+        IMemoryCache cache)
     {
-        _userRepo = userRepo;
         _context = context;
         _logger = logger;
+        _emailSender = emailSender;
+        _emailTemplateRenderer = emailTemplateRenderer;
+        _cache = cache;
     }
 
-    public async Task<User?> GetByEmailAsync(string email)
+    public Task<AuthenticatedUserDto?> GetAuthenticatedUserAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        // Sử dụng SingleOrDefaultAsync thay vì FirstOrDefaultAsync để đảm bảo tính toàn vẹn dữ liệu (chỉ có duy nhất 1 bản ghi email trong DB).
-        return await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
+        return _context.Users
+            .AsNoTracking()
+            .Where(user => user.Id == id && user.IsActive)
+            .Select(user => new AuthenticatedUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role
+            })
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<bool> EmailExistsAsync(string email)
+    public async Task<ServiceResultDto> RegisterStudentAsync(
+        StudentRegistrationDto dto,
+        CancellationToken cancellationToken = default)
     {
-        // Tối ưu tốc độ kiểm tra trùng lặp email ở DB bằng ExistsAsync (chỉ sinh câu lệnh IF EXISTS trong SQL) thay vì load toàn bộ Entity.
-        return await _userRepo.ExistsAsync(u => u.Email == email);
-    }
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
 
-    public async Task<User> RegisterAsync(RegisterDto dto)
-    {
-        _logger.LogInformation("Registering new user {Email} with role {Role}", dto.Email, dto.Role);
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            return ServiceResultDto.Failed("Họ tên không được để trống.", "FullName");
 
-        // Khởi tạo Entity với các thông tin mặc định. Quản lý ID từ phía Application thay vì phó mặc cho DB để tiện lợi hơn cho CQRS/Event Sourcing.
+        if (!new EmailAddressAttribute().IsValid(normalizedEmail))
+            return ServiceResultDto.Failed("Email không hợp lệ.", "Email");
+
+        if (string.IsNullOrWhiteSpace(dto.StudentCode))
+            return ServiceResultDto.Failed("Mã số sinh viên là bắt buộc.", "StudentCode");
+
+        if (dto.Password.Length < 6)
+            return ServiceResultDto.Failed("Mật khẩu phải có ít nhất 6 ký tự.", "Password");
+
+        if (!string.Equals(dto.Password, dto.ConfirmPassword, StringComparison.Ordinal))
+            return ServiceResultDto.Failed("Mật khẩu xác nhận không khớp.", "ConfirmPassword");
+
+        if (await _context.Users.AsNoTracking()
+                .AnyAsync(user => user.Email == normalizedEmail, cancellationToken))
+        {
+            return ServiceResultDto.Failed("Email này đã được sử dụng.", "Email");
+        }
+
         var user = new User
         {
             Id = Guid.NewGuid(),
-            FullName = dto.FullName,
-            Email = dto.Email,
-            StudentCode = dto.StudentCode,
-            Role = dto.Role,
-            // Hash mật khẩu 1 chiều bằng BCrypt. Tham số work factor của bcrypt mặc định là 11 (cân bằng giữa bảo mật và hiệu suất).
+            FullName = dto.FullName.Trim(),
+            Email = normalizedEmail,
+            StudentCode = dto.StudentCode.Trim(),
+            Role = ApplicationRoles.Student,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Lưu entity vào DB thông qua Repository Pattern và commit bằng DbContext
-        await _userRepo.AddAsync(user);
-        await _context.SaveChangesAsync();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("User {Email} registered with Id {Id}", user.Email, user.Id);
-        return user;
+        _logger.LogInformation("New student registered with Id {UserId}", user.Id);
+        return ServiceResultDto.Succeeded();
     }
 
-    public async Task<User?> ValidateLoginAsync(string email, string password)
+    public async Task<AuthenticatedUserDto?> ValidateLoginAsync(
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Login attempt for {Email}", email);
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _context.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Email == normalizedEmail, cancellationToken);
 
-        // Bước 1: Tra cứu User trong hệ thống dựa trên email
-        var user = await _userRepo.SingleOrDefaultAsync(u => u.Email == email);
-
-        if (user is null)
+        if (user is null || !user.IsActive)
         {
-            _logger.LogWarning("Login failed — email {Email} not found", email);
-            return null;
-        }
-
-        // Bước 2: Chặn đăng nhập nếu tài khoản đã bị vô hiệu hóa (IsActive = false)
-        if (!user.IsActive)
-        {
-            _logger.LogWarning("Login failed — account {Email} is locked", email);
+            _logger.LogWarning("Login failed for {Email}", normalizedEmail);
             return null;
         }
 
         try
         {
-            // Bước 3: Xác thực tính nguyên vẹn của Hash trước khi Verify
-            // Ngăn BCrypt.Verify throw SaltParseException khi gặp hash cũ hoặc sai định dạng.
-            if (string.IsNullOrEmpty(user.PasswordHash) || !user.PasswordHash.StartsWith("$2"))
+            if (string.IsNullOrEmpty(user.PasswordHash) ||
+                !user.PasswordHash.StartsWith("$2", StringComparison.Ordinal) ||
+                !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                _logger.LogWarning("Login failed — invalid password hash format for {Email}", email);
-                return null;
-            }
-
-            // Bước 4: So khớp mật khẩu bản rõ với Hash trong cơ sở dữ liệu
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-            {
-                _logger.LogWarning("Login failed — wrong password for {Email}", email);
+                _logger.LogWarning("Login failed for {Email}", normalizedEmail);
                 return null;
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            // Ghi log lỗi hệ thống khi Verify thất bại (do lỗi thuật toán/lib) thay vì throw Exception ra controller
-            _logger.LogError(ex, "Login failed — error verifying password for {Email}", email);
+            _logger.LogError(exception, "Password verification failed for {Email}", normalizedEmail);
             return null;
         }
 
-        return user;
+        return new AuthenticatedUserDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role
+        };
     }
 
-    public async Task DeleteUserAsync(Guid id, bool softDelete = true)
+    public async Task<ServiceResultDto> SendPasswordResetOtpAsync(
+        string email,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _userRepo.Query()
-            .Include(u => u.OrganizedEvents)
-            .Include(u => u.Bookings)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _context.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Email == normalizedEmail, cancellationToken);
 
-        if (user is null)
-            throw new KeyNotFoundException("Tài khoản không tồn tại.");
-
-        if (softDelete)
+        if (user is null || !user.IsActive)
         {
-            user.IsActive = false;
-            _userRepo.Update(user);
-            await _context.SaveChangesAsync();
-            return;
+            _logger.LogWarning("Password reset requested for an unavailable account");
+            return ServiceResultDto.Succeeded();
         }
 
-        if (user.Role == "Organizer" && user.OrganizedEvents.Any())
-            throw new InvalidOperationException("Không cho xóa Organizer do đã tạo Sự kiện. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
+        var otp = RandomNumberGenerator.GetInt32(100000, 1000000)
+            .ToString("D6", CultureInfo.InvariantCulture);
+        var cacheKey = GetResetOtpCacheKey(normalizedEmail);
+        _cache.Set(cacheKey, otp, TimeSpan.FromMinutes(5));
 
-        if (user.Role == "Student" && user.Bookings.Any())
-            throw new InvalidOperationException("Không cho xóa Student do đang giữ vé đăng ký. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
-
+        var subject = "[EventHub] Mã xác thực khôi phục mật khẩu";
         try
         {
-            _userRepo.Remove(user);
-            await _context.SaveChangesAsync();
+            var body = await _emailTemplateRenderer.RenderAsync(
+                "PasswordResetOtp",
+                new Dictionary<string, string>
+                {
+                    ["FullName"] = user.FullName,
+                    ["Otp"] = otp
+                },
+                cancellationToken);
+
+            await _emailSender.SendEmailAsync(normalizedEmail, subject, body, cancellationToken);
+            _logger.LogInformation("Password reset OTP sent");
+            return ServiceResultDto.Succeeded();
         }
-        catch (DbUpdateException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            throw new InvalidOperationException("Không thể xóa tài khoản do ràng buộc dữ liệu. Vui lòng sử dụng Xóa mềm (khóa tài khoản).");
+            _cache.Remove(cacheKey);
+            throw;
         }
+        catch (Exception exception)
+        {
+            _cache.Remove(cacheKey);
+            _logger.LogError(exception, "Unable to prepare or send a password reset email");
+            return ServiceResultDto.Failed($"Gửi email thất bại: {exception.Message}");
+        }
+    }
+
+    public async Task<ServiceResultDto> ResetPasswordWithOtpAsync(
+        string email,
+        string otp,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (newPassword.Length < 6)
+            return ServiceResultDto.Failed("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var cacheKey = GetResetOtpCacheKey(normalizedEmail);
+        if (!_cache.TryGetValue(cacheKey, out string? cachedOtp) ||
+            !string.Equals(cachedOtp, otp, StringComparison.Ordinal))
+        {
+            return ServiceResultDto.Failed(
+                "Mã OTP không chính xác hoặc đã hết hạn (chỉ có hiệu lực trong 5 phút).");
+        }
+
+        var user = await _context.Users.SingleOrDefaultAsync(
+            candidate => candidate.Email == normalizedEmail,
+            cancellationToken);
+        if (user is null || !user.IsActive)
+            return ServiceResultDto.Failed("Tài khoản không tồn tại hoặc đã bị khóa.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _cache.Remove(cacheKey);
+        _logger.LogInformation("Password reset successfully for User {UserId}", user.Id);
+        return ServiceResultDto.Succeeded();
+    }
+
+    private static string GetResetOtpCacheKey(string normalizedEmail)
+    {
+        return $"ResetOtp_{normalizedEmail}";
     }
 }

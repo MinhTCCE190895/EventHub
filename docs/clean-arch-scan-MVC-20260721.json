@@ -1,0 +1,26 @@
+﻿[
+    {
+        "RuleId":  "CA-WARN-02",
+        "Severity":  "Warning",
+        "Description":  "Chứa switch/case ánh xạ màu sắc UI (badgeClass, bg-) hoặc trạng thái nằm trực tiếp bên trong View HTML",
+        "File":  "MVC\\Views\\Admin\\Users.cshtml",
+        "Line":  88,
+        "CodeSnippet":  "\"Admin\" =\u003e \"bg-danger-subtle text-danger border-danger-subtle\","
+    },
+    {
+        "RuleId":  "CA-WARN-02",
+        "Severity":  "Warning",
+        "Description":  "Chứa switch/case ánh xạ màu sắc UI (badgeClass, bg-) hoặc trạng thái nằm trực tiếp bên trong View HTML",
+        "File":  "MVC\\Views\\Admin\\Users.cshtml",
+        "Line":  89,
+        "CodeSnippet":  "\"Organizer\" =\u003e \"bg-primary-subtle text-primary border-primary-subtle\","
+    },
+    {
+        "RuleId":  "CA-WARN-02",
+        "Severity":  "Warning",
+        "Description":  "Chứa switch/case ánh xạ màu sắc UI (badgeClass, bg-) hoặc trạng thái nằm trực tiếp bên trong View HTML",
+        "File":  "MVC\\Views\\Admin\\Users.cshtml",
+        "Line":  90,
+        "CodeSnippet":  "_ =\u003e \"bg-secondary-subtle text-secondary border-secondary-subtle\""
+    }
+]
