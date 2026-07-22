@@ -111,12 +111,12 @@ public class CommentService : ICommentService
         return true;
     }
 
-    public async Task<bool> DeleteCommentAsync(Guid commentId, Guid adminUserId, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteCommentAsync(Guid commentId, Guid userId, CancellationToken cancellationToken = default)
     {
-        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Id == adminUserId, cancellationToken);
-        if (admin == null || admin.Role != "Admin")
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
         {
-            throw new UnauthorizedAccessException("Chỉ có Quản trị viên (Admin) mới có quyền xóa bình luận.");
+            throw new UnauthorizedAccessException("Không xác định được danh tính người dùng.");
         }
 
         var comment = await _commentRepository.Query()
@@ -126,6 +126,11 @@ public class CommentService : ICommentService
         if (comment == null)
         {
             throw new KeyNotFoundException("Bình luận không tồn tại.");
+        }
+
+        if (comment.UserId != userId && user.Role != "Admin")
+        {
+            throw new UnauthorizedAccessException("Bạn chỉ có quyền xóa bình luận của chính mình.");
         }
 
         // Xóa tất cả bình luận con liên quan

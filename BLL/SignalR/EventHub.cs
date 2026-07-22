@@ -39,7 +39,7 @@ public class EventHub : Hub
         var comment = await _commentService.AddCommentAsync(eventId, userId, commentText, parentCommentId);
 
         // Broadcast bình luận mới đến tất cả các client đang kết nối
-        await Clients.All.SendAsync("ReceiveComment", eventId, comment.Id, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"), comment.UserRole, parentCommentId);
+        await Clients.All.SendAsync("ReceiveComment", eventId, comment.Id, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"), comment.UserRole, parentCommentId, comment.UserId);
     }
 
     // Phương thức ẩn bình luận dành cho Admin
@@ -49,10 +49,10 @@ public class EventHub : Hub
         await Clients.All.SendAsync("ReceiveCommentHidden", commentId);
     }
 
-    // Phương thức xóa bình luận dành cho Admin
-    public async Task DeleteComment(Guid commentId, Guid adminUserId)
+    // Phương thức xóa bình luận (dành cho tác giả hoặc Admin)
+    public async Task DeleteComment(Guid commentId, Guid userId)
     {
-        await _commentService.DeleteCommentAsync(commentId, adminUserId);
+        await _commentService.DeleteCommentAsync(commentId, userId);
         await Clients.All.SendAsync("ReceiveCommentDeleted", commentId);
     }
 

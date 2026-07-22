@@ -44,14 +44,14 @@
                         <div class="d-flex align-items-center gap-1">
                             <small class="text-muted text-xs me-1">@c.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
 
-                            @if (CurrentUserRole == "Admin")
+                            @if (CurrentUserRole == "Admin" || (CurrentUserId != null && c.UserId == CurrentUserId))
                             {
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
-                                        @if (!c.IsHidden && c.UserRole != "Admin")
+                                        @if (CurrentUserRole == "Admin" && !c.IsHidden)
                                         {
                                             <li>
                                                 <button type="button" class="dropdown-item text-warning fw-semibold" @onclick="() => RequestHideComment(c.Id)">
@@ -61,7 +61,7 @@
                                         }
                                         <li>
                                             <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestDeleteComment(c.Id)">
-                                                <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                <i class="bi bi-trash me-1"></i> Xóa bình luận
                                             </button>
                                         </li>
                                     </ul>
@@ -143,14 +143,14 @@
                                                 <div class="d-flex align-items-center gap-1">
                                                     <small class="text-muted text-xs me-1">@r.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
 
-                                                    @if (CurrentUserRole == "Admin")
+                                                    @if (CurrentUserRole == "Admin" || (CurrentUserId != null && r.UserId == CurrentUserId))
                                                     {
                                                         <div class="dropdown">
                                                             <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="bi bi-three-dots-vertical"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
-                                                                @if (!r.IsHidden && r.UserRole != "Admin")
+                                                                @if (CurrentUserRole == "Admin" && !r.IsHidden)
                                                                 {
                                                                     <li>
                                                                         <button type="button" class="dropdown-item text-warning fw-semibold" @onclick="() => RequestHideComment(r.Id)">
@@ -160,7 +160,7 @@
                                                                 }
                                                                 <li>
                                                                     <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestDeleteComment(r.Id)">
-                                                                        <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                                        <i class="bi bi-trash me-1"></i> Xóa bình luận
                                                                     </button>
                                                                 </li>
                                                             </ul>
@@ -342,7 +342,7 @@
                         .WithAutomaticReconnect()
                         .Build();
 
-                    hubConnection.On<Guid, Guid, string, string, string, string, Guid?>("ReceiveComment", (id, commentId, author, content, time, role, parentCommentId) =>
+                    hubConnection.On<Guid, Guid, string, string, string, string, Guid?, Guid>("ReceiveComment", (id, commentId, author, content, time, role, parentCommentId, commentUserId) =>
                     {
                         if (id == EventId)
                         {
@@ -350,6 +350,7 @@
                             {
                                 Id = commentId,
                                 EventId = id,
+                                UserId = commentUserId,
                                 UserFullName = author,
                                 UserRole = role,
                                 Content = content,
@@ -528,7 +529,7 @@
 
     private async Task ConfirmDeleteCommentAsync(Guid commentId)
     {
-        if (CurrentUserId == null || CurrentUserRole != "Admin") return;
+        if (CurrentUserId == null) return;
         ConfirmingDeleteCommentId = null;
         try
         {

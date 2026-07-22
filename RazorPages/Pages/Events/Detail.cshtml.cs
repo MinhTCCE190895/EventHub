@@ -152,23 +152,23 @@ namespace RazorPages.Pages.Events
 
         public async Task<IActionResult> OnPostDeleteCommentAsync(Guid id, Guid commentId)
         {
-            if (!User.IsInRole("Admin"))
+            if (!User.Identity?.IsAuthenticated == true)
             {
-                TempData["ErrorMessage"] = "Chỉ Quản trị viên (Admin) mới có quyền xóa bình luận.";
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập để thực hiện xóa bình luận.";
                 return RedirectToPage(new { id });
             }
 
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var adminUserId))
+            if (!Guid.TryParse(userIdClaim, out var userId))
             {
-                TempData["ErrorMessage"] = "Không xác định được danh tính Admin.";
+                TempData["ErrorMessage"] = "Không xác định được danh tính người dùng.";
                 return RedirectToPage(new { id });
             }
 
             try
             {
-                await _commentService.DeleteCommentAsync(commentId, adminUserId);
-                TempData["SuccessMessage"] = "Đã xóa vĩnh viễn bình luận thành công!";
+                await _commentService.DeleteCommentAsync(commentId, userId);
+                TempData["SuccessMessage"] = "Đã xóa bình luận thành công!";
             }
             catch (Exception ex)
             {
