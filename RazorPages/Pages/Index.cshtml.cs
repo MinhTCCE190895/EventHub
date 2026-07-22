@@ -67,7 +67,7 @@ public class IndexModel : PageModel
 
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / EventSearchDTO.PageSize);
 
-    // Dùng để render danh mục và thẻ trên form lọc
+    // Lists to populate categories and tags dropdown/checkbox selections on the UI
     public List<CategoryDTO> Categories { get; set; } = new();
     public List<TagDTO> Tags { get; set; } = new();
 
@@ -75,13 +75,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
-        // So sánh ngày kết thúc có trước ngày bắt đầu không để báo lỗi ra form
+        // Verify if EndDate is chronologically before StartDate to append field-level error
         if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)
         {
             ModelState.AddModelError(nameof(EndDate), "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
         }
 
-        // Load danh mục và thẻ trước để hiển thị ra form bất kể có lỗi nhập liệu hay không
+        // Pre-load category and tag lists to populate dropdowns regardless of validation state
         try
         {
             Categories = (await _categoryService.GetAllCategoriesAsync(cancellationToken)).ToList();
@@ -89,20 +89,20 @@ public class IndexModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Không thể tải danh sách danh mục hoặc thẻ trên trang chủ");
+            _logger.LogError(ex, "Failed to load category or tag lists on home page");
         }
 
-        // Nếu có lỗi validation (như nhập sai khoảng ngày) thì dừng và hiển thị trang luôn
+        // Return immediately if model validation fails (e.g. invalid date range input)
         if (!ModelState.IsValid)
             return Page();
 
-        // Lấy danh sách ID các sự kiện đã lưu của sinh viên này để hiển thị icon bookmark tương ứng
+        // Retrieve bookmarked event IDs for the logged-in student to display correct bookmark icon states
         if (CurrentStudentId.HasValue && User.IsInRole("Student"))
         {
             BookmarkedEventIds = await _bookmarkService.GetBookmarkedEventIdsAsync(CurrentStudentId.Value, cancellationToken);
         }
 
-        // Map các biến filter từ PageModel sang DTO để truyền xuống tầng BLL
+        // Map filter inputs from PageModel properties to EventSearchDTO for BLL consumption
         var searchDto = new EventSearchDTO
         {
             Keyword    = Keyword,
@@ -115,13 +115,13 @@ public class IndexModel : PageModel
             SortBy     = SortBy
         };
 
-        // Gọi service xử lý tìm kiếm và lấy tổng số bản ghi phục vụ phân trang
+        // Call business logic service to execute search and fetch total count
         var (items, totalCount) = await _eventService.SearchEventsAsync(searchDto, cancellationToken);
 
         Results    = items;
         TotalCount = totalCount;
 
-        // Giới hạn PageNumber không được vượt quá TotalPages và không được nhỏ hơn 1 để tránh lỗi ngoài phạm vi
+        // Clamp page number between 1 and TotalPages to prevent out-of-bounds navigation queries
         PageNumber = Math.Clamp(PageNumber, 1, Math.Max(1, TotalPages));
 
         return Page();
