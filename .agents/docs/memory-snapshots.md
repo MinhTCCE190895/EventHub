@@ -66,7 +66,7 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
   - **Cấp quyền cho Tác giả tự Xóa bình luận cá nhân (`FE-15`)**:
     - Cập nhật `DeleteCommentAsync` trong `ICommentService` & `CommentService`: Cho phép người dùng xóa bình luận nếu họ là chính tác giả tạo ra bình luận đó (`comment.UserId == userId`) hoặc có vai trò `Admin`.
     - Cập nhật SignalR `EventHub.cs`: Bổ sung `comment.UserId` vào tín hiệu broadcast `ReceiveComment` và cho phép mọi người dùng gọi `DeleteComment`.
-    - Nâng cấp giao diện RazorPages ([Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml)) và Blazor ([QAComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/QA/QAComponent.razor)): Hiển thị menu 3 chấm chứa nút *"Xóa bình luận"* cho cả tác giả bình luận và Admin trên tất cả các bình luận gốc và bình luận trả lời.
+    - Nâng cấp giao diện RazorPages ([Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml)) và Blazor ([QAComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/QA/QAComponent.razor)): Bổ sung kiểm tra `c.UserId == currentUserId` trong template CSHTML để hiển thị nút 3 chấm chứa menu *"Xóa bình luận"* cho sinh viên tác giả trên cả bình luận gốc và bình luận trả lời.
 
 - **2026-07-22 (Antigravity / Khôi)**:
   - **Khắc phục giao diện & Tùy chọn Quản trị cho Bình luận Trả lời (`FE-15`)**:

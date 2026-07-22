@@ -142,6 +142,9 @@
                         }
                         else
                         {
+                            var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                            Guid.TryParse(currentUserIdClaim, out var currentUserId);
+
                             @foreach (var c in Model.Comments)
                             {
                                 var initials = string.IsNullOrWhiteSpace(c.UserFullName) ? "U" : 
@@ -164,14 +167,14 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <small class="text-muted fs-7">@c.CreatedAt.AddHours(7).ToString("HH:mm:ss dd/MM/yyyy")</small>
                                             
-                                            @if (User.IsInRole("Admin"))
+                                            @if (User.IsInRole("Admin") || (currentUserId != Guid.Empty && c.UserId == currentUserId))
                                             {
                                                 <div class="dropdown">
-                                                    <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn quản trị">
+                                                    <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn">
                                                         <i class="bi bi-three-dots-vertical"></i>
                                                     </button>
                                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.82rem;">
-                                                        @if (!c.IsHidden)
+                                                        @if (User.IsInRole("Admin") && !c.IsHidden)
                                                         {
                                                             <li>
                                                                 <button type="button" class="dropdown-item text-warning fw-semibold" onclick="confirmHideComment('@c.Id')">
@@ -181,7 +184,7 @@
                                                         }
                                                         <li>
                                                             <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmDeleteComment('@c.Id')">
-                                                                <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                                <i class="bi bi-trash me-1"></i> Xóa bình luận
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -244,14 +247,14 @@
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <small class="text-muted" style="font-size: 0.7rem;">@r.CreatedAt.AddHours(7).ToString("HH:mm:ss dd/MM")</small>
 
-                                                                @if (User.IsInRole("Admin"))
+                                                                @if (User.IsInRole("Admin") || (currentUserId != Guid.Empty && r.UserId == currentUserId))
                                                                 {
                                                                     <div class="dropdown">
-                                                                        <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                        <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn">
                                                                             <i class="bi bi-three-dots-vertical"></i>
                                                                         </button>
                                                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
-                                                                            @if (!r.IsHidden)
+                                                                            @if (User.IsInRole("Admin") && !r.IsHidden)
                                                                             {
                                                                                 <li>
                                                                                     <button type="button" class="dropdown-item text-warning fw-semibold" onclick="confirmHideComment('@r.Id')">
@@ -261,7 +264,7 @@
                                                                             }
                                                                             <li>
                                                                                 <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmDeleteComment('@r.Id')">
-                                                                                    <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                                                    <i class="bi bi-trash me-1"></i> Xóa bình luận
                                                                                 </button>
                                                                             </li>
                                                                         </ul>
