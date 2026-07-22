@@ -168,6 +168,7 @@ public class WeatherService(HttpClient httpClient, IMemoryCache cache, ILogger<W
         if (city.Contains("Hà Nội", StringComparison.OrdinalIgnoreCase) || city.Contains("Hanoi", StringComparison.OrdinalIgnoreCase)) return "Hanoi";
         if (city.Contains("Cần Thơ", StringComparison.OrdinalIgnoreCase) || city.Contains("Can Tho", StringComparison.OrdinalIgnoreCase)) return "Can Tho";
         if (city.Contains("Đà Nẵng", StringComparison.OrdinalIgnoreCase) || city.Contains("Da Nang", StringComparison.OrdinalIgnoreCase)) return "Da Nang";
+        if (city.Contains("Quy Nhơn", StringComparison.OrdinalIgnoreCase) || city.Contains("Quy Nhon", StringComparison.OrdinalIgnoreCase)) return "Quy Nhon";
 
         // Remove common administrative prefixes
         return city
