@@ -155,6 +155,9 @@ public class EventService : IEventService
 
         var oldStartTime = ev.StartTime;
 
+        if (dto.StartTime != oldStartTime && dto.StartTime < DateTime.Now)
+            throw new ArgumentException("Thời gian bắt đầu mới không được nằm trong quá khứ.");
+
         if (ev.VenueId != dto.VenueId)
         {
             var newVenue = await _context.Venues.FirstOrDefaultAsync(v => v.Id == dto.VenueId, cancellationToken);

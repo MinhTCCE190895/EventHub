@@ -33,11 +33,6 @@ public class EventUpdateDTO : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (StartTime < DateTime.Now)
-        {
-            yield return new ValidationResult("Thời gian bắt đầu không được nằm trong quá khứ.", new[] { nameof(StartTime) });
-        }
-
         if (StartTime >= EndTime)
         {
             yield return new ValidationResult("Ngày kết thúc phải sau ngày bắt đầu.", new[] { nameof(EndTime) });
