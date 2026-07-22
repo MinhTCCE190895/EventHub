@@ -77,7 +77,14 @@ public class IndexModel : PageModel
 
     public int TotalCount { get; set; }
 
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / EventSearchDTO.PageSize);
+    public int TotalPages
+    {
+        get
+        {
+            double pages = (double)TotalCount / EventSearchDTO.PageSize;
+            return (int)Math.Ceiling(pages);
+        }
+    }
 
     // Lists to populate categories and tags dropdown/checkbox selections on the UI
     public List<CategoryDTO> Categories { get; set; } = new();
