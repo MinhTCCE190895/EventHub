@@ -70,7 +70,7 @@ public class IndexModel : PageModel
     public string? SortBy { get; set; } = "DateAsc";
 
     [BindProperty(SupportsGet = true)]
-    public string ViewType { get; set; } = "Grid";
+    public string? ViewType { get; set; } = "Grid";
 
     // Danh sách kết quả trả về sau khi tìm kiếm
     public List<EventCardDTO> Results { get; set; } = new();
@@ -94,6 +94,11 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(ViewType))
+        {
+            ViewType = "Grid";
+        }
+
         // Verify if EndDate is chronologically before StartDate to append field-level error
         if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)
         {
@@ -111,14 +116,21 @@ public class IndexModel : PageModel
             _logger.LogError(ex, "Failed to load category or tag lists on home page");
         }
 
-        // Return immediately if model validation fails (e.g. invalid date range input)
+        // Nếu có lỗi validation (như nhập sai khoảng ngày) thì dừng và hiển thị trang luôn
         if (!ModelState.IsValid)
             return Page();
 
         // Retrieve bookmarked event IDs for the logged-in student to display correct bookmark icon states
         if (CurrentStudentId.HasValue && User.IsInRole("Student"))
         {
-            BookmarkedEventIds = await _bookmarkService.GetBookmarkedEventIdsAsync(CurrentStudentId.Value, cancellationToken);
+            try
+            {
+                BookmarkedEventIds = await _bookmarkService.GetBookmarkedEventIdsAsync(CurrentStudentId.Value, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load bookmarks for student: {StudentId}", CurrentStudentId);
+            }
         }
 
         // Map filter inputs from PageModel properties to EventSearchDTO for BLL consumption

@@ -395,6 +395,11 @@
             performSearchAjax();
         }
 
+        // Instantly submit search form on filter selection changes
+        function submitInstant() {
+            performSearchAjax();
+        }
+
         // Fetch search results asynchronously using fetch, async/await, try/catch
         async function performSearchAjax() {
             // Validate date range on client-side (F.E Custom Validation)
