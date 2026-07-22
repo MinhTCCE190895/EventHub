@@ -14,10 +14,22 @@ public class IndexModel : PageModel
     private readonly IBookmarkService _bookmarkService;
     private readonly ILogger<IndexModel> _logger;
 
-    // Lấy ID của sinh viên hiện tại đăng nhập để hiển thị nút bookmark
-    public Guid? CurrentStudentId => User.Identity?.IsAuthenticated == true
-        ? Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
-        : null;
+    // Retrieve logged-in student's ID from Claims safely
+    public Guid? CurrentStudentId
+    {
+        get
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    return Guid.Parse(userIdClaim);
+                }
+            }
+            return null;
+        }
+    }
 
     public IndexModel(
         IEventService eventService,
