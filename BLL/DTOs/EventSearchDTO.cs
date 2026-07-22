@@ -1,6 +1,5 @@
 namespace BLL.DTOs;
 
-// DTO này đi từ PL xuống BLL — BLL không biết gì về ViewModel của web
 public class EventSearchDTO
 {
     public string? Keyword { get; set; }
