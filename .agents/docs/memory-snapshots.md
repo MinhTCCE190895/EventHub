@@ -63,6 +63,12 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ### 3.1. Detailed Changes Log
 - **2026-07-22 (Antigravity / Khôi)**:
+  - **Khắc phục giao diện & Tùy chọn Quản trị cho Bình luận Trả lời (`FE-15`)**:
+    - Gỡ bỏ điều kiện chặn ẩn bình luận của Admin trong `CommentService.cs` (`HideCommentAsync`), cho phép Admin ẩn và xóa vĩnh viễn mọi bình luận (bao gồm cả các câu trả lời con).
+    - Cập nhật [Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml): Bổ sung nút *"Trả lời"* và menu 3 chấm Quản trị (Ẩn / Xóa vĩnh viễn) cho tất cả các câu trả lời con trên cả giao diện CSHTML lẫn luồng nhận dữ liệu real-time SignalR `ReceiveComment`.
+    - Fix triệt để nút `X` hủy *"Đang trả lời"*: Chuyển đổi cơ chế ẩn/hiện `#replyingBadge` từ inline `style.display` sang việc toggle class `d-none` và `d-flex` của Bootstrap (giải quyết lỗi lớp `.d-flex` có `display: flex !important` đè CSS làm nút X không có tác dụng).
+
+- **2026-07-22 (Antigravity / Khôi)**:
   - **Nâng cấp Phân hệ Hỏi đáp & Bình luận (`FE-15` Live Q&A Hub)**:
     - Bổ sung `ParentCommentId` và danh sách `Replies` lồng nhau vào `CommentDTO` và cấu hình AutoMapper `CommentProfile`.
     - Cập nhật `ICommentService` & `CommentService`: Hỗ trợ tạo bình luận trả lời theo luồng (`parentCommentId`), tải cây bình luận và bổ sung phương thức `DeleteCommentAsync` cho Admin xóa vĩnh viễn bình luận kèm các câu trả lời con.

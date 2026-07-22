@@ -106,11 +106,6 @@ public class CommentService : ICommentService
             throw new KeyNotFoundException("Bình luận không tồn tại.");
         }
 
-        if (comment.User != null && comment.User.Role == "Admin")
-        {
-            throw new InvalidOperationException("Không thể ẩn bình luận của Quản trị viên.");
-        }
-
         comment.IsHidden = true;
         await _context.SaveChangesAsync(cancellationToken);
         return true;
