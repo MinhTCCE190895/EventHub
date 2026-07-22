@@ -17,7 +17,7 @@ public class EventHub : Hub
     }
 
     // Phương thức gửi bình luận thời gian thực có cơ chế chặn spam (Rate Limiting 2 giây)
-    public async Task SendComment(Guid eventId, Guid userId, string commentText)
+    public async Task SendComment(Guid eventId, Guid userId, string commentText, Guid? parentCommentId = null)
     {
         var connectionId = Context.ConnectionId;
         var now = DateTime.UtcNow;
@@ -36,10 +36,10 @@ public class EventHub : Hub
         _lastCommentTimes[connectionId] = now;
 
         // Lưu comment vào database qua Service
-        var comment = await _commentService.AddCommentAsync(eventId, userId, commentText);
+        var comment = await _commentService.AddCommentAsync(eventId, userId, commentText, parentCommentId);
 
         // Broadcast bình luận mới đến tất cả các client đang kết nối
-        await Clients.All.SendAsync("ReceiveComment", eventId, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"), comment.UserRole);
+        await Clients.All.SendAsync("ReceiveComment", eventId, comment.Id, comment.UserFullName, comment.Content, comment.CreatedAt.ToLocalTime().ToString("HH:mm:ss"), comment.UserRole, parentCommentId);
     }
 
     // Phương thức ẩn bình luận dành cho Admin
@@ -47,6 +47,13 @@ public class EventHub : Hub
     {
         await _commentService.HideCommentAsync(commentId, adminUserId);
         await Clients.All.SendAsync("ReceiveCommentHidden", commentId);
+    }
+
+    // Phương thức xóa bình luận dành cho Admin
+    public async Task DeleteComment(Guid commentId, Guid adminUserId)
+    {
+        await _commentService.DeleteCommentAsync(commentId, adminUserId);
+        await Clients.All.SendAsync("ReceiveCommentDeleted", commentId);
     }
 
     // Tự động dọn dẹp bộ nhớ cache connectionId khi client ngắt kết nối

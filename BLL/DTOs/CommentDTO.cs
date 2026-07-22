@@ -9,6 +9,8 @@ public class CommentDTO
     public string UserAvatarUrl { get; set; } = string.Empty;
     public string UserRole { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
+    public Guid? ParentCommentId { get; set; }
+    public List<CommentDTO> Replies { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public bool IsHidden { get; set; }
 

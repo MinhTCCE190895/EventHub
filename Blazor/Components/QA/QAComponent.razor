@@ -17,7 +17,7 @@
     </div>
 
     <!-- Danh sách bình luận -->
-    <div class="comments-scroll-area mb-3" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
+    <div class="comments-scroll-area mb-3" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
         @if (!Comments.Any())
         {
             <div class="text-center my-4 py-3 text-muted">
@@ -29,7 +29,7 @@
         {
             @foreach (var c in Comments)
             {
-                <div class="comment-bubble-wrapper mb-3 p-3 rounded-3 bg-white border border-light shadow-3xs hover-scale position-relative">
+                <div class="comment-bubble-wrapper mb-3 p-3 rounded-3 bg-white border border-light shadow-3xs position-relative" id="comment-@c.Id">
                     <div class="d-flex justify-content-between align-items-start mb-1">
                         <div class="d-flex align-items-center gap-2">
                             <div class="avatar-placeholder rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
@@ -44,16 +44,24 @@
                         <div class="d-flex align-items-center gap-1">
                             <small class="text-muted text-xs me-1">@c.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
 
-                            @if (CurrentUserRole == "Admin" && !c.IsHidden && c.UserRole != "Admin")
+                            @if (CurrentUserRole == "Admin")
                             {
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
+                                        @if (!c.IsHidden && c.UserRole != "Admin")
+                                        {
+                                            <li>
+                                                <button type="button" class="dropdown-item text-warning fw-semibold" @onclick="() => RequestHideComment(c.Id)">
+                                                    <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                </button>
+                                            </li>
+                                        }
                                         <li>
-                                            <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestHideComment(c.Id)">
-                                                <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                            <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestDeleteComment(c.Id)">
+                                                <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
                                             </button>
                                         </li>
                                     </ul>
@@ -62,7 +70,7 @@
                         </div>
                     </div>
 
-                    <div class="comment-content text-sm ps-4 ms-2">
+                    <div class="comment-content text-sm ps-4 ms-2 mb-2">
                         @if (c.IsHidden)
                         {
                             <span class="text-muted fst-italic">
@@ -75,14 +83,108 @@
                         }
                     </div>
 
+                    <div class="ps-4 ms-2">
+                        @if (CurrentUserId != null)
+                        {
+                            <button type="button" class="btn btn-link text-xs text-decoration-none text-primary p-0 fw-semibold" @onclick="() => SetReplyTarget(c.Id, c.UserFullName)">
+                                <i class="bi bi-reply-fill me-1"></i>Trả lời
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Confirm Dialogs for Admin -->
                     @if (ConfirmingHideCommentId == c.Id)
                     {
-                        <div class="mt-2 p-2 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 d-flex align-items-center justify-content-between text-xs">
-                            <span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Bạn có chắc chắn muốn ẩn bình luận này không?</span>
+                        <div class="mt-2 p-2 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 d-flex align-items-center justify-content-between text-xs">
+                            <span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Xóa hiển thị bình luận này?</span>
                             <div class="d-flex gap-1">
                                 <button class="btn btn-xs btn-secondary py-0 px-2 fw-bold" @onclick="CancelHideComment">Hủy</button>
-                                <button class="btn btn-xs btn-danger py-0 px-2 fw-bold" @onclick="() => ConfirmHideCommentAsync(c.Id)">Xác nhận ẩn</button>
+                                <button class="btn btn-xs btn-warning py-0 px-2 fw-bold" @onclick="() => ConfirmHideCommentAsync(c.Id)">Xác nhận ẩn</button>
                             </div>
+                        </div>
+                    }
+                    @if (ConfirmingDeleteCommentId == c.Id)
+                    {
+                        <div class="mt-2 p-2 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25 d-flex align-items-center justify-content-between text-xs">
+                            <span class="text-danger fw-semibold"><i class="bi bi-trash-fill me-1"></i> Xóa vĩnh viễn bình luận này?</span>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-xs btn-secondary py-0 px-2 fw-bold" @onclick="CancelDeleteComment">Hủy</button>
+                                <button class="btn btn-xs btn-danger py-0 px-2 fw-bold" @onclick="() => ConfirmDeleteCommentAsync(c.Id)">Xóa vĩnh viễn</button>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Dropdown danh sách câu trả lời (FB / TikTok style) -->
+                    @if (c.Replies != null && c.Replies.Any())
+                    {
+                        <div class="mt-2 ms-4">
+                            <button type="button" class="btn btn-link p-0 text-decoration-none text-slate-600 text-xs fw-semibold d-inline-flex align-items-center gap-1" @onclick="() => ToggleReplies(c.Id)">
+                                <i class="bi bi-arrow-return-right"></i>
+                                <span>@(ExpandedReplyCommentIds.Contains(c.Id) ? "▲ Ẩn câu trả lời" : $"Xem {c.Replies.Count} câu trả lời")</span>
+                            </button>
+
+                            @if (ExpandedReplyCommentIds.Contains(c.Id))
+                            {
+                                <div class="replies-list ms-2 ps-3 border-start border-2 border-slate-200 mt-2">
+                                    @foreach (var r in c.Replies)
+                                    {
+                                        <div class="comment-bubble-wrapper p-2.5 mb-2 bg-slate-50 rounded-3 border border-light position-relative" id="comment-@r.Id">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="avatar-placeholder rounded-circle bg-primary bg-opacity-75 text-white d-flex align-items-center justify-content-center fw-bold" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                                        @GetInitials(r.UserFullName)
+                                                    </div>
+                                                    <div>
+                                                        <strong class="text-slate-800 text-xs">@r.UserFullName</strong>
+                                                        <span class="badge ms-1" style="font-size: 0.6rem; @r.RoleBadgeStyle">@r.RoleBadgeText</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <small class="text-muted text-xs me-1">@r.CreatedAt.ToLocalTime().ToString("HH:mm:ss dd/MM")</small>
+
+                                                    @if (CurrentUserRole == "Admin")
+                                                    {
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="bi bi-three-dots-vertical"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
+                                                                @if (!r.IsHidden && r.UserRole != "Admin")
+                                                                {
+                                                                    <li>
+                                                                        <button type="button" class="dropdown-item text-warning fw-semibold" @onclick="() => RequestHideComment(r.Id)">
+                                                                            <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                                        </button>
+                                                                    </li>
+                                                                }
+                                                                <li>
+                                                                    <button type="button" class="dropdown-item text-danger fw-semibold" @onclick="() => RequestDeleteComment(r.Id)">
+                                                                        <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                                    </button>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <div class="comment-content text-xs ps-4 ms-1">
+                                                @if (r.IsHidden)
+                                                {
+                                                    <span class="text-muted fst-italic">
+                                                        <i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-slate-700">@r.Content</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -99,10 +201,18 @@
     }
     else
     {
+        @if (ReplyingToCommentId != null)
+        {
+            <div class="alert alert-info py-1 px-3 mb-2 text-xs fw-semibold d-flex justify-content-between align-items-center rounded-3">
+                <span><i class="bi bi-reply-fill me-1"></i> Đang trả lời <strong>@ReplyingToUserName</strong></span>
+                <button type="button" class="btn-close btn-sm" style="font-size: 0.65rem;" @onclick="CancelReply"></button>
+            </div>
+        }
+
         <div class="input-group">
             <textarea class="form-control form-control-minimal" 
                       rows="2" 
-                      placeholder="Nhập câu hỏi hoặc ý kiến của bạn..." 
+                      placeholder="@(ReplyingToCommentId != null ? $"Trả lời {ReplyingToUserName}..." : "Nhập câu hỏi hoặc ý kiến của bạn...")" 
                       @bind="NewCommentText" 
                       disabled="@IsSending"
                       @onkeydown="HandleKeyDown">
@@ -153,6 +263,10 @@
     .avatar-placeholder {
         user-select: none;
     }
+    .btn-xs {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+    }
 </style>
 
 @code {
@@ -172,10 +286,14 @@
     private string? CurrentUserFullName;
     private string? CurrentUserRole;
     private Guid? ConfirmingHideCommentId;
+    private Guid? ConfirmingDeleteCommentId;
+
+    private HashSet<Guid> ExpandedReplyCommentIds = new();
+    private Guid? ReplyingToCommentId;
+    private string? ReplyingToUserName;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Phân tích thông tin đăng nhập của user từ Cookie SSO qua Cascading Parameter
         if (AuthState != null)
         {
             var authState = await AuthState;
@@ -192,7 +310,6 @@
             }
         }
 
-        // 2. Tải lịch sử bình luận
         try
         {
             var list = await CommentService.GetCommentsForEventAsync(EventId);
@@ -225,31 +342,55 @@
                         .WithAutomaticReconnect()
                         .Build();
 
-                    hubConnection.On<Guid, string, string, string, string>("ReceiveComment", (id, author, content, time, role) =>
+                    hubConnection.On<Guid, Guid, string, string, string, string, Guid?>("ReceiveComment", (id, commentId, author, content, time, role, parentCommentId) =>
                     {
                         if (id == EventId)
                         {
-                            Comments.Add(new CommentDTO
+                            var newDto = new CommentDTO
                             {
-                                Id = Guid.NewGuid(),
+                                Id = commentId,
                                 EventId = id,
                                 UserFullName = author,
                                 UserRole = role,
                                 Content = content,
-                                CreatedAt = DateTime.UtcNow
-                            });
+                                CreatedAt = DateTime.UtcNow,
+                                ParentCommentId = parentCommentId
+                            };
+
+                            if (parentCommentId.HasValue)
+                            {
+                                var parent = Comments.FirstOrDefault(c => c.Id == parentCommentId.Value);
+                                if (parent != null)
+                                {
+                                    parent.Replies.Add(newDto);
+                                    ExpandedReplyCommentIds.Add(parentCommentId.Value);
+                                }
+                            }
+                            else
+                            {
+                                Comments.Add(newDto);
+                            }
                             InvokeAsync(StateHasChanged);
                         }
                     });
 
                     hubConnection.On<Guid>("ReceiveCommentHidden", (commentId) =>
                     {
-                        var target = Comments.FirstOrDefault(c => c.Id == commentId);
-                        if (target != null)
+                        foreach (var c in Comments)
                         {
-                            target.IsHidden = true;
-                            InvokeAsync(StateHasChanged);
+                            if (c.Id == commentId) c.IsHidden = true;
+                            foreach (var r in c.Replies)
+                            {
+                                if (r.Id == commentId) r.IsHidden = true;
+                            }
                         }
+                        InvokeAsync(StateHasChanged);
+                    });
+
+                    hubConnection.On<Guid>("ReceiveCommentDeleted", (commentId) =>
+                    {
+                        RemoveCommentFromList(commentId);
+                        InvokeAsync(StateHasChanged);
                     });
 
                     await hubConnection.StartAsync();
@@ -261,6 +402,26 @@
             });
         }
         return Task.CompletedTask;
+    }
+
+    private void ToggleReplies(Guid commentId)
+    {
+        if (!ExpandedReplyCommentIds.Remove(commentId))
+        {
+            ExpandedReplyCommentIds.Add(commentId);
+        }
+    }
+
+    private void SetReplyTarget(Guid commentId, string authorName)
+    {
+        ReplyingToCommentId = commentId;
+        ReplyingToUserName = authorName;
+    }
+
+    private void CancelReply()
+    {
+        ReplyingToCommentId = null;
+        ReplyingToUserName = null;
     }
 
     private async Task SendCommentAsync()
@@ -275,17 +436,25 @@
         {
             if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
             {
-                // Gọi qua SignalR Hub để vừa lưu DB vừa broadcast
-                await hubConnection.SendAsync("SendComment", EventId, CurrentUserId.Value, NewCommentText.Trim());
+                await hubConnection.SendAsync("SendComment", EventId, CurrentUserId.Value, NewCommentText.Trim(), ReplyingToCommentId);
                 NewCommentText = "";
+                CancelReply();
             }
             else
             {
                 ErrorMessage = "Mất kết nối với máy chủ thời gian thực. Đang thử gửi trực tiếp...";
-                // Fallback gửi trực tiếp qua service nếu SignalR lỗi
-                var saved = await CommentService.AddCommentAsync(EventId, CurrentUserId.Value, NewCommentText.Trim());
-                Comments.Add(saved);
+                var saved = await CommentService.AddCommentAsync(EventId, CurrentUserId.Value, NewCommentText.Trim(), ReplyingToCommentId);
+                if (ReplyingToCommentId.HasValue)
+                {
+                    var parent = Comments.FirstOrDefault(c => c.Id == ReplyingToCommentId.Value);
+                    if (parent != null) parent.Replies.Add(saved);
+                }
+                else
+                {
+                    Comments.Add(saved);
+                }
                 NewCommentText = "";
+                CancelReply();
             }
         }
         catch (Exception ex)
@@ -330,14 +499,62 @@
             else
             {
                 await CommentService.HideCommentAsync(commentId, CurrentUserId.Value);
-                var target = Comments.FirstOrDefault(c => c.Id == commentId);
-                if (target != null) target.IsHidden = true;
+                foreach (var c in Comments)
+                {
+                    if (c.Id == commentId) c.IsHidden = true;
+                    foreach (var r in c.Replies)
+                    {
+                        if (r.Id == commentId) r.IsHidden = true;
+                    }
+                }
                 StateHasChanged();
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+        }
+    }
+
+    private void RequestDeleteComment(Guid commentId)
+    {
+        ConfirmingDeleteCommentId = commentId;
+    }
+
+    private void CancelDeleteComment()
+    {
+        ConfirmingDeleteCommentId = null;
+    }
+
+    private async Task ConfirmDeleteCommentAsync(Guid commentId)
+    {
+        if (CurrentUserId == null || CurrentUserRole != "Admin") return;
+        ConfirmingDeleteCommentId = null;
+        try
+        {
+            if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
+            {
+                await hubConnection.SendAsync("DeleteComment", commentId, CurrentUserId.Value);
+            }
+            else
+            {
+                await CommentService.DeleteCommentAsync(commentId, CurrentUserId.Value);
+                RemoveCommentFromList(commentId);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private void RemoveCommentFromList(Guid commentId)
+    {
+        Comments.RemoveAll(c => c.Id == commentId);
+        foreach (var parent in Comments)
+        {
+            parent.Replies.RemoveAll(r => r.Id == commentId);
         }
     }
 

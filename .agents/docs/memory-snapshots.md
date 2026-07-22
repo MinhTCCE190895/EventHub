@@ -63,6 +63,13 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 
 ### 3.1. Detailed Changes Log
 - **2026-07-22 (Antigravity / Khôi)**:
+  - **Nâng cấp Phân hệ Hỏi đáp & Bình luận (`FE-15` Live Q&A Hub)**:
+    - Bổ sung `ParentCommentId` và danh sách `Replies` lồng nhau vào `CommentDTO` và cấu hình AutoMapper `CommentProfile`.
+    - Cập nhật `ICommentService` & `CommentService`: Hỗ trợ tạo bình luận trả lời theo luồng (`parentCommentId`), tải cây bình luận và bổ sung phương thức `DeleteCommentAsync` cho Admin xóa vĩnh viễn bình luận kèm các câu trả lời con.
+    - Cập nhật SignalR `EventHub.cs`: Bổ sung tham số `parentCommentId` vào `SendComment` và thêm phương thức `DeleteComment` cùng tín hiệu broadcast `ReceiveCommentDeleted`.
+    - Nâng cấp giao diện hiển thị trên RazorPages ([Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml)) và Blazor ([QAComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/QA/QAComponent.razor)): Tích hợp nút *"Trả lời"* kèm badge hiển thị trạng thái đang trả lời trên form, nút đóng/mở danh sách câu trả lời theo phong cách Facebook/TikTok (*"Xem X câu trả lời"* / *"Ẩn câu trả lời"*), và tính năng dành cho Admin chọn *"Xóa vĩnh viễn"* bình luận.
+
+- **2026-07-22 (Antigravity / Khôi)**:
   - **Cập nhật giao diện Đặt vé & Chi tiết sự kiện (`FE-04`)**:
     - Thêm phương thức `GetUserBookingForEventAsync` vào `IBookingService` và `BookingService` để kiểm tra vé đã đặt của sinh viên.
     - Cập nhật trang Chi tiết sự kiện ([Detail.cshtml](file:///c:/Users/HUYNHKHOI/EventHub/RazorPages/Pages/Events/Detail.cshtml)) và component ([BookingComponent.razor](file:///c:/Users/HUYNHKHOI/EventHub/Blazor/Components/Booking/BookingComponent.razor)): Khi sinh viên đã đăng ký vé thành công, chuyển nút *"Đăng Ký Đặt Vé Ngay"* thành nút disabled xanh *"Bạn đã đặt vé rồi"* và hiển thị khung mã vé QR (`TicketCode`) bên dưới.

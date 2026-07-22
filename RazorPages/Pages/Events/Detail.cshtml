@@ -164,16 +164,24 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <small class="text-muted fs-7">@c.CreatedAt.AddHours(7).ToString("HH:mm:ss dd/MM/yyyy")</small>
                                             
-                                            @if (User.IsInRole("Admin") && !c.IsHidden && c.UserRole != "Admin")
+                                            @if (User.IsInRole("Admin"))
                                             {
                                                 <div class="dropdown">
                                                     <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn quản trị">
                                                         <i class="bi bi-three-dots-vertical"></i>
                                                     </button>
                                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.82rem;">
+                                                        @if (!c.IsHidden && c.UserRole != "Admin")
+                                                        {
+                                                            <li>
+                                                                <button type="button" class="dropdown-item text-warning fw-semibold" onclick="confirmHideComment('@c.Id')">
+                                                                    <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                                </button>
+                                                            </li>
+                                                        }
                                                         <li>
-                                                            <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmHideComment('@c.Id')">
-                                                                <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                            <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmDeleteComment('@c.Id')">
+                                                                <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -182,7 +190,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="comment-body fs-7 ps-4 ms-2" id="comment-body-@c.Id">
+                                    <div class="comment-body fs-7 ps-4 ms-2 mb-2" id="comment-body-@c.Id">
                                         @if (c.IsHidden)
                                         {
                                             <span class="text-muted fst-italic">
@@ -194,6 +202,95 @@
                                             <span class="text-slate-700">@c.Content</span>
                                         }
                                     </div>
+
+                                    <div class="ps-4 ms-2">
+                                        @if (User.Identity?.IsAuthenticated == true)
+                                        {
+                                            <button type="button" class="btn btn-link btn-xs text-decoration-none text-primary p-0 fw-semibold" onclick="setReplyTarget('@c.Id', '@c.UserFullName')">
+                                                <i class="bi bi-reply-fill me-1"></i>Trả lời
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <!-- Dropdown câu trả lời (FB / TikTok style) -->
+                                    @if (c.Replies != null && c.Replies.Any())
+                                    {
+                                        <div class="mt-2 ms-4">
+                                            <button type="button" class="btn btn-link p-0 text-decoration-none text-slate-600 fs-7 fw-semibold d-inline-flex align-items-center gap-1" onclick="toggleReplies('replies-@c.Id', this)">
+                                                <i class="bi bi-arrow-return-right"></i>
+                                                <span class="lbl-text" data-count="@c.Replies.Count">Xem @c.Replies.Count câu trả lời</span>
+                                            </button>
+
+                                            <div class="replies-list ms-2 ps-3 border-start border-2 border-slate-200 mt-2" id="replies-@c.Id" style="display: none;">
+                                                @foreach (var r in c.Replies)
+                                                {
+                                                    var rInitials = string.IsNullOrWhiteSpace(r.UserFullName) ? "U" : 
+                                                        (r.UserFullName.Trim().Split(' ').Length > 1 ? 
+                                                            (r.UserFullName.Trim().Split(' ')[0][0].ToString() + r.UserFullName.Trim().Split(' ')[r.UserFullName.Trim().Split(' ').Length - 1][0].ToString()).ToUpper() : 
+                                                            r.UserFullName.Substring(0, Math.Min(2, r.UserFullName.Length)).ToUpper());
+
+                                                    <div class="comment-item p-2.5 mb-2 bg-slate-50 rounded-3 border border-light position-relative" id="comment-@r.Id">
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <div class="avatar-circle rounded-circle bg-primary bg-opacity-75 text-white d-flex align-items-center justify-content-center fw-bold" style="width: 26px; height: 26px; font-size: 0.72rem;">
+                                                                    @rInitials
+                                                                </div>
+                                                                <div>
+                                                                    <strong class="text-slate-800 fs-7">@r.UserFullName</strong>
+                                                                    <span class="badge ms-1" style="font-size: 0.6rem; @r.RoleBadgeStyle">@r.RoleBadgeText</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <small class="text-muted" style="font-size: 0.7rem;">@r.CreatedAt.AddHours(7).ToString("HH:mm:ss dd/MM")</small>
+
+                                                                @if (User.IsInRole("Admin"))
+                                                                {
+                                                                    <div class="dropdown">
+                                                                        <button class="btn btn-sm btn-link text-slate-400 p-0 text-decoration-none ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                            <i class="bi bi-three-dots-vertical"></i>
+                                                                        </button>
+                                                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.8rem;">
+                                                                            @if (!r.IsHidden && r.UserRole != "Admin")
+                                                                            {
+                                                                                <li>
+                                                                                    <button type="button" class="dropdown-item text-warning fw-semibold" onclick="confirmHideComment('@r.Id')">
+                                                                                        <i class="bi bi-eye-slash me-1"></i> Ẩn bình luận
+                                                                                    </button>
+                                                                                </li>
+                                                                            }
+                                                                            <li>
+                                                                                <button type="button" class="dropdown-item text-danger fw-semibold" onclick="confirmDeleteComment('@r.Id')">
+                                                                                    <i class="bi bi-trash me-1"></i> Xóa vĩnh viễn
+                                                                                </button>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="comment-body fs-7 ps-4 ms-1" id="comment-body-@r.Id">
+                                                            @if (r.IsHidden)
+                                                            {
+                                                                <span class="text-muted fst-italic">
+                                                                    <i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-slate-700">@r.Content</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="replies-list ms-2 ps-3 border-start border-2 border-slate-200 mt-2" id="replies-@c.Id" style="display: none;"></div>
+                                    }
                                 </div>
                             }
                         }
@@ -203,6 +300,13 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <form method="post" asp-page-handler="Comment" asp-route-id="@Model.EventItem.Id" id="commentForm" class="mt-3">
+                            <input type="hidden" asp-for="ParentCommentId" id="parentCommentIdInput" value="" />
+                            
+                            <div id="replyingBadge" class="alert alert-info py-1 px-3 mb-2 small fw-semibold d-flex align-items-center justify-content-between rounded-3" style="display: none;">
+                                <span><i class="bi bi-reply-fill me-1"></i> <span id="replyingText">Đang trả lời...</span></span>
+                                <button type="button" class="btn-close btn-sm" onclick="cancelReply()"></button>
+                            </div>
+
                             <div class="form-group mb-2">
                                 <label class="form-label fw-semibold text-slate-700 fs-7">Viết bình luận mới:</label>
                                 <textarea asp-for="CommentText" id="commentInput" class="form-control rounded-3" rows="3" placeholder="Nhập thắc mắc hoặc ý kiến của bạn về sự kiện..." required></textarea>
@@ -522,11 +626,70 @@
     </div>
 </div>
 
+<!-- Modal xác nhận xóa vĩnh viễn bình luận dành cho Admin -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold text-slate-800"><i class="bi bi-trash-fill text-danger me-2"></i> Xác nhận xóa</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-slate-600 small py-3">
+                Bạn có chắc chắn muốn xóa vĩnh viễn bình luận này không? Các câu trả lời liên quan cũng sẽ bị xóa.
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-sm btn-light fw-bold rounded-3" data-bs-dismiss="modal">Hủy</button>
+                <form method="post" asp-page-handler="DeleteComment" asp-route-id="@Model.EventItem.Id">
+                    <input type="hidden" id="deleteCommentIdInput" name="commentId" value="" />
+                    <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-3">Xóa vĩnh viễn</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
+    function toggleReplies(id, btn) {
+        const el = document.getElementById(id);
+        const lbl = btn.querySelector('.lbl-text');
+        const count = lbl ? lbl.getAttribute('data-count') : '';
+        if (!el) return;
+        if (el.style.display === 'none' || !el.style.display) {
+            el.style.display = 'block';
+            if (lbl) lbl.textContent = '▲ Ẩn câu trả lời';
+        } else {
+            el.style.display = 'none';
+            if (lbl) lbl.textContent = `Xem ${count} câu trả lời`;
+        }
+    }
+
+    function setReplyTarget(commentId, authorName) {
+        document.getElementById('parentCommentIdInput').value = commentId;
+        document.getElementById('replyingText').textContent = 'Đang trả lời ' + authorName;
+        document.getElementById('replyingBadge').style.display = 'flex';
+        const input = document.getElementById('commentInput');
+        if (input) {
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            input.focus();
+        }
+    }
+
+    function cancelReply() {
+        document.getElementById('parentCommentIdInput').value = '';
+        document.getElementById('replyingBadge').style.display = 'none';
+    }
+
     function confirmHideComment(commentId) {
         document.getElementById('hideCommentIdInput').value = commentId;
         var modalElement = document.getElementById('hideCommentModal');
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+
+    function confirmDeleteComment(commentId) {
+        document.getElementById('deleteCommentIdInput').value = commentId;
+        var modalElement = document.getElementById('deleteCommentModal');
         var modal = new bootstrap.Modal(modalElement);
         modal.show();
     }
@@ -542,50 +705,84 @@
             .build();
 
         // Lắng nghe bình luận mới từ bất kỳ client nào đẩy qua SignalR
-        connection.on("ReceiveComment", function (eventId, authorName, content, timeStr, role) {
+        connection.on("ReceiveComment", function (eventId, commentId, authorName, content, timeStr, role, parentCommentId) {
             if (eventId.toLowerCase() === currentEventId.toLowerCase()) {
                 const noCommentsPlaceholder = document.getElementById("noCommentsPlaceholder");
                 if (noCommentsPlaceholder) {
                     noCommentsPlaceholder.remove();
                 }
 
-                const commentsList = document.getElementById("commentsList");
-                if (commentsList) {
-                    const initials = authorName ? authorName.trim().substring(0, 2).toUpperCase() : "U";
-                    let roleBadgeStyle = "background-color: #e2e8f0; color: #000000; font-weight: 600;";
-                    let roleBadgeText = "Sinh Viên";
-                    if (role === "Admin") {
-                        roleBadgeStyle = "background-color: #dc3545; color: #000000; font-weight: 600;";
-                        roleBadgeText = "Admin";
-                    } else if (role === "Organizer") {
-                        roleBadgeStyle = "background-color: #fd7e14; color: #000000; font-weight: 600;";
-                        roleBadgeText = "Ban Tổ Chức";
+                const initials = authorName ? authorName.trim().substring(0, 2).toUpperCase() : "U";
+                let roleBadgeStyle = "background-color: #e2e8f0; color: #000000; font-weight: 600;";
+                let roleBadgeText = "Sinh Viên";
+                if (role === "Admin") {
+                    roleBadgeStyle = "background-color: #dc3545; color: #000000; font-weight: 600;";
+                    roleBadgeText = "Admin";
+                } else if (role === "Organizer") {
+                    roleBadgeStyle = "background-color: #fd7e14; color: #000000; font-weight: 600;";
+                    roleBadgeText = "Ban Tổ Chức";
+                }
+
+                if (parentCommentId) {
+                    const repliesList = document.getElementById("replies-" + parentCommentId);
+                    if (repliesList) {
+                        repliesList.style.display = "block";
+                        const replyDiv = document.createElement("div");
+                        replyDiv.className = "comment-item p-2.5 mb-2 bg-slate-50 rounded-3 border border-light position-relative";
+                        replyDiv.id = "comment-" + commentId;
+                        replyDiv.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-circle rounded-circle bg-primary bg-opacity-75 text-white d-flex align-items-center justify-content-center fw-bold" style="width: 26px; height: 26px; font-size: 0.72rem;">
+                                        ${initials}
+                                    </div>
+                                    <div>
+                                        <strong class="text-slate-800 fs-7">${authorName}</strong>
+                                        <span class="badge ms-1" style="font-size: 0.6rem; ${roleBadgeStyle}">${roleBadgeText}</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.7rem;">${timeStr}</small>
+                            </div>
+                            <div class="comment-body fs-7 ps-4 ms-1" id="comment-body-${commentId}">
+                                <span class="text-slate-700">${content}</span>
+                            </div>
+                        `;
+                        repliesList.appendChild(replyDiv);
                     }
-
-                    const commentDiv = document.createElement("div");
-                    commentDiv.className = "comment-item p-3 mb-3 bg-white rounded-3 border shadow-3xs position-relative";
-                    commentDiv.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="avatar-circle rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-7" style="width: 32px; height: 32px;">
-                                    ${initials}
+                } else {
+                    const commentsList = document.getElementById("commentsList");
+                    if (commentsList) {
+                        const tempDiv = document.createElement("div");
+                        tempDiv.innerHTML = `
+                            <div class="comment-item p-3 mb-3 bg-white rounded-3 border shadow-3xs position-relative" id="comment-${commentId}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-7" style="width: 32px; height: 32px;">
+                                            ${initials}
+                                        </div>
+                                        <div>
+                                            <strong class="text-slate-800 fs-7">${authorName}</strong>
+                                            <span class="badge ms-1" style="font-size: 0.65rem; ${roleBadgeStyle}">${roleBadgeText}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted fs-7">${timeStr}</small>
+                                    </div>
                                 </div>
-                                <div>
-                                    <strong class="text-slate-800 fs-7">${authorName}</strong>
-                                    <span class="badge ms-1" style="font-size: 0.65rem; ${roleBadgeStyle}">${roleBadgeText}</span>
+                                <div class="comment-body fs-7 ps-4 ms-2 mb-2" id="comment-body-${commentId}">
+                                    <span class="text-slate-700">${content}</span>
                                 </div>
+                                <div class="ps-4 ms-2">
+                                    <button type="button" class="btn btn-link btn-xs text-decoration-none text-primary p-0 fw-semibold" onclick="setReplyTarget('${commentId}', '${authorName}')">
+                                        <i class="bi bi-reply-fill me-1"></i>Trả lời
+                                    </button>
+                                </div>
+                                <div class="replies-list ms-2 ps-3 border-start border-2 border-slate-200 mt-2" id="replies-${commentId}" style="display: none;"></div>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <small class="text-muted fs-7">${timeStr}</small>
-                            </div>
-                        </div>
-                        <div class="comment-body fs-7 ps-4 ms-2">
-                            <span class="text-slate-700">${content}</span>
-                        </div>
-                    `;
-
-                    commentsList.appendChild(commentDiv);
-                    commentsList.scrollTop = commentsList.scrollHeight;
+                        `;
+                        commentsList.appendChild(tempDiv.firstElementChild);
+                        commentsList.scrollTop = commentsList.scrollHeight;
+                    }
                 }
             }
         });
@@ -595,6 +792,14 @@
             const commentBody = document.getElementById("comment-body-" + commentId);
             if (commentBody) {
                 commentBody.innerHTML = '<span class="text-muted fst-italic"><i class="bi bi-eye-slash me-1"></i> Bình luận đã bị admin ẩn</span>';
+            }
+        });
+
+        // Lắng nghe tín hiệu xóa bình luận thời gian thực từ Admin
+        connection.on("ReceiveCommentDeleted", function (commentId) {
+            const el = document.getElementById("comment-" + commentId);
+            if (el) {
+                el.remove();
             }
         });
 
@@ -611,12 +816,15 @@
                 if (connection.state === signalR.HubConnectionState.Connected) {
                     e.preventDefault();
                     const input = document.getElementById("commentInput");
+                    const parentInput = document.getElementById("parentCommentIdInput");
                     const text = input ? input.value.trim() : "";
+                    const parentId = parentInput && parentInput.value ? parentInput.value : null;
                     if (!text) return;
 
-                    connection.invoke("SendComment", currentEventId, currentUserId, text)
+                    connection.invoke("SendComment", currentEventId, currentUserId, text, parentId)
                         .then(function () {
                             if (input) input.value = "";
+                            cancelReply();
                         })
                         .catch(function (err) {
                             console.error("Error sending comment via SignalR: ", err);

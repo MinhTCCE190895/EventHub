@@ -40,6 +40,9 @@ namespace RazorPages.Pages.Events
         [BindProperty]
         public string CommentText { get; set; } = string.Empty;
 
+        [BindProperty]
+        public Guid? ParentCommentId { get; set; }
+
         public int MaxCapacity => EventItem?.Venue?.MaxCapacity ?? 0;
         public int BookedCount => EventItem?.RegisteredCount ?? 0;
         public int RemainingSeats => MaxCapacity - BookedCount;
@@ -108,7 +111,7 @@ namespace RazorPages.Pages.Events
 
             try
             {
-                await _commentService.AddCommentAsync(id, userId, CommentText.Trim());
+                await _commentService.AddCommentAsync(id, userId, CommentText.Trim(), ParentCommentId);
                 TempData["SuccessMessage"] = "Bình luận của bạn đã được đăng thành công!";
             }
             catch (Exception ex)
@@ -138,6 +141,34 @@ namespace RazorPages.Pages.Events
             {
                 await _commentService.HideCommentAsync(commentId, adminUserId);
                 TempData["SuccessMessage"] = "Đã ẩn bình luận thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostDeleteCommentAsync(Guid id, Guid commentId)
+        {
+            if (!User.IsInRole("Admin"))
+            {
+                TempData["ErrorMessage"] = "Chỉ Quản trị viên (Admin) mới có quyền xóa bình luận.";
+                return RedirectToPage(new { id });
+            }
+
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var adminUserId))
+            {
+                TempData["ErrorMessage"] = "Không xác định được danh tính Admin.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _commentService.DeleteCommentAsync(commentId, adminUserId);
+                TempData["SuccessMessage"] = "Đã xóa vĩnh viễn bình luận thành công!";
             }
             catch (Exception ex)
             {

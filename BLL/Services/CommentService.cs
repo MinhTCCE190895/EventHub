@@ -28,23 +28,52 @@ public class CommentService : ICommentService
     {
         var comments = await _commentRepository.Query()
             .Include(c => c.User)
+            .Include(c => c.Replies)
+                .ThenInclude(r => r.User)
             .Where(c => c.EventId == eventId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return _mapper.Map<IEnumerable<CommentDTO>>(comments);
+        var topLevel = comments.Where(c => c.ParentCommentId == null).ToList();
+        var dtos = _mapper.Map<List<CommentDTO>>(topLevel);
+
+        void MapRepliesRecursively(List<EventComment> entities, List<CommentDTO> dtoTargetList)
+        {
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var childEntities = comments.Where(c => c.ParentCommentId == entities[i].Id).OrderBy(c => c.CreatedAt).ToList();
+                dtoTargetList[i].Replies = _mapper.Map<List<CommentDTO>>(childEntities);
+                if (childEntities.Any())
+                {
+                    MapRepliesRecursively(childEntities, dtoTargetList[i].Replies);
+                }
+            }
+        }
+
+        MapRepliesRecursively(topLevel, dtos);
+        return dtos;
     }
 
-    public async Task<CommentDTO> AddCommentAsync(Guid eventId, Guid userId, string content, CancellationToken cancellationToken = default)
+    public async Task<CommentDTO> AddCommentAsync(Guid eventId, Guid userId, string content, Guid? parentCommentId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Nội dung bình luận không được để trống.");
+
+        if (parentCommentId.HasValue)
+        {
+            var parentExists = await _commentRepository.Query().AnyAsync(c => c.Id == parentCommentId.Value, cancellationToken);
+            if (!parentExists)
+            {
+                throw new KeyNotFoundException("Bình luận cha không tồn tại.");
+            }
+        }
 
         var comment = new EventComment
         {
             Id = Guid.NewGuid(),
             EventId = eventId,
             UserId = userId,
+            ParentCommentId = parentCommentId,
             Content = content.Trim(),
             CreatedAt = DateTime.UtcNow
         };
@@ -83,6 +112,34 @@ public class CommentService : ICommentService
         }
 
         comment.IsHidden = true;
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteCommentAsync(Guid commentId, Guid adminUserId, CancellationToken cancellationToken = default)
+    {
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Id == adminUserId, cancellationToken);
+        if (admin == null || admin.Role != "Admin")
+        {
+            throw new UnauthorizedAccessException("Chỉ có Quản trị viên (Admin) mới có quyền xóa bình luận.");
+        }
+
+        var comment = await _commentRepository.Query()
+            .Include(c => c.Replies)
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+
+        if (comment == null)
+        {
+            throw new KeyNotFoundException("Bình luận không tồn tại.");
+        }
+
+        // Xóa tất cả bình luận con liên quan
+        if (comment.Replies != null && comment.Replies.Any())
+        {
+            _context.Set<EventComment>().RemoveRange(comment.Replies);
+        }
+
+        _context.Set<EventComment>().Remove(comment);
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
