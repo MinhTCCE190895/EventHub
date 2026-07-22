@@ -378,10 +378,10 @@
 
 @section Scripts {
     <script>
-        let searchDebounceTimer; // Bộ đếm thời gian để trì hoãn việc gọi API (debounce)
+        let searchDebounceTimer; // Timer for debouncing input requests
         const form = document.getElementById('searchForm');
 
-        // Bắt sự kiện gõ phím của ô tìm kiếm, chờ 300ms rồi mới tìm để tránh spam request liên tục lên server
+        // Trigger search on typing with a 300ms delay to prevent excessive queries
         $('#keywordInput').on('input', function() {
             clearTimeout(searchDebounceTimer);
             searchDebounceTimer = setTimeout(() => {
@@ -389,61 +389,61 @@
             }, 300);
         });
 
-        // Thay đổi chế độ xem hiển thị (Lưới hoặc Danh sách)
+        // Switch layouts between Grid and List
         function changeView(viewType) {
             document.getElementById('viewTypeInput').value = viewType;
             performSearchAjax();
         }
 
-        // Thực hiện tìm kiếm bằng AJAX fetch để tránh reload lại toàn bộ trang
+        // Fetch search results asynchronously using fetch, async/await, try/catch
         async function performSearchAjax() {
-            // Kiểm tra ngày bắt đầu/kết thúc ở client-side trước khi gửi đi
+            // Validate date range on client-side (F.E Custom Validation)
             const startDate = document.getElementById('startDateInput')?.value;
             const endDate = document.getElementById('endDateInput')?.value;
             const validationMsg = document.getElementById('endDateValMsg');
-            if (validationMsg) validationMsg.textContent = ''; // Reset thông báo lỗi cũ
+            if (validationMsg) validationMsg.textContent = ''; // Reset validation message
 
             if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
                 if (validationMsg) {
                     validationMsg.textContent = 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.';
                 }
-                return; // Dừng lại không gửi request nếu ngày không hợp lệ
+                return; // Stop execution if dates are invalid
             }
 
             const formData = new FormData(form);
             const queryParams = new URLSearchParams(formData).toString();
             const newUrl = `${window.location.pathname}?${queryParams}`;
             
-            // Đẩy URL mới lên thanh địa chỉ của trình duyệt mà không load lại trang
+            // Push history state to update browser address bar
             window.history.pushState({ path: newUrl }, '', newUrl);
 
             try {
-                // Gọi fetch bất đồng bộ đến server
+                // Perform async fetch request to get new HTML content
                 const response = await fetch(newUrl);
                 if (!response.ok) return;
                 const htmlString = await response.text();
 
-                // Dùng DOMParser bóc tách chuỗi HTML nhận về để thay thế vùng hiển thị kết quả
+                // Parse response HTML to swap out results section only
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlString, 'text/html');
 
-                // Thay thế phần HTML danh sách kết quả cũ bằng kết quả mới
+                // Swap results wrapper
                 document.getElementById('resultsWrapper').innerHTML = doc.getElementById('resultsWrapper').innerHTML;
 
-                // Thay đổi tiêu đề số lượng kết quả tìm thấy
+                // Update result count header
                 const currentHeader = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
                 const newHeader = doc.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
                 if (currentHeader && newHeader) {
                     currentHeader.innerHTML = newHeader.innerHTML;
                 }
 
-                bindPaginationLinks(); // Gắn lại sự kiện click cho các nút phân trang mới sinh ra
+                bindPaginationLinks(); // Re-attach pagination event listeners
             } catch (error) {
-                console.error("Lỗi khi tìm kiếm AJAX:", error);
+                console.error("Error performing search query:", error);
             }
         }
 
-        // Bắt sự kiện click nút phân trang để chạy qua AJAX thay vì load lại trang
+        // Intercept pagination clicks to execute via AJAX
         function bindPaginationLinks() {
             document.querySelectorAll('.ajax-page-link').forEach(link => {
                 link.addEventListener('click', async function(e) {
@@ -469,15 +469,15 @@
                         }
 
                         bindPaginationLinks();
-                        document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' }); // Cuộn trang lên vùng bộ lọc cho dễ nhìn
+                        document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' }); // Scroll back to filter panel
                     } catch (error) {
-                        console.error("Lỗi chuyển trang phân trang:", error);
+                        console.error("Error navigating page:", error);
                     }
                 });
             });
         }
 
-        // Khi trang tải xong, gắn các sự kiện click cho phân trang lần đầu tiên
+        // Initialize pagination event listeners on page load
         $(document).ready(function() {
             bindPaginationLinks();
         });
