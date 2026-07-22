@@ -14,34 +14,34 @@
 
 <form id="searchForm" method="get" class="search-card-minimal">
     <!-- ViewType hidden input -->
-    <input type="hidden" asp-for="SearchVm.ViewType" id="viewTypeInput" />
+    <input type="hidden" asp-for="ViewType" id="viewTypeInput" />
 
     <div class="row g-3 align-items-end">
         <div class="col-md-4">
-            <label asp-for="SearchVm.Keyword" class="form-label-minimal">Từ khóa tìm kiếm</label>
+            <label asp-for="Keyword" class="form-label-minimal">Từ khóa tìm kiếm</label>
             <div class="input-group">
                 <span class="input-group-text bg-white border-end-0 border-slate-200" style="border-radius: var(--radius-md) 0 0 var(--radius-md);">
                     <i class="bi bi-search text-muted"></i>
                 </span>
-                <input asp-for="SearchVm.Keyword" id="keywordInput" autocomplete="off" class="form-control form-control-minimal border-start-0" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" placeholder="Nhập tên hoặc mô tả sự kiện..." maxlength="200" />
+                <input asp-for="Keyword" id="keywordInput" autocomplete="off" class="form-control form-control-minimal border-start-0" style="border-radius: 0 var(--radius-md) var(--radius-md) 0;" placeholder="Nhập tên hoặc mô tả sự kiện..." maxlength="200" />
             </div>
-            <span asp-validation-for="SearchVm.Keyword" class="text-danger small"></span>
+            <span asp-validation-for="Keyword" class="text-danger small"></span>
         </div>
 
         <div class="col-md-3">
-            <label asp-for="SearchVm.CategoryId" class="form-label-minimal">Danh mục</label>
-            <select asp-for="SearchVm.CategoryId" onchange="submitInstant()" class="form-select form-select-minimal">
+            <label asp-for="CategoryId" class="form-label-minimal">Danh mục</label>
+            <select asp-for="CategoryId" onchange="submitInstant()" class="form-select form-select-minimal">
                 <option value="">Tất cả danh mục</option>
-                @foreach (var cat in Model.SearchVm.Categories)
+                @foreach (var cat in Model.Categories)
                 {
-                    <option value="@cat.Id" selected="@(Model.SearchVm.CategoryId == cat.Id)">@cat.Name</option>
+                    <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
                 }
             </select>
         </div>
 
         <div class="col-md-2">
-            <label asp-for="SearchVm.TimeFilter" class="form-label-minimal">Thời gian</label>
-            <select asp-for="SearchVm.TimeFilter" onchange="submitInstant()" class="form-select form-select-minimal">
+            <label asp-for="TimeFilter" class="form-label-minimal">Thời gian</label>
+            <select asp-for="TimeFilter" onchange="submitInstant()" class="form-select form-select-minimal">
                 <option value="">Tất cả</option>
                 <option value="Upcoming">Sắp diễn ra</option>
                 <option value="Ongoing">Đang diễn ra</option>
@@ -50,8 +50,8 @@
         </div>
 
         <div class="col-md-3">
-            <label asp-for="SearchVm.SortBy" class="form-label-minimal">Sắp xếp theo</label>
-            <select asp-for="SearchVm.SortBy" onchange="submitInstant()" class="form-select form-select-minimal">
+            <label asp-for="SortBy" class="form-label-minimal">Sắp xếp theo</label>
+            <select asp-for="SortBy" onchange="submitInstant()" class="form-select form-select-minimal">
                 <option value="DateAsc">Ngày diễn ra (Tăng dần)</option>
                 <option value="DateDesc">Ngày diễn ra (Giảm dần)</option>
                 <option value="NameAsc">Tên sự kiện (A-Z)</option>
@@ -64,30 +64,30 @@
     <!-- Date Range Filter -->
     <div class="row g-3 align-items-end mt-1">
         <div class="col-md-6">
-            <label asp-for="SearchVm.StartDate" class="form-label-minimal">Từ ngày</label>
-            <input type="date" id="startDateInput" asp-for="SearchVm.StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
-            <span asp-validation-for="SearchVm.StartDate" class="text-danger small"></span>
+            <label asp-for="StartDate" class="form-label-minimal">Từ ngày</label>
+            <input type="date" id="startDateInput" asp-for="StartDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <span asp-validation-for="StartDate" class="text-danger small"></span>
         </div>
         <div class="col-md-6">
-            <label asp-for="SearchVm.EndDate" class="form-label-minimal">Đến ngày</label>
-            <input type="date" id="endDateInput" asp-for="SearchVm.EndDate" onchange="submitInstant()" class="form-control form-control-minimal" />
-            <span asp-validation-for="SearchVm.EndDate" class="text-danger small" id="endDateValMsg"></span>
+            <label asp-for="EndDate" class="form-label-minimal">Đến ngày</label>
+            <input type="date" id="endDateInput" asp-for="EndDate" onchange="submitInstant()" class="form-control form-control-minimal" />
+            <span asp-validation-for="EndDate" class="text-danger small" id="endDateValMsg"></span>
         </div>
     </div>
 
-    @if (Model.SearchVm.Tags != null && Model.SearchVm.Tags.Count > 0)
+    @if (Model.Tags != null && Model.Tags.Count > 0)
     {
         <div class="mt-4 border-top pt-3">
             <label class="form-label-minimal d-block mb-3">Lọc nhanh theo thẻ (Tags)</label>
             <div class="d-flex flex-wrap gap-2">
-                @foreach (var tag in Model.SearchVm.Tags)
+                @foreach (var tag in Model.Tags)
                 {
                     <div class="tag-badge-minimal">
                         <input class="tag-checkbox-minimal" type="checkbox"
-                               name="SearchVm.TagIds" value="@tag.Id"
-                               id="tag_@tag.Id"
-                               @(Model.SearchVm.TagIds != null && Model.SearchVm.TagIds.Contains(tag.Id) ? "checked" : "")
-                               onchange="submitInstant()" />
+                                name="TagIds" value="@tag.Id"
+                                id="tag_@tag.Id"
+                                @(Model.TagIds != null && Model.TagIds.Contains(tag.Id) ? "checked" : "")
+                                onchange="submitInstant()" />
                         <label class="tag-label-minimal" for="tag_@tag.Id">
                             <i class="bi bi-tag-fill me-1"></i> @tag.Name
                         </label>
@@ -99,22 +99,22 @@
 </form>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    @if (Model.SearchVm.Results != null && Model.SearchVm.Results.Count > 0)
+    @if (Model.Results != null && Model.Results.Count > 0)
     {
         <h5 class="fw-bold mb-0 text-slate-800">
-            Kết quả tìm kiếm (@Model.SearchVm.TotalCount sự kiện)
+            Kết quả tìm kiếm (@Model.TotalCount sự kiện)
         </h5>
         
         <div class="d-flex align-items-center gap-3">
             <span class="text-muted small">
-                Trang <strong>@Model.SearchVm.PageNumber</strong> / @Model.SearchVm.TotalPages
+                Trang <strong>@Model.PageNumber</strong> / @Model.TotalPages
             </span>
             <!-- Layout toggle buttons -->
             <div class="btn-group btn-group-sm rounded-3 overflow-hidden border">
-                <button type="button" onclick="changeView('Grid')" class="btn btn-light border-0 px-3 @(Model.SearchVm.ViewType == "Grid" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng lưới">
+                <button type="button" onclick="changeView('Grid')" class="btn btn-light border-0 px-3 @(Model.ViewType == "Grid" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng lưới">
                     <i class="bi bi-grid-3x3-gap-fill"></i>
                 </button>
-                <button type="button" onclick="changeView('List')" class="btn btn-light border-0 px-3 @(Model.SearchVm.ViewType == "List" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng danh sách">
+                <button type="button" onclick="changeView('List')" class="btn btn-light border-0 px-3 @(Model.ViewType == "List" ? "active btn-primary-minimal text-white" : "")" title="Xem dạng danh sách">
                     <i class="bi bi-list-task"></i>
                 </button>
             </div>
@@ -124,7 +124,7 @@
 
 <!-- Results and pagination area -->
 <div id="resultsWrapper">
-    @if (Model.SearchVm.Results == null || Model.SearchVm.Results.Count == 0)
+    @if (Model.Results == null || Model.Results.Count == 0)
     {
         <div class="text-center py-5 rounded-4 bg-white border border-2 border-dashed my-4">
             <div class="display-1 text-muted mb-3"><i class="bi bi-calendar-x"></i></div>
@@ -134,11 +134,11 @@
     }
     else
     {
-        @if (Model.SearchVm.ViewType == "List")
+        @if (Model.ViewType == "List")
         {
             <!-- List View Style -->
             <div class="d-flex flex-column gap-3 mb-5">
-                @foreach (var card in Model.SearchVm.Results)
+                @foreach (var card in Model.Results)
                 {
                     var now = DateTime.UtcNow.AddHours(7);
                     string statusText = "Đang diễn ra";
@@ -222,7 +222,7 @@
         {
             <!-- Grid View Style (Default) -->
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-                @foreach (var card in Model.SearchVm.Results)
+                @foreach (var card in Model.Results)
                 {
                     var now = DateTime.UtcNow.AddHours(7);
                     string statusText = "Đang diễn ra";
@@ -314,43 +314,43 @@
         }
 
         @* Minimal Pagination *@
-        @if (Model.SearchVm.TotalPages > 1)
+        @if (Model.TotalPages > 1)
         {
             var routeData = new Dictionary<string, string>
             {
-                { "SearchVm.Keyword", Model.SearchVm.Keyword ?? "" },
-                { "SearchVm.CategoryId", Model.SearchVm.CategoryId?.ToString() ?? "" },
-                { "SearchVm.TimeFilter", Model.SearchVm.TimeFilter ?? "" },
-                { "SearchVm.SortBy", Model.SearchVm.SortBy ?? "" },
-                { "SearchVm.ViewType", Model.SearchVm.ViewType ?? "Grid" }
+                { "Keyword", Model.Keyword ?? "" },
+                { "CategoryId", Model.CategoryId?.ToString() ?? "" },
+                { "TimeFilter", Model.TimeFilter ?? "" },
+                { "SortBy", Model.SortBy ?? "" },
+                { "ViewType", Model.ViewType ?? "Grid" }
             };
 
-            if (Model.SearchVm.TagIds != null)
+            if (Model.TagIds != null)
             {
-                for (int t = 0; t < Model.SearchVm.TagIds.Count; t++)
+                for (int t = 0; t < Model.TagIds.Count; t++)
                 {
-                    routeData.Add($"SearchVm.TagIds[{t}]", Model.SearchVm.TagIds[t].ToString());
+                    routeData.Add($"TagIds[{t}]", Model.TagIds[t].ToString());
                 }
             }
 
             <nav aria-label="Phân trang">
                 <ul class="pagination pagination-minimal justify-content-center">
-                    @if (Model.SearchVm.PageNumber > 1)
+                    @if (Model.PageNumber > 1)
                     {
-                        var prevRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", (Model.SearchVm.PageNumber - 1).ToString() } };
+                        var prevRoute = new Dictionary<string, string>(routeData) { { "PageNumber", (Model.PageNumber - 1).ToString() } };
                         <li class="page-item">
-                            <a class="page-link ajax-page-link"
-                               asp-page="./Index"
-                               asp-all-route-data="prevRoute">
-                                <i class="bi bi-chevron-left"></i> Trước
-                            </a>
+                             <a class="page-link ajax-page-link"
+                                asp-page="./Index"
+                                asp-all-route-data="prevRoute">
+                                 <i class="bi bi-chevron-left"></i> Trước
+                             </a>
                         </li>
                     }
 
-                    @for (int i = 1; i <= Model.SearchVm.TotalPages; i++)
+                    @for (int i = 1; i <= Model.TotalPages; i++)
                     {
-                        var pageRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", i.ToString() } };
-                        <li class="page-item @(i == Model.SearchVm.PageNumber ? "active" : "")">
+                        var pageRoute = new Dictionary<string, string>(routeData) { { "PageNumber", i.ToString() } };
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
                             <a class="page-link ajax-page-link"
                                asp-page="./Index"
                                asp-all-route-data="pageRoute">
@@ -359,9 +359,9 @@
                         </li>
                     }
 
-                    @if (Model.SearchVm.PageNumber < Model.SearchVm.TotalPages)
+                    @if (Model.PageNumber < Model.TotalPages)
                     {
-                        var nextRoute = new Dictionary<string, string>(routeData) { { "SearchVm.PageNumber", (Model.SearchVm.PageNumber + 1).ToString() } };
+                        var nextRoute = new Dictionary<string, string>(routeData) { { "PageNumber", (Model.PageNumber + 1).ToString() } };
                         <li class="page-item">
                             <a class="page-link ajax-page-link"
                                asp-page="./Index"
@@ -513,6 +513,5 @@
             } finally {
                 buttonEl.disabled = false;
             }
-        }
     </script>
 }

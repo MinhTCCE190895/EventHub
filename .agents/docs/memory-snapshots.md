@@ -62,6 +62,12 @@ Các PageModel/Component sau inject `AppDbContext` thay vì đi qua BLL Service:
 ## 3. WORK LOG & ARCHITECTURE CONVENTIONS
 
 ### 3.1. Detailed Changes Log
+- **2026-07-22 (Antigravity / QuiNC)**:
+  - Loại bỏ hoàn toàn `EventSearchViewModel` khỏi phân hệ tìm kiếm sự kiện (`FE-03`).
+  - Đưa trực tiếp các thuộc tính lọc sự kiện (Keyword, CategoryId, TagIds, TimeFilter, StartDate, EndDate, PageNumber, SortBy, ViewType) vào `IndexModel` dưới dạng flattened properties để phục vụ Model Binding.
+  - Chuyển logic kiểm tra khoảng thời gian hợp lệ (StartDate & EndDate) thành validation thủ công trong phương thức `OnGetAsync` của `IndexModel`.
+  - Cập nhật toàn bộ các tham chiếu `SearchVm` trên giao diện `Index.cshtml` và các liên kết phân trang tương ứng.
+
 - **2026-07-22 (Antigravity / Khôi)**:
   - **Cấp quyền cho Tác giả tự Xóa bình luận cá nhân (`FE-15`)**:
     - Cập nhật `DeleteCommentAsync` trong `ICommentService` & `CommentService`: Cho phép người dùng xóa bình luận nếu họ là chính tác giả tạo ra bình luận đó (`comment.UserId == userId`) hoặc có vai trò `Admin`.
